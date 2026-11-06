@@ -9,7 +9,10 @@ class SoundManager {
     this.initialized = false;
     this.bgmPlaying = false;
     this.bgmTimer = null;
-    this.bgmNoteIndex = 0;
+    this.bgmStep = 0;
+    this.nextStepTime = 0;
+    this.bgmMasterGain = null;
+    this.noiseBuffer = null;
   }
 
   init() {
@@ -18,8 +21,23 @@ class SoundManager {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       this.ctx = new AudioContext();
       this.initialized = true;
+      this.createNoiseBuffer();
     } catch (e) {
       console.warn('Web Audio not supported', e);
+    }
+  }
+
+  createNoiseBuffer() {
+    if (!this.ctx) return;
+    try {
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.1);
+      this.noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = this.noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+    } catch (e) {
+      console.warn('Could not create noise buffer', e);
     }
   }
 
@@ -318,102 +336,342 @@ class SoundManager {
     });
   }
 
-  // Catchy 8-bit Retro Arcade Background Music loop (Original Composition)
+  // =========================================================================
+  // 8-BIT RETRO MERENGUE ENGINE: IL BARBIERE DI SIVIGLIA (Gioachino Rossini)
+  // "Largo al factotum della citta" + Overture + "Figaro! Figaro!" in 8-bit Merengue
+  // =========================================================================
+
+  playLeadNote(freq, time, dur) {
+    if (!this.bgmMasterGain || !this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, time);
+
+    gain.gain.setValueAtTime(0.040, time);
+    gain.gain.exponentialRampToValueAtTime(0.003, time + dur * 0.82);
+
+    osc.connect(gain);
+    gain.connect(this.bgmMasterGain);
+
+    osc.start(time);
+    osc.stop(time + dur * 0.85);
+  }
+
+  playBrassNote(freq, time, dur) {
+    if (!this.bgmMasterGain || !this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(freq, time);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2200, time);
+
+    gain.gain.setValueAtTime(0.024, time);
+    gain.gain.exponentialRampToValueAtTime(0.002, time + dur * 0.8);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.bgmMasterGain);
+
+    osc.start(time);
+    osc.stop(time + dur * 0.82);
+  }
+
+  playBassNote(freq, time, dur) {
+    if (!this.bgmMasterGain || !this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, time);
+
+    gain.gain.setValueAtTime(0.065, time);
+    gain.gain.exponentialRampToValueAtTime(0.005, time + dur * 0.85);
+
+    osc.connect(gain);
+    gain.connect(this.bgmMasterGain);
+
+    osc.start(time);
+    osc.stop(time + dur * 0.88);
+  }
+
+  playGuiraScrape(time, isAccent, dur) {
+    if (!this.noiseBuffer || !this.bgmMasterGain || !this.ctx) return;
+    const source = this.ctx.createBufferSource();
+    source.buffer = this.noiseBuffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.setValueAtTime(3400, time);
+
+    const gain = this.ctx.createGain();
+    const peakGain = isAccent ? 0.034 : 0.016;
+    gain.gain.setValueAtTime(peakGain, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.bgmMasterGain);
+
+    source.start(time);
+    source.stop(time + dur);
+  }
+
+  playTamboraRim(time) {
+    if (!this.bgmMasterGain || !this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1200, time);
+    osc.frequency.exponentialRampToValueAtTime(380, time + 0.028);
+
+    gain.gain.setValueAtTime(0.042, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.028);
+
+    osc.connect(gain);
+    gain.connect(this.bgmMasterGain);
+
+    osc.start(time);
+    osc.stop(time + 0.028);
+  }
+
+  playTamboraSkin(time) {
+    if (!this.bgmMasterGain || !this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(170, time);
+    osc.frequency.exponentialRampToValueAtTime(54, time + 0.075);
+
+    gain.gain.setValueAtTime(0.075, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.075);
+
+    osc.connect(gain);
+    gain.connect(this.bgmMasterGain);
+
+    osc.start(time);
+    osc.stop(time + 0.075);
+  }
+
+  scheduleMerengueStep(step, time, stepDur) {
+    if (!this.ctx || this.muted) return;
+
+    const stepInBar = step % 16;
+    const bar = Math.floor(step / 16);
+
+    // 1. Lead Melody: Rossini Figaro / Largo al Factotum
+    const leadFreq = MERENGUE_SCORE.lead[step];
+    if (leadFreq && leadFreq > 0) {
+      this.playLeadNote(leadFreq, time, stepDur * 1.5);
+    }
+
+    // 2. Merengue Brass Stabs
+    const brassFreq = MERENGUE_SCORE.brass[step];
+    if (brassFreq && brassFreq > 0) {
+      this.playBrassNote(brassFreq, time, stepDur * 1.3);
+    }
+
+    // 3. Merengue Bass Tumbao
+    const bassFreq = MERENGUE_SCORE.bass[step];
+    if (bassFreq && bassFreq > 0) {
+      this.playBassNote(bassFreq, time, stepDur * 1.7);
+    }
+
+    // 4. Guira Scrapes (continuous 16th-note Dominican merengue groove)
+    const isGuiraAccent = (stepInBar % 4 === 2);
+    this.playGuiraScrape(time, isGuiraAccent, isGuiraAccent ? 0.045 : 0.025);
+
+    // 5. Tambora (Rim and Skin hits)
+    const isRepiqueBar = (bar === 10);
+    if (isRepiqueBar) {
+      // Merengue roll during the famous Figaro! Figaro! Figaro! line
+      if ([0, 2, 4, 6, 8, 10, 12, 14].includes(stepInBar)) {
+        this.playTamboraRim(time);
+      }
+      if ([1, 3, 5, 7, 9, 11, 13, 15].includes(stepInBar)) {
+        this.playTamboraSkin(time);
+      }
+    } else {
+      // Standard Merengue Tambora pattern
+      if ([0, 6, 8, 12].includes(stepInBar)) {
+        this.playTamboraRim(time);
+      }
+      if ([4, 10, 14].includes(stepInBar)) {
+        this.playTamboraSkin(time);
+      }
+    }
+  }
+
   startBGM() {
     if (this.muted || !this.ctx || this.bgmPlaying) return;
     this.bgmPlaying = true;
-    this.bgmNoteIndex = 0;
+    this.bgmStep = 0;
 
-    // Original 8-bit upbeat arcade ragtime bounce in F major
-    const melody = [
-      // Phrase 1 (F major swing)
-      { note: 349.2, dur: 0.11, bass: 174.6 }, // F4
-      { note: 440.0, dur: 0.11, bass: 261.6 }, // A4
-      { note: 523.2, dur: 0.11, bass: 174.6 }, // C5
-      { note: 587.3, dur: 0.11, bass: 261.6 }, // D5
-      { note: 523.2, dur: 0.14, bass: 174.6 }, // C5
-      { note: 440.0, dur: 0.11, bass: 220.0 }, // A4
-      { note: 392.0, dur: 0.11, bass: 196.0 }, // G4
-      { note: 349.2, dur: 0.18, bass: 174.6 }, // F4
+    if (!this.noiseBuffer) {
+      this.createNoiseBuffer();
+    }
 
-      // Phrase 2 (D minor / Bb groove)
-      { note: 293.7, dur: 0.11, bass: 146.8 }, // D4
-      { note: 349.2, dur: 0.11, bass: 220.0 }, // F4
-      { note: 440.0, dur: 0.11, bass: 146.8 }, // A4
-      { note: 466.2, dur: 0.14, bass: 116.5 }, // Bb4
-      { note: 440.0, dur: 0.11, bass: 174.6 }, // A4
-      { note: 392.0, dur: 0.11, bass: 130.8 }, // G4
-      { note: 349.2, dur: 0.14, bass: 174.6 }, // F4
-      { note: 329.6, dur: 0.18, bass: 130.8 }, // E4
+    this.bgmMasterGain = this.ctx.createGain();
+    this.bgmMasterGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
+    this.bgmMasterGain.connect(this.ctx.destination);
 
-      // Phrase 3 (Ascending staccato run)
-      { note: 261.6, dur: 0.10, bass: 130.8 }, // C4
-      { note: 293.7, dur: 0.10, bass: 130.8 }, // D4
-      { note: 329.6, dur: 0.10, bass: 164.8 }, // E4
-      { note: 349.2, dur: 0.11, bass: 174.6 }, // F4
-      { note: 392.0, dur: 0.11, bass: 196.0 }, // G4
-      { note: 440.0, dur: 0.11, bass: 220.0 }, // A4
-      { note: 466.2, dur: 0.11, bass: 233.1 }, // Bb4
-      { note: 523.2, dur: 0.18, bass: 261.6 }, // C5
+    this.nextStepTime = this.ctx.currentTime + 0.05;
+    const stepDuration = 0.098; // ~153 BPM Merengue tempo
 
-      // Phrase 4 (Turnaround cadence)
-      { note: 587.3, dur: 0.11, bass: 146.8 }, // D5
-      { note: 523.2, dur: 0.11, bass: 261.6 }, // C5
-      { note: 440.0, dur: 0.11, bass: 220.0 }, // A4
-      { note: 392.0, dur: 0.11, bass: 196.0 }, // G4
-      { note: 349.2, dur: 0.22, bass: 174.6 }, // F4
-      { note: 261.6, dur: 0.11, bass: 130.8 }, // C4
-      { note: 349.2, dur: 0.28, bass: 87.3  }  // F4 resolve
-    ];
-
-    const playNext = () => {
-      if (!this.bgmPlaying || this.muted) return;
-      const cur = melody[this.bgmNoteIndex];
-      const now = this.ctx.currentTime;
-
-      // Pulse lead
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(cur.note, now);
-
-      gain.gain.setValueAtTime(0.042, now);
-      gain.gain.exponentialRampToValueAtTime(0.005, now + cur.dur);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now);
-      osc.stop(now + cur.dur);
-
-      // Bass triangle
-      const bassOsc = this.ctx.createOscillator();
-      const bassGain = this.ctx.createGain();
-      bassOsc.type = 'triangle';
-      const bassFreq = cur.bass || (cur.note / 2);
-      bassOsc.frequency.setValueAtTime(bassFreq, now);
-
-      bassGain.gain.setValueAtTime(0.055, now);
-      bassGain.gain.exponentialRampToValueAtTime(0.005, now + cur.dur);
-
-      bassOsc.connect(bassGain);
-      bassGain.connect(this.ctx.destination);
-      bassOsc.start(now);
-      bassOsc.stop(now + cur.dur);
-
-      this.bgmNoteIndex = (this.bgmNoteIndex + 1) % melody.length;
-      this.bgmTimer = setTimeout(playNext, (cur.dur + 0.025) * 1000);
+    const scheduler = () => {
+      if (!this.bgmPlaying || this.muted || !this.ctx) return;
+      while (this.nextStepTime < this.ctx.currentTime + 0.16) {
+        this.scheduleMerengueStep(this.bgmStep, this.nextStepTime, stepDuration);
+        this.nextStepTime += stepDuration;
+        this.bgmStep = (this.bgmStep + 1) % 256;
+      }
     };
 
-    playNext();
+    scheduler();
+    this.bgmTimer = setInterval(scheduler, 35);
   }
 
   stopBGM() {
     this.bgmPlaying = false;
     if (this.bgmTimer) {
-      clearTimeout(this.bgmTimer);
+      clearInterval(this.bgmTimer);
       this.bgmTimer = null;
+    }
+    if (this.bgmMasterGain && this.ctx) {
+      try {
+        this.bgmMasterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+        this.bgmMasterGain.disconnect();
+      } catch (e) {}
+      this.bgmMasterGain = null;
     }
   }
 }
+
+// Global score and note definitions for Il Barbiere di Siviglia Merengue
+const ROSSINI_FREQ = {
+  _: 0,
+  C2: 65.41, D2: 73.42, E2: 82.41, F2: 87.31, G2: 98.00, A2: 110.00, B2: 123.47,
+  C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
+  C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+  C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, B5: 987.77,
+  C6: 1046.50, D6: 1174.66, E6: 1318.51
+};
+
+const MERENGUE_SCORE = {
+  lead: [
+    // Bar 0: Largo al factotum della citta
+    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.E4, 0,
+    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.G4, 0,
+    // Bar 1: Largo!
+    ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.F4, 0,
+    ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.B4, 0,
+    // Bar 2: La ran la lera la ran la la
+    ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.D5, 0,
+    ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.B4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.G4, 0,
+    // Bar 3: Cadence resolve
+    ROSSINI_FREQ.F4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.B4, 0,
+    ROSSINI_FREQ.C5, 0, 0, ROSSINI_FREQ.G4, 0, 0, ROSSINI_FREQ.C5, 0,
+
+    // Bar 4: Overture Theme A (Rossini gallop)
+    ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.C5, 0,
+    ROSSINI_FREQ.B4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.G4, 0,
+    // Bar 5: Overture Theme B
+    ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.D5, 0,
+    ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.G4, 0,
+    // Bar 6: Mambo Crescendo Gallop
+    ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0,
+    ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.D5, 0,
+    // Bar 7: Crescendo Resolve
+    ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.B4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.B4, 0,
+    ROSSINI_FREQ.C5, 0, 0, ROSSINI_FREQ.G4, 0, 0, ROSSINI_FREQ.C5, 0,
+
+    // Bar 8: Figaro! Figaro!
+    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0,
+    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0,
+    // Bar 9: Figaro! Figaro!
+    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.D5, 0,
+    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.D5, 0,
+    // Bar 10: Repique Figaro Figaro Figaro Figaro!
+    ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0,
+    ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0,
+    // Bar 11: Bravo bravissimo!
+    ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.D5, 0,
+    ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.G5, 0, 0, 0,
+
+    // Bar 12: Merengue Mambo Horns Part 1
+    ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.E5, 0,
+    ROSSINI_FREQ.C6, 0, 0, ROSSINI_FREQ.G5, 0, 0, ROSSINI_FREQ.E5, 0,
+    // Bar 13: Mambo Horns Part 2
+    ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.A5, 0, ROSSINI_FREQ.F5, 0,
+    ROSSINI_FREQ.D6, 0, 0, ROSSINI_FREQ.B5, 0, 0, ROSSINI_FREQ.G5, 0,
+    // Bar 14: Gallop Descent
+    ROSSINI_FREQ.C6, 0, ROSSINI_FREQ.B5, 0, ROSSINI_FREQ.A5, 0, ROSSINI_FREQ.G5, 0,
+    ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.C5, 0,
+    // Bar 15: Loop Turnaround
+    ROSSINI_FREQ.B4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.B4, 0,
+    ROSSINI_FREQ.C5, 0, 0, ROSSINI_FREQ.G4, 0, 0, ROSSINI_FREQ.C5, 0
+  ],
+
+  // Dominican Merengue Tumbao Bass (Syncopated leaps)
+  bass: [
+    // 0-3
+    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.E3, 0, 0, ROSSINI_FREQ.G2, 0,
+    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0, 0, ROSSINI_FREQ.D3, 0,
+    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.E3, 0, 0, ROSSINI_FREQ.G2, 0,
+    ROSSINI_FREQ.F2, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.C3, 0,
+
+    // 4-7
+    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.E3, 0, 0, ROSSINI_FREQ.G2, 0,
+    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0, 0, ROSSINI_FREQ.D3, 0,
+    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.F2, 0, 0, ROSSINI_FREQ.A2, 0, 0, ROSSINI_FREQ.D3, 0,
+    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.C3, 0,
+
+    // 8-11 (Figaro section)
+    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.E3, 0, 0, ROSSINI_FREQ.G2, 0,
+    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0, 0, ROSSINI_FREQ.D3, 0,
+    ROSSINI_FREQ.C3, 0, ROSSINI_FREQ.E3, 0, ROSSINI_FREQ.G3, 0, ROSSINI_FREQ.C3, 0, ROSSINI_FREQ.C3, 0, ROSSINI_FREQ.E3, 0, ROSSINI_FREQ.G3, 0, ROSSINI_FREQ.C3, 0,
+    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0, 0, ROSSINI_FREQ.D3, 0,
+
+    // 12-15 (Mambo & Outro)
+    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.E3, 0, 0, ROSSINI_FREQ.G2, 0,
+    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0, 0, ROSSINI_FREQ.D3, 0,
+    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.F2, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0,
+    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.C3, 0
+  ],
+
+  // Merengue Brass Stabs & Harmonies
+  brass: [
+    // 0-3
+    0, 0, ROSSINI_FREQ.E4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.E4, 0, ROSSINI_FREQ.G4, 0, 0, 0,
+    0, 0, ROSSINI_FREQ.D4, 0, 0, 0, ROSSINI_FREQ.F4, 0, 0, 0, ROSSINI_FREQ.D4, 0, ROSSINI_FREQ.F4, 0, 0, 0,
+    0, 0, ROSSINI_FREQ.E4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.E4, 0, ROSSINI_FREQ.G4, 0, 0, 0,
+    0, 0, ROSSINI_FREQ.F4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.E4, 0, ROSSINI_FREQ.G4, 0, 0, 0,
+
+    // 4-7
+    0, 0, ROSSINI_FREQ.E4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.E4, 0, ROSSINI_FREQ.G4, 0, 0, 0,
+    0, 0, ROSSINI_FREQ.D4, 0, 0, 0, ROSSINI_FREQ.F4, 0, 0, 0, ROSSINI_FREQ.D4, 0, ROSSINI_FREQ.F4, 0, 0, 0,
+    ROSSINI_FREQ.E5, 0, 0, 0, ROSSINI_FREQ.C5, 0, 0, 0, ROSSINI_FREQ.F5, 0, 0, 0, ROSSINI_FREQ.D5, 0, 0, 0,
+    0, 0, ROSSINI_FREQ.E4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.E4, 0, ROSSINI_FREQ.G4, 0, 0, 0,
+
+    // 8-11 (Figaro section)
+    0, 0, 0, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.E5, 0, 0, 0, 0, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.E5, 0,
+    0, 0, 0, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.F5, 0, 0, 0, 0, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.F5, 0,
+    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.C5, 0,
+    ROSSINI_FREQ.B4, 0, 0, 0, ROSSINI_FREQ.B4, 0, 0, 0, ROSSINI_FREQ.B4, 0, 0, 0, ROSSINI_FREQ.D5, 0, 0, 0,
+
+    // 12-15
+    ROSSINI_FREQ.E4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.C5, 0, 0, 0, ROSSINI_FREQ.E5, 0, 0, 0,
+    ROSSINI_FREQ.F4, 0, 0, 0, ROSSINI_FREQ.A4, 0, 0, 0, ROSSINI_FREQ.D5, 0, 0, 0, ROSSINI_FREQ.F5, 0, 0, 0,
+    ROSSINI_FREQ.G5, 0, 0, 0, ROSSINI_FREQ.E5, 0, 0, 0, ROSSINI_FREQ.D5, 0, 0, 0, ROSSINI_FREQ.B4, 0, 0, 0,
+    0, 0, ROSSINI_FREQ.D5, 0, 0, 0, ROSSINI_FREQ.D5, 0, 0, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.E5, 0, 0, 0
+  ]
+};
 
 window.soundManager = new SoundManager();
