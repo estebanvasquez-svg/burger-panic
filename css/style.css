@@ -1,0 +1,431 @@
+/* Retro Arcade Mobile Styles for Burger Panic */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #0c0b10;
+  font-family: 'Press Start 2P', monospace, sans-serif;
+  color: #f4f4f4;
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
+}
+
+#app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 600px;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0 auto;
+  background: radial-gradient(circle at 50% 20%, #1c1a29 0%, #0d0c14 100%);
+  position: relative;
+  border-left: 2px solid #222034;
+  border-right: 2px solid #222034;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+}
+
+/* ---------------------------------
+   ARCADE HEADER / TOP BAR
+   --------------------------------- */
+.arcade-header {
+  flex-shrink: 0;
+  width: 100%;
+  height: 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  background: linear-gradient(180deg, #242238 0%, #141320 100%);
+  border-bottom: 2px solid #e40058;
+  box-shadow: 0 2px 8px rgba(228, 0, 88, 0.3);
+  z-index: 10;
+}
+
+.logo-badge {
+  font-size: 11px;
+  color: #fcb400;
+  text-shadow: 2px 2px #e40058;
+  letter-spacing: 1px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.arcade-btn-mini {
+  background: #2a2842;
+  border: 1px solid #5b587a;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 12px;
+  padding: 4px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.arcade-btn-mini:active {
+  transform: scale(0.92);
+  background: #e40058;
+}
+
+/* ---------------------------------
+   GAME SCREEN / MODERN HD DISPLAY
+   --------------------------------- */
+.screen-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 6px 10px;
+  background: radial-gradient(circle at 50% 30%, #161426 0%, #06050a 100%);
+  overflow: hidden;
+}
+
+.bezel {
+  position: relative;
+  background: #080710;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(130, 80, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  height: 100%;
+  max-height: 100%;
+  max-width: 100%;
+  aspect-ratio: 240 / 320;
+}
+
+canvas#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #050508;
+  border-radius: 8px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* CRT Scanlines Overlay Completely Removed */
+.scanlines {
+  display: none !important;
+}
+
+/* ---------------------------------
+   MOBILE CONTROLS DECK
+   --------------------------------- */
+.controls-deck {
+  flex-shrink: 0;
+  width: 100%;
+  height: 170px;
+  background: linear-gradient(180deg, #181625 0%, #0c0b12 100%);
+  border-top: 3px solid #3b3756;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 18px;
+  position: relative;
+  box-shadow: inset 0 3px 6px rgba(255, 255, 255, 0.05);
+  transition: opacity 0.2s ease;
+}
+
+.controls-deck.hidden {
+  display: none !important;
+}
+
+/* Virtual D-Pad */
+.dpad-container {
+  position: relative;
+  width: 130px;
+  height: 130px;
+}
+
+.dpad {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #252336 40%, #151420 100%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dpad-btn {
+  position: absolute;
+  background: #37344f;
+  border: 1px solid #545075;
+  color: #a4a0c8;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.05s, transform 0.05s;
+}
+
+.dpad-up {
+  top: 6px;
+  left: 44px;
+  width: 42px;
+  height: 40px;
+  border-radius: 6px 6px 0 0;
+}
+
+.dpad-down {
+  bottom: 6px;
+  left: 44px;
+  width: 42px;
+  height: 40px;
+  border-radius: 0 0 6px 6px;
+}
+
+.dpad-left {
+  left: 6px;
+  top: 44px;
+  width: 40px;
+  height: 42px;
+  border-radius: 6px 0 0 6px;
+}
+
+.dpad-right {
+  right: 6px;
+  top: 44px;
+  width: 40px;
+  height: 42px;
+  border-radius: 0 6px 6px 0;
+}
+
+.dpad-center {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: #201e30;
+  border-radius: 50%;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.dpad-btn.active {
+  background: #fcb400;
+  color: #111;
+  box-shadow: 0 0 10px rgba(252, 180, 0, 0.8);
+  transform: scale(0.96);
+}
+
+/* Action Buttons: JUMP & PEPPER */
+.action-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btn-arcade-action {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  border: 3px solid #201d2d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.08s ease;
+}
+
+/* Red Pepper Button */
+.btn-arcade-action.btn-pepper {
+  background: radial-gradient(circle at 35% 35%, #ff4b6e, #c0003c 70%, #6b0021 100%);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.8), 0 0 15px rgba(228, 0, 88, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+}
+
+.btn-arcade-action.btn-pepper:active,
+.btn-arcade-action.btn-pepper.active {
+  transform: translateY(3px) scale(0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 25px rgba(228, 0, 88, 0.9);
+  background: radial-gradient(circle at 50% 50%, #ff2050, #960028 100%);
+}
+
+/* Blue Jump Button */
+.btn-arcade-action.btn-jump {
+  background: radial-gradient(circle at 35% 35%, #00d2ff, #0077c8 70%, #003e73 100%);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 168, 252, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+}
+
+.btn-arcade-action.btn-jump:active,
+.btn-arcade-action.btn-jump.active {
+  transform: translateY(3px) scale(0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 25px rgba(0, 168, 252, 0.9);
+  background: radial-gradient(circle at 50% 50%, #00f0ff, #005096 100%);
+}
+
+.action-icon {
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.action-label {
+  font-size: 8px;
+  color: #fff;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px #400010;
+  font-weight: bold;
+}
+
+.pepper-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #fcb400;
+  color: #111;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+
+@media (min-width: 440px) {
+  .btn-arcade-action {
+    width: 84px;
+    height: 84px;
+  }
+  .action-icon {
+    font-size: 30px;
+    margin-bottom: 4px;
+  }
+  .action-label {
+    font-size: 9px;
+  }
+  .action-container {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 350px) {
+  .controls-deck {
+    padding: 8px 10px;
+  }
+  .dpad-container {
+    width: 120px;
+    height: 120px;
+  }
+  .btn-arcade-action {
+    width: 68px;
+    height: 68px;
+  }
+  .action-icon {
+    font-size: 24px;
+  }
+  .action-container {
+    gap: 8px;
+  }
+}
+
+/* ---------------------------------
+   MODAL HELP & INSTRUCTIONS
+   --------------------------------- */
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: #191726;
+  border: 3px solid #fcb400;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 0 25px rgba(252, 180, 0, 0.4);
+}
+
+.modal-content h2 {
+  color: #e40058;
+  font-size: 13px;
+  margin-bottom: 14px;
+  text-shadow: 2px 2px #000;
+}
+
+.instructions-list {
+  text-align: left;
+  font-size: 8px;
+  line-height: 1.6;
+  margin-bottom: 18px;
+  color: #d8d4ec;
+}
+
+.instructions-list li {
+  margin-bottom: 8px;
+}
+
+.instructions-list strong {
+  color: #fcb400;
+}
+
+.arcade-btn-primary {
+  background: #e40058;
+  color: #fff;
+  border: 2px solid #fff;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 9px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+.arcade-btn-primary:active {
+  transform: scale(0.95);
+  background: #c0003c;
+}

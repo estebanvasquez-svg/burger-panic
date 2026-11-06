@@ -1,0 +1,211 @@
+/**
+ * Burger Piece Mechanics & Cascades for Burger Panic Mobile
+ */
+class BurgerPiece {
+  constructor(data, levelData) {
+    this.col = data.col;
+    this.x = data.x;
+    this.y = data.y;
+    this.initialY = data.y;
+    this.type = data.type; // 'bun_top', 'lettuce', 'tomato', 'cheese', 'patty', 'bun_bottom'
+    this.width = 32;
+    this.height = 8;
+    this.levelData = levelData;
+
+    // 4 segments (8px each)
+    this.segments = [
+      { stepped: false, dropY: 0 },
+      { stepped: false, dropY: 0 },
+      { stepped: false, dropY: 0 },
+      { stepped: false, dropY: 0 }
+    ];
+
+    this.falling = false;
+    this.fallSpeed = 3.5;
+    this.targetY = this.y;
+    this.landedOnPlate = false;
+    this.riders = []; // Enemies currently riding this falling piece
+  }
+
+  // Check if player walks across segments
+  checkPlayerStep(player) {
+    if (this.falling || this.landedOnPlate || player.isDead) return;
+
+    // Both player.y and burger.y are aligned to floor.y
+    // Verify vertical distance is within walking range
+    if (Math.abs(player.y - this.y) > 8) return;
+
+    // Check player foot span [pX1, pX2]
+    const pX1 = player.x + 2;
+    const pX2 = player.x + 14;
+
+    let newlyStepped = false;
+    for (let i = 0; i < 4; i++) {
+      const segX1 = this.x + i * 8;
+      const segX2 = segX1 + 8;
+
+      if (pX2 >= segX1 && pX1 <= segX2) {
+        if (!this.segments[i].stepped) {
+          this.segments[i].stepped = true;
+          this.segments[i].dropY = 3; // Visual dip
+          newlyStepped = true;
+        }
+      }
+    }
+
+    if (newlyStepped) {
+      window.soundManager.playStep();
+    }
+
+    // Check if all 4 segments have been stepped on
+    if (this.segments.every((s) => s.stepped)) {
+      this.triggerFall();
+    }
+  }
+
+  triggerFall(forced = false) {
+    if (this.falling || this.landedOnPlate) return;
+    this.falling = true;
+    window.soundManager.playDrop();
+
+    // Reset visual dip during fall
+    this.segments.forEach((s) => (s.dropY = 0));
+
+    // Calculate next floor below
+    this.targetY = this.findNextFloorBelow();
+  }
+
+  findNextFloorBelow() {
+    const floors = this.levelData.floors;
+    const plateFloor = floors[floors.length - 1];
+    let candidateY = plateFloor.y;
+
+    for (const f of floors) {
+      if (f.y > this.y + 6) {
+        // Only land on floor segments that physically span this burger piece
+        if (this.x + 6 >= f.x1 && this.x + this.width - 6 <= f.x2) {
+          candidateY = f.y;
+          break;
+        }
+      }
+    }
+    return candidateY;
+  }
+
+  update(allBurgers, enemies, addScoreCallback, onComboCallback) {
+    if (!this.falling) return;
+
+    this.y += this.fallSpeed;
+
+    // Check enemies riding on top (only at the start of the fall, standing on the piece)
+    if (this.y <= this.initialY + 6) {
+      for (const enemy of enemies) {
+        if (!enemy.squashed && !enemy.riding && enemy.state === 'normal') {
+          if (
+            Math.abs(enemy.y - this.initialY) <= 6 &&
+            enemy.x + 10 >= this.x &&
+            enemy.x + 6 <= this.x + this.width
+          ) {
+            enemy.startRiding(this);
+            this.riders.push(enemy);
+          }
+        }
+      }
+    }
+
+    // Check enemies underneath to squash them
+    for (const enemy of enemies) {
+      if (!enemy.squashed && !enemy.riding && enemy.state !== 'spawning') {
+        const enemyCenter = enemy.x + 8;
+        const enemyTop = enemy.y;
+        const enemyBottom = enemy.y + 16;
+
+        if (enemyCenter >= this.x - 2 && enemyCenter <= this.x + this.width + 2) {
+          if (this.y + 12 >= enemyTop && this.y <= enemyBottom) {
+            // Squash enemy!
+            enemy.squash();
+            window.soundManager.playSquash();
+            if (addScoreCallback) {
+              addScoreCallback(500, enemy.x, enemy.y);
+            }
+          }
+        }
+      }
+    }
+
+    // Check landing on targetY
+    if (this.y >= this.targetY) {
+      this.y = this.targetY;
+      this.falling = false;
+      window.soundManager.playLand();
+
+      // Reset step state
+      this.segments.forEach((s) => {
+        s.stepped = false;
+        s.dropY = 0;
+      });
+
+      // If riders were carried down, destroy riders for huge bonus points & combo lives!
+      if (this.riders.length > 0) {
+        const riderCount = this.riders.length;
+        this.riders.forEach((rider, idx) => {
+          rider.crushFromRide();
+          window.soundManager.playSquash();
+          const pts = (idx + 1) * 500;
+          if (addScoreCallback) {
+            addScoreCallback(pts, rider.x, rider.y);
+          }
+        });
+
+        // Combo: 2 or more enemies dropped on the same piece awards an extra life!
+        if (riderCount >= 2 && onComboCallback) {
+          onComboCallback(riderCount, this.x + 8, this.y);
+        }
+
+        this.riders = [];
+      }
+
+      // Check cascade: Did we land on another burger below us in the same column?
+      for (const other of allBurgers) {
+        if (other !== this && other.col === this.col && !other.falling) {
+          if (Math.abs(other.y - this.y) < 12) {
+            // Knock lower burger down!
+            other.triggerFall(true);
+          }
+        }
+      }
+
+      // Check if reached bottom plate
+      const plateFloor = this.levelData.floors[this.levelData.floors.length - 1];
+      if (this.y >= plateFloor.y - 6) {
+        this.landedOnPlate = true;
+        // Stack neatly inside the tray
+        const othersOnPlate = allBurgers.filter(
+          (b) => b !== this && b.col === this.col && b.landedOnPlate
+        );
+        this.y = plateFloor.y - othersOnPlate.length * 4;
+      }
+    }
+  }
+
+  draw(ctx) {
+    const sprite = window.spriteManager.get(this.type);
+    if (!sprite) return;
+
+    const sw = sprite.width / 4;
+    const sh = sprite.height;
+
+    // Draw 4 segments resting cleanly on top of the girder
+    for (let i = 0; i < 4; i++) {
+      const segX = this.x + i * 8;
+      const segY = this.y + 6 + (this.falling ? 0 : this.segments[i].dropY);
+      ctx.drawImage(
+        sprite,
+        i * sw, 0, sw, sh, // source slice
+        segX, segY, 8, 8 // destination
+      );
+    }
+  }
+}
+
+window.BurgerPiece = BurgerPiece;

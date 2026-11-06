@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Burger Panic - Retro Arcade Mobile</title>
+
+  <!-- PWA & Mobile Web App Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#111122">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BurgerPanic">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css?v=40">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Top Arcade Bar -->
+    <header class="arcade-header">
+      <div class="logo-badge">BURGER PANIC</div>
+      <div class="header-actions">
+        <button id="btn-map" class="arcade-btn-mini" aria-label="Mapa de Niveles">🗺️</button>
+        <button id="btn-sound" class="arcade-btn-mini" aria-label="Sonido">🔊</button>
+        <button id="btn-pause" class="arcade-btn-mini" aria-label="Pausa">⏸</button>
+        <button id="btn-help" class="arcade-btn-mini" aria-label="Ayuda">❓</button>
+      </div>
+    </header>
+
+    <!-- Game Screen (Clean HD Display without CRT scanlines) -->
+    <main class="screen-wrapper">
+      <div class="bezel">
+        <canvas id="gameCanvas" width="240" height="320"></canvas>
+      </div>
+    </main>
+
+    <!-- Mobile Vertical Controls Deck -->
+    <footer class="controls-deck">
+      <!-- 4-Way Virtual D-Pad -->
+      <div class="dpad-container">
+        <div class="dpad" id="dpad">
+          <button class="dpad-btn dpad-up" id="dpad-up">▲</button>
+          <button class="dpad-btn dpad-left" id="dpad-left">◀</button>
+          <div class="dpad-center"></div>
+          <button class="dpad-btn dpad-right" id="dpad-right">▶</button>
+          <button class="dpad-btn dpad-down" id="dpad-down">▼</button>
+        </div>
+      </div>
+
+      <!-- Action Buttons: JUMP & PEPPER -->
+      <div class="action-container">
+        <!-- Jump Escape Button -->
+        <button class="btn-arcade-action btn-jump" id="btn-jump" aria-label="Saltar / Escapar">
+          <span class="action-icon">👟</span>
+          <span class="action-label">JUMP</span>
+        </button>
+
+        <!-- Pepper Action Button -->
+        <button class="btn-arcade-action btn-pepper" id="btn-pepper" aria-label="Pimienta">
+          <span class="action-icon">🧂</span>
+          <span class="action-label">PEPPER</span>
+          <span class="pepper-badge" id="pepper-count-badge">5</span>
+        </button>
+      </div>
+    </footer>
+
+    <!-- Instructions / Help Modal -->
+    <div id="help-modal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h2>CÓMO JUGAR</h2>
+        <ul class="instructions-list">
+          <li>🗺️ <strong>Mapa y Niveles:</strong> Pulsa el botón 🗺️ en la barra superior o en la pantalla de título para abrir el <strong>Mapa de Niveles</strong> y elegir qué escenario jugar.</li>
+          <li>⭐️ <strong>Sistema de 3 Estrellas:</strong>
+            <br>• <strong>1 Estrella:</strong> Solo por completar el nivel.
+            <br>• <strong>1.5 Estrellas:</strong> Si completas el nivel y recoges 1 o 2 ítems.
+            <br>• <strong>2 Estrellas:</strong> Si completas el nivel recogiendo los 3 ítems iniciales.
+            <br>• <strong>3 Estrellas:</strong> Si recoges los 3 ítems y además la <strong>Vida Extra (4° ítem)</strong> que aparece tras ellos.
+            <br><em>(Nota: Las vidas de combos o de pasar de nivel no entregan la 3ra estrella, solo el ítem de vida extra).</em>
+          </li>
+          <li>🪜 <strong>Salto y Escaleras:</strong> Pulsa <strong>JUMP</strong> para saltar verticalmente, o combínalo con <strong>Izquierda/Derecha</strong> para saltar a los lados. En una escalera te dejarás caer hacia los lados. ¡Y si cruzas una escalera en el aire durante un salto, pulsa <strong>Arriba (▲)</strong> para agarrarte!</li>
+          <li>🍔 <strong>Objetivo:</strong> Camina sobre cada sección de pan, carne, lechuga y queso para hacerlos caer a los platos inferiores y armar todas las hamburguesas.</li>
+          <li>🧂 <strong>Pimienta:</strong> Presiona el botón rojo para rociar pimienta en 4 direcciones y aturdir a los enemigos.</li>
+          <li>⚠️ <strong>Reaparición con Gracia:</strong> Los enemigos parpadean durante 3 segundos al reaparecer sin hacer daño, dándote tiempo de reaccionar.</li>
+          <li>🐭 <strong>Plagas y Aplastamiento:</strong> Los enemigos naturales del chef son las plagas de cocina (el <strong>Ratón ladrón</strong>, la <strong>Cucaracha veloz</strong> y la <strong>Mosca zumbadora</strong>). Si una hamburguesa cae sobre una plaga, ¡la aplastará y ganarás <strong>500 puntos</strong>!</li>
+          <li>🍦 <strong>Bonus y Pimienta:</strong> En cada nivel aparecen 3 ítems en diferentes lugares (helados/cafés para puntos y pimienta) y un 4° ítem especial (vida extra) si recoges los 3 anteriores.</li>
+          <li>📱 <strong>Controles:</strong> Usa la cruceta táctil o desliza el dedo en la pantalla.</li>
+        </ul>
+        <button id="btn-close-help" class="arcade-btn-primary">¡A COCINAR!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Scripts -->
+  <script src="js/chef_atlas.js?v=43"></script>
+  <script src="js/audio.js?v=43"></script>
+  <script src="js/sprites.js?v=43"></script>
+  <script src="js/map.js?v=43"></script>
+  <script src="js/burger.js?v=43"></script>
+  <script src="js/entities.js?v=43"></script>
+  <script src="js/controls.js?v=43"></script>
+  <script src="js/game.js?v=43"></script>
+
+  <!-- Service Worker Registration for Offline Play & PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('Burger Panic PWA Service Worker registrado:', reg.scope))
+          .catch((err) => console.log('Error registrando Service Worker:', err));
+      });
+    }
+  </script>
+</body>
+</html>
