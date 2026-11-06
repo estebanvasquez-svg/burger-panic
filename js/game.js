@@ -311,10 +311,37 @@ class BurgerPanicGame {
     // Initialize burgers
     this.burgers = this.levelData.burgers.map((b) => new window.BurgerPiece(b, this.levelData));
 
-    // Initialize enemies
-    this.enemies = this.levelData.enemies.map(
-      (e) => new window.Enemy(e.type, e.x, e.y, this.levelData.enemySpeed, this.levelData)
-    );
+    // Initialize enemies (Safety: ensure all enemies spawn on upper floors far from chef)
+    const MIN_SAFE_DIST = 170;
+    this.enemies = this.levelData.enemies.map((e) => {
+      let spawnX = e.x;
+      let spawnY = e.y;
+      const initialDist = Math.hypot((spawnX + 8) - (this.player.x + 8), (spawnY + 8) - (this.player.y + 8));
+
+      // Guard: If enemy is placed near player or on low floors, find highest/furthest upper platform
+      if (initialDist < MIN_SAFE_DIST || spawnY > this.player.y - 80) {
+        let bestCandidate = { x: spawnX, y: spawnY };
+        let maxDist = -1;
+        if (this.levelData && this.levelData.floors) {
+          const upperFloors = this.levelData.floors.filter((f) => f.y <= 120);
+          const candidateFloors = upperFloors.length > 0 ? upperFloors : this.levelData.floors;
+          for (const floor of candidateFloors) {
+            const checkXs = [floor.x1 + 8, Math.floor((floor.x1 + floor.x2) / 2), floor.x2 - 8];
+            for (const tx of checkXs) {
+              const d = Math.hypot(tx - this.player.x, floor.y - this.player.y);
+              if (d > maxDist) {
+                maxDist = d;
+                bestCandidate = { x: tx - 8, y: floor.y };
+              }
+            }
+          }
+        }
+        spawnX = bestCandidate.x;
+        spawnY = bestCandidate.y;
+      }
+
+      return new window.Enemy(e.type, spawnX, spawnY, this.levelData.enemySpeed, this.levelData);
+    });
 
     this.pepperClouds = [];
     this.bonusItems = [];

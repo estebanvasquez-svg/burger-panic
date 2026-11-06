@@ -384,7 +384,7 @@ class LevelMap {
           { type: 'hotdog', x: 112, y: 48 },
           { type: 'pickle', x: 22, y: 96 },
           { type: 'pickle', x: 188, y: 96 },
-          { type: 'egg', x: 112, y: 240 }
+          { type: 'egg', x: 32, y: 48 }
         ],
         enemySpeed: 0.90
       },
@@ -488,7 +488,7 @@ class LevelMap {
           { type: 'hotdog', x: 112, y: 48 },
           { type: 'pickle', x: 26, y: 96 },
           { type: 'pickle', x: 186, y: 96 },
-          { type: 'egg', x: 112, y: 144 }
+          { type: 'egg', x: 32, y: 48 }
         ],
         enemySpeed: 0.95
       },
@@ -613,7 +613,7 @@ class LevelMap {
           { type: 'hotdog', x: 112, y: 64 },
           { type: 'pickle', x: 26, y: 96 },
           { type: 'pickle', x: 186, y: 96 },
-          { type: 'egg', x: 112, y: 244 }
+          { type: 'egg', x: 52, y: 32 }
         ],
         enemySpeed: 1.0
       },
@@ -700,7 +700,7 @@ class LevelMap {
           { type: 'hotdog', x: 112, y: 48 },
           { type: 'pickle', x: 24, y: 96 },
           { type: 'pickle', x: 188, y: 96 },
-          { type: 'egg', x: 112, y: 240 }
+          { type: 'egg', x: 36, y: 48 }
         ],
         enemySpeed: 1.05
       },
@@ -785,9 +785,9 @@ class LevelMap {
         playerStart: { x: 112, y: 288 },
         enemies: [
           { type: 'hotdog', x: 112, y: 48 },
-          { type: 'pickle', x: 26, y: 144 },
-          { type: 'pickle', x: 186, y: 144 },
-          { type: 'egg', x: 96, y: 240 }
+          { type: 'pickle', x: 36, y: 96 },
+          { type: 'pickle', x: 186, y: 96 },
+          { type: 'egg', x: 36, y: 48 }
         ],
         enemySpeed: 1.10
       },
@@ -883,7 +883,7 @@ class LevelMap {
           { type: 'hotdog', x: 112, y: 32 },
           { type: 'pickle', x: 26, y: 96 },
           { type: 'pickle', x: 186, y: 96 },
-          { type: 'egg', x: 112, y: 244 }
+          { type: 'egg', x: 36, y: 64 }
         ],
         enemySpeed: 1.12
       },
@@ -976,9 +976,9 @@ class LevelMap {
         playerStart: { x: 112, y: 288 },
         enemies: [
           { type: 'hotdog', x: 112, y: 32 },
-          { type: 'pickle', x: 26, y: 144 },
-          { type: 'pickle', x: 186, y: 144 },
-          { type: 'egg', x: 112, y: 244 }
+          { type: 'pickle', x: 36, y: 64 },
+          { type: 'pickle', x: 198, y: 64 },
+          { type: 'egg', x: 112, y: 96 }
         ],
         enemySpeed: 1.15
       },
@@ -1072,10 +1072,10 @@ class LevelMap {
         ],
         playerStart: { x: 112, y: 288 },
         enemies: [
-          { type: 'hotdog', x: 112, y: 96 },
-          { type: 'pickle', x: 26, y: 144 },
-          { type: 'pickle', x: 186, y: 144 },
-          { type: 'egg', x: 112, y: 244 }
+          { type: 'hotdog', x: 72, y: 32 },
+          { type: 'pickle', x: 160, y: 32 },
+          { type: 'pickle', x: 36, y: 64 },
+          { type: 'egg', x: 200, y: 64 }
         ],
         enemySpeed: 1.18
       },
@@ -1420,13 +1420,13 @@ class LevelMap {
                   },
                   {
                         type: "pickle",
-                        x: 186,
-                        y: 132
+                        x: 190,
+                        y: 36
                   },
                   {
                         type: "egg",
-                        x: 80,
-                        y: 236
+                        x: 36,
+                        y: 28
                   }
             ],
             enemySpeed: 1.2
@@ -1752,18 +1752,18 @@ class LevelMap {
                   },
                   {
                         type: "pickle",
-                        x: 26,
-                        y: 124
+                        x: 36,
+                        y: 88
                   },
                   {
                         type: "pickle",
-                        x: 186,
-                        y: 124
+                        x: 198,
+                        y: 88
                   },
                   {
                         type: "egg",
                         x: 112,
-                        y: 222
+                        y: 56
                   }
             ],
             enemySpeed: 1.22
@@ -2110,7 +2110,7 @@ class LevelMap {
                   {
                         type: "egg",
                         x: 134,
-                        y: 248
+                        y: 52
                   }
             ],
             enemySpeed: 1.25
@@ -2438,18 +2438,18 @@ class LevelMap {
                   },
                   {
                         type: "pickle",
-                        x: 26,
-                        y: 134
+                        x: 36,
+                        y: 58
                   },
                   {
                         type: "pickle",
-                        x: 186,
-                        y: 134
+                        x: 200,
+                        y: 58
                   },
                   {
                         type: "egg",
-                        x: 112,
-                        y: 250
+                        x: 88,
+                        y: 38
                   }
             ],
             enemySpeed: 1.3
