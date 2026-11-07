@@ -881,8 +881,28 @@ class BurgerPanicGame {
   // RENDERING
   // ========================================================
   draw() {
-    this.ctx.fillStyle = '#050508';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
+    const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
+
+    if (theme && this.state !== 'TITLE' && this.state !== 'MAP') {
+      this.ctx.fillStyle = theme.wallColor;
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+      // Subtle atmospheric kitchen tile backdrop pattern
+      this.ctx.save();
+      this.ctx.fillStyle = theme.wallTileColor;
+      for (let ty = 34; ty < 320; ty += 16) {
+        for (let tx = 0; tx < this.canvas.width; tx += 16) {
+          if ((Math.floor(tx / 16) + Math.floor(ty / 16)) % 2 === 0) {
+            this.ctx.fillRect(tx, ty, 15, 15);
+          }
+        }
+      }
+      this.ctx.restore();
+    } else {
+      this.ctx.fillStyle = '#050508';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
 
     if (this.state === 'TITLE') {
       this.drawTitleScreen();
@@ -1031,41 +1051,50 @@ class BurgerPanicGame {
   }
 
   drawPlatforms() {
+    const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
+    const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
     const platSpr = window.spriteManager.get('platform');
 
     for (const f of this.levelData.floors) {
       if (f.type === 'diagonal') {
-        this.drawDiagonalPlatform(f, platSpr);
+        this.drawDiagonalPlatform(f, theme || platSpr);
       } else if (f.type === 'elevator') {
-        this.drawElevatorPlatform(f, platSpr);
+        this.drawElevatorPlatform(f, theme || platSpr);
       } else if (f.type === 'swaying') {
-        this.drawSwayingPlatform(f, platSpr);
+        this.drawSwayingPlatform(f, theme || platSpr);
       } else if (f.type === 'swing') {
-        this.drawSwingPlatform(f, platSpr);
+        this.drawSwingPlatform(f, theme || platSpr);
       } else {
-        if (!platSpr) continue;
-        for (let x = f.x1; x < f.x2; x += 16) {
-          const w = Math.min(16, f.x2 - x);
-          this.ctx.drawImage(platSpr, 0, 0, w, 8, x, f.y + 14, w, 8);
+        if (theme && window.stageThemesManager) {
+          window.stageThemesManager.drawPlatform(this.ctx, f, theme);
+        } else if (platSpr) {
+          for (let x = f.x1; x < f.x2; x += 16) {
+            const w = Math.min(16, f.x2 - x);
+            this.ctx.drawImage(platSpr, 0, 0, w, 8, x, f.y + 14, w, 8);
+          }
         }
       }
     }
   }
 
-  drawDiagonalPlatform(f, platSpr) {
+  drawDiagonalPlatform(f, themeOrSpr) {
+    const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
+    const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
+    const p = theme ? theme.platform : null;
+
     const steps = Math.max(3, Math.floor((f.x2 - f.x1) / 12));
     const dx = (f.x2 - f.x1) / steps;
     const dy = (f.y2 - f.y1) / steps;
 
-    // Metallic truss girder rail under the ramp
-    this.ctx.strokeStyle = '#b87820';
+    // Metallic truss girder rail under the ramp matching stage theme
+    this.ctx.strokeStyle = p ? p.trimColor : '#b87820';
     this.ctx.lineWidth = 3;
     this.ctx.beginPath();
     this.ctx.moveTo(f.x1, f.y1 + 18);
     this.ctx.lineTo(f.x2, f.y2 + 18);
     this.ctx.stroke();
 
-    this.ctx.strokeStyle = '#f8b800';
+    this.ctx.strokeStyle = p ? p.highlightColor : '#f8b800';
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     this.ctx.moveTo(f.x1, f.y1 + 16);
@@ -1077,23 +1106,28 @@ class BurgerPanicGame {
       const sx = Math.round(f.x1 + i * dx);
       const sy = Math.round(f.y1 + i * dy);
       const sw = Math.round(dx + 2);
-      if (platSpr) {
-        this.ctx.drawImage(platSpr, 0, 0, Math.min(16, sw), 8, sx, sy + 14, sw, 8);
+
+      if (theme && window.stageThemesManager) {
+        window.stageThemesManager.drawPlatform(this.ctx, { x1: sx, x2: sx + sw, y: sy }, theme);
       } else {
-        this.ctx.fillStyle = '#00a844';
+        this.ctx.fillStyle = p ? p.topColor : '#00a844';
         this.ctx.fillRect(sx, sy + 14, sw, 8);
       }
     }
 
     // Safety edge studs
-    this.ctx.fillStyle = '#fce4a0';
+    this.ctx.fillStyle = p ? p.highlightColor : '#fce4a0';
     this.ctx.fillRect(f.x1 - 2, f.y1 + 13, 3, 10);
     this.ctx.fillRect(f.x2 - 1, f.y2 + 13, 3, 10);
   }
 
-  drawElevatorPlatform(f, platSpr) {
+  drawElevatorPlatform(f, themeOrSpr) {
+    const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
+    const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
+    const p = theme ? theme.platform : null;
+
     // 1. Draw vertical cables & shaft rails
-    this.ctx.strokeStyle = '#445566';
+    this.ctx.strokeStyle = p ? p.trimColor : '#445566';
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
     this.ctx.moveTo(f.x1 + 6, f.minY + 6);
@@ -1103,20 +1137,17 @@ class BurgerPanicGame {
     this.ctx.stroke();
 
     // 2. Draw pulley cogs at top
-    this.ctx.fillStyle = '#f8b800';
+    this.ctx.fillStyle = p ? p.highlightColor : '#f8b800';
     this.ctx.fillRect(f.x1 + 4, f.minY + 2, 5, 5);
     this.ctx.fillRect(f.x2 - 8, f.minY + 2, 5, 5);
 
-    // 3. Draw metallic elevator platform
+    // 3. Draw themed elevator platform
     const w = f.x2 - f.x1;
-    this.ctx.fillStyle = '#203048';
-    this.ctx.fillRect(f.x1, f.y + 14, w, 8);
-
-    if (platSpr) {
-      for (let x = f.x1; x < f.x2; x += 16) {
-        const segW = Math.min(16, f.x2 - x);
-        this.ctx.drawImage(platSpr, 0, 0, segW, 8, x, f.y + 14, segW, 8);
-      }
+    if (theme && window.stageThemesManager) {
+      window.stageThemesManager.drawPlatform(this.ctx, f, theme);
+    } else {
+      this.ctx.fillStyle = p ? p.bodyColor : '#203048';
+      this.ctx.fillRect(f.x1, f.y + 14, w, 8);
     }
 
     // Flashing safety signal lamp on elevator
@@ -1124,17 +1155,21 @@ class BurgerPanicGame {
     this.ctx.fillStyle = pulse ? '#00e436' : '#fc5454';
     this.ctx.fillRect(f.x1 + Math.floor(w / 2) - 2, f.y + 16, 4, 4);
 
-    // Side metal brackets
-    this.ctx.fillStyle = '#83769c';
+    // Side brackets
+    this.ctx.fillStyle = p ? p.trimColor : '#83769c';
     this.ctx.fillRect(f.x1, f.y + 11, 4, 11);
     this.ctx.fillRect(f.x2 - 4, f.y + 11, 4, 11);
   }
 
-  drawSwayingPlatform(f, platSpr) {
+  drawSwayingPlatform(f, themeOrSpr) {
+    const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
+    const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
+    const p = theme ? theme.platform : null;
+
     // 1. Draw sliding guide track behind platform
     const railX1 = (f.baseX1 || f.x1) - (f.range || 35);
     const railX2 = (f.baseX2 || f.x2) + (f.range || 35);
-    this.ctx.strokeStyle = '#556677';
+    this.ctx.strokeStyle = p ? p.trimColor : '#556677';
     this.ctx.lineWidth = 3;
     this.ctx.beginPath();
     this.ctx.moveTo(railX1, f.y + 18);
@@ -1142,33 +1177,31 @@ class BurgerPanicGame {
     this.ctx.stroke();
 
     // Track end bumpers
-    this.ctx.fillStyle = '#d82800';
+    this.ctx.fillStyle = p ? p.highlightColor : '#d82800';
     this.ctx.fillRect(railX1 - 2, f.y + 15, 3, 7);
     this.ctx.fillRect(railX2 - 1, f.y + 15, 3, 7);
 
     // 2. Platform body
-    if (platSpr) {
-      for (let x = f.x1; x < f.x2; x += 16) {
-        const w = Math.min(16, f.x2 - x);
-        this.ctx.drawImage(platSpr, 0, 0, w, 8, x, f.y + 14, w, 8);
-      }
+    if (theme && window.stageThemesManager) {
+      window.stageThemesManager.drawPlatform(this.ctx, f, theme);
     } else {
-      this.ctx.fillStyle = '#00a844';
+      this.ctx.fillStyle = p ? p.topColor : '#00a844';
       this.ctx.fillRect(f.x1, f.y + 14, f.x2 - f.x1, 8);
     }
 
-    // Hazard stripes on borders
-    this.ctx.fillStyle = '#fcb400';
-    this.ctx.fillRect(f.x1, f.y + 14, 4, 8);
-    this.ctx.fillRect(f.x2 - 4, f.y + 14, 4, 8);
-    this.ctx.fillStyle = '#222222';
-    this.ctx.fillRect(f.x1 + 1, f.y + 16, 2, 4);
-    this.ctx.fillRect(f.x2 - 3, f.y + 16, 2, 4);
+    // Hazard accents on borders
+    this.ctx.fillStyle = p ? p.highlightColor : '#fcb400';
+    this.ctx.fillRect(f.x1, f.y + 14, 3, 8);
+    this.ctx.fillRect(f.x2 - 3, f.y + 14, 3, 8);
   }
 
-  drawSwingPlatform(f, platSpr) {
+  drawSwingPlatform(f, themeOrSpr) {
+    const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
+    const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
+    const p = theme ? theme.platform : null;
+
     // 1. Pivot ring
-    this.ctx.fillStyle = '#fcb400';
+    this.ctx.fillStyle = p ? p.highlightColor : '#fcb400';
     this.ctx.beginPath();
     this.ctx.arc(f.pivotX, f.pivotY, 3, 0, Math.PI * 2);
     this.ctx.fill();
@@ -1178,7 +1211,7 @@ class BurgerPanicGame {
     const rightAnchorX = f.x2 - 4;
     const anchorY = f.y + 15;
 
-    this.ctx.strokeStyle = '#a08050';
+    this.ctx.strokeStyle = p ? p.trimColor : '#a08050';
     this.ctx.lineWidth = 1.5;
     this.ctx.beginPath();
     this.ctx.moveTo(f.pivotX - 2, f.pivotY);
@@ -1188,40 +1221,47 @@ class BurgerPanicGame {
     this.ctx.stroke();
 
     // 3. Platform body
-    if (platSpr) {
-      for (let x = f.x1; x < f.x2; x += 16) {
-        const w = Math.min(16, f.x2 - x);
-        this.ctx.drawImage(platSpr, 0, 0, w, 8, x, f.y + 14, w, 8);
-      }
+    if (theme && window.stageThemesManager) {
+      window.stageThemesManager.drawPlatform(this.ctx, f, theme);
     } else {
-      this.ctx.fillStyle = '#8b5a2b';
+      this.ctx.fillStyle = p ? p.bodyColor : '#8b5a2b';
       this.ctx.fillRect(f.x1, f.y + 14, f.x2 - f.x1, 8);
     }
 
     // Metallic ring fittings on ends
-    this.ctx.fillStyle = '#fcb400';
+    this.ctx.fillStyle = p ? p.highlightColor : '#fcb400';
     this.ctx.fillRect(leftAnchorX - 2, anchorY - 2, 4, 4);
     this.ctx.fillRect(rightAnchorX - 2, anchorY - 2, 4, 4);
   }
 
   drawLadders() {
+    const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
+    const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
     const ladderSpr = window.spriteManager.get('ladder');
-    if (!ladderSpr) return;
 
     for (const l of this.levelData.ladders) {
-      for (let y = l.y1 + 4; y < l.y2 + 14; y += 16) {
-        const h = Math.min(16, l.y2 + 14 - y);
-        this.ctx.drawImage(ladderSpr, 0, 0, 16, h, l.x, y, 16, h);
+      if (theme && window.stageThemesManager) {
+        window.stageThemesManager.drawLadder(this.ctx, l, theme);
+      } else if (ladderSpr) {
+        for (let y = l.y1 + 4; y < l.y2 + 14; y += 16) {
+          const h = Math.min(16, l.y2 + 14 - y);
+          this.ctx.drawImage(ladderSpr, 0, 0, 16, h, l.x, y, 16, h);
+        }
       }
     }
   }
 
   drawPlates() {
+    const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
+    const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
     const plateSpr = window.spriteManager.get('plate');
-    if (!plateSpr) return;
 
     for (const p of this.levelData.plates) {
-      this.ctx.drawImage(plateSpr, p.x, p.y + 14);
+      if (theme && window.stageThemesManager) {
+        window.stageThemesManager.drawPlate(this.ctx, p, theme);
+      } else if (plateSpr) {
+        this.ctx.drawImage(plateSpr, p.x, p.y + 14);
+      }
     }
   }
 

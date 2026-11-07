@@ -231,3 +231,14 @@ window.ENEMIES_ATLAS_DATA = {
     "h": 7
   }
 };
+
+// Register Kitchen Pest Aliases: mouse (Ratón), roach (Cucaracha), fly (Mosca)
+Object.keys(window.ENEMIES_ATLAS_DATA).forEach((k) => {
+  if (k.startsWith('hotdog_')) {
+    window.ENEMIES_ATLAS_DATA[k.replace('hotdog_', 'mouse_')] = window.ENEMIES_ATLAS_DATA[k];
+  } else if (k.startsWith('pickle_')) {
+    window.ENEMIES_ATLAS_DATA[k.replace('pickle_', 'roach_')] = window.ENEMIES_ATLAS_DATA[k];
+  } else if (k.startsWith('egg_')) {
+    window.ENEMIES_ATLAS_DATA[k.replace('egg_', 'fly_')] = window.ENEMIES_ATLAS_DATA[k];
+  }
+});
