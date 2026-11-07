@@ -1,4 +1,4 @@
-const CACHE_NAME = 'burgerpanic-mobile-v54';
+const CACHE_NAME = 'burgerpanic-mobile-v55';
 const ASSETS = [
   './',
   './index.html',

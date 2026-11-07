@@ -88,6 +88,104 @@ html, body {
   background: #e40058;
 }
 
+#btn-dev.active {
+  background: #00e436;
+  color: #000;
+  border-color: #00ff40;
+  box-shadow: 0 0 10px rgba(0, 228, 54, 0.7);
+}
+
+/* ---------------------------------
+   DEVELOPER TOOLBAR
+   --------------------------------- */
+.dev-toolbar {
+  flex-shrink: 0;
+  width: 100%;
+  background: linear-gradient(180deg, #18152c 0%, #0d0c18 100%);
+  border-bottom: 2px solid #00e436;
+  padding: 5px 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 15;
+  box-shadow: 0 4px 12px rgba(0, 228, 54, 0.25);
+}
+
+.dev-toolbar.hidden {
+  display: none !important;
+}
+
+.dev-toolbar-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.dev-tag {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7.5px;
+  color: #00e436;
+  text-shadow: 0 0 5px rgba(0, 228, 54, 0.7);
+  letter-spacing: 0.5px;
+}
+
+.dev-select {
+  background: #1e1b36;
+  border: 1px solid #00e436;
+  border-radius: 4px;
+  color: #fce4a0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  padding: 4px 4px;
+  cursor: pointer;
+  max-width: 175px;
+  outline: none;
+}
+
+.dev-btn {
+  background: #252240;
+  border: 1px solid #5b587a;
+  border-radius: 3px;
+  color: #fff;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.dev-btn:active {
+  background: #00e436;
+  color: #000;
+  transform: scale(0.92);
+}
+
+.dev-toast {
+  position: absolute;
+  top: 55px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 16, 32, 0.95);
+  border: 1.5px solid #00e436;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7.5px;
+  color: #00e436;
+  text-align: center;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 228, 54, 0.4);
+  transition: opacity 0.3s;
+}
+
+.dev-toast.hidden {
+  display: none;
+}
+
 /* ---------------------------------
    GAME SCREEN / MODERN HD DISPLAY
    --------------------------------- */

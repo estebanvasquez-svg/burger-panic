@@ -33,6 +33,8 @@ class BurgerPanicGame {
     this.stageLifeItemCollected = false;
     this.stageTotalItemsSpawned = 0;
     this.stageEarnedStars = 0;
+    this.devMode = localStorage.getItem('burgerpanic_dev_mode') === 'true';
+    this.toastTimeout = null;
 
     this.mapSelectedStage = 1;
     this.mapNavLock = false;
@@ -277,9 +279,71 @@ class BurgerPanicGame {
   }
 
   getUnlockedLevel() {
-    const val = parseInt(localStorage.getItem('burgerpanic_unlocked_level') || '1', 10);
     const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 15;
+    if (this.devMode) return totalStages;
+    const val = parseInt(localStorage.getItem('burgerpanic_unlocked_level') || '1', 10);
     return Math.min(Math.max(1, val), totalStages);
+  }
+
+  toggleDevMode(forceState = null) {
+    if (typeof forceState === 'boolean') {
+      this.devMode = forceState;
+    } else {
+      this.devMode = !this.devMode;
+    }
+    localStorage.setItem('burgerpanic_dev_mode', this.devMode ? 'true' : 'false');
+    this.applyDevModeUI();
+    this.showDevToast(this.devMode ? '🛠️ MODO DEV: 15 NIVELES ABIERTOS' : '🛠️ MODO DEV: DESACTIVADO');
+    if (window.soundManager) window.soundManager.playBonus();
+  }
+
+  applyDevModeUI() {
+    const devToolbar = document.getElementById('dev-toolbar');
+    const devBtn = document.getElementById('btn-dev');
+    if (devToolbar) {
+      devToolbar.classList.toggle('hidden', !this.devMode);
+    }
+    if (devBtn) {
+      devBtn.classList.toggle('active', this.devMode);
+      devBtn.style.background = this.devMode ? '#00e436' : '';
+      devBtn.style.color = this.devMode ? '#000' : '';
+    }
+    this.updateDevSelect();
+  }
+
+  updateDevSelect() {
+    const select = document.getElementById('dev-stage-select');
+    if (select) {
+      const currentStage = (this.stageIndex || 0) + 1;
+      select.value = currentStage.toString();
+    }
+  }
+
+  showDevToast(msg) {
+    let toast = document.getElementById('dev-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'dev-toast';
+      toast.className = 'dev-toast';
+      const container = document.getElementById('app-container') || document.body;
+      container.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.remove('hidden');
+    toast.style.opacity = '1';
+    clearTimeout(this.toastTimeout);
+    this.toastTimeout = setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.classList.add('hidden'), 300);
+    }, 2000);
+  }
+
+  jumpToStage(stageNum) {
+    const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 15;
+    const target = Math.max(1, Math.min(stageNum, totalStages));
+    this.startStage(target);
+    this.updateDevSelect();
+    this.showDevToast(`CARGANDO NIVEL ${target}`);
   }
 
   getTotalStars() {
@@ -354,6 +418,8 @@ class BurgerPanicGame {
     this.stageLifeItemCollected = false;
     this.stageTotalItemsSpawned = 0;
     this.stageEarnedStars = 0;
+    this.devMode = localStorage.getItem('burgerpanic_dev_mode') === 'true';
+    this.toastTimeout = null;
   }
 
   updatePepperUI() {
@@ -815,6 +881,13 @@ class BurgerPanicGame {
     this.ctx.fillStyle = '#00f0ff'; // Retro cyan
     this.ctx.fillText(stageNum.toString().padStart(2, '0'), 120, 25);
 
+    if (this.devMode) {
+      this.ctx.fillStyle = '#00e436';
+      this.ctx.font = '6px "Press Start 2P", monospace';
+      this.ctx.fillText('[DEV]', 120, 34);
+      this.ctx.font = '7px "Press Start 2P", monospace';
+    }
+
     // High Score (Right)
     this.ctx.fillStyle = '#e40058';
     this.ctx.textAlign = 'left';
@@ -1091,6 +1164,12 @@ class BurgerPanicGame {
       this.ctx.fillText('BURGER PANIC', 121, 23);
       this.ctx.fillStyle = '#fcb400';
       this.ctx.fillText('BURGER PANIC', 120, 22);
+
+      if (this.devMode) {
+        this.ctx.fillStyle = '#00e436';
+        this.ctx.font = '6px "Press Start 2P", monospace';
+        this.ctx.fillText('🛠️ MODO DEV: 15 NIVELES', 120, 32);
+      }
 
       // 3. Bottom Action Drawer
       this.ctx.fillStyle = '#080612';
@@ -1735,4 +1814,106 @@ window.addEventListener('DOMContentLoaded', () => {
     helpBtn.addEventListener('click', () => modal.classList.toggle('hidden'));
     closeHelp.addEventListener('click', () => modal.classList.add('hidden'));
   }
+
+  // ----------------------------------------------------
+  // DEVELOPER MODE CONTROLS & SHORTCUTS
+  // ----------------------------------------------------
+  const devBtn = document.getElementById('btn-dev');
+  if (devBtn) {
+    devBtn.addEventListener('click', () => {
+      window.burgerPanicGame.toggleDevMode();
+    });
+  }
+
+  const devStageSelect = document.getElementById('dev-stage-select');
+  if (devStageSelect) {
+    devStageSelect.addEventListener('change', (e) => {
+      const stage = parseInt(e.target.value, 10);
+      if (!isNaN(stage)) {
+        window.burgerPanicGame.jumpToStage(stage);
+      }
+    });
+  }
+
+  const devPrevBtn = document.getElementById('dev-btn-prev');
+  if (devPrevBtn) {
+    devPrevBtn.addEventListener('click', () => {
+      const current = (window.burgerPanicGame.stageIndex || 0) + 1;
+      window.burgerPanicGame.jumpToStage(current - 1);
+    });
+  }
+
+  const devNextBtn = document.getElementById('dev-btn-next');
+  if (devNextBtn) {
+    devNextBtn.addEventListener('click', () => {
+      const current = (window.burgerPanicGame.stageIndex || 0) + 1;
+      window.burgerPanicGame.jumpToStage(current + 1);
+    });
+  }
+
+  const devPeppersBtn = document.getElementById('dev-btn-peppers');
+  if (devPeppersBtn) {
+    devPeppersBtn.addEventListener('click', () => {
+      if (window.burgerPanicGame.player) {
+        window.burgerPanicGame.player.peppers = 9;
+        window.burgerPanicGame.updatePepperUI();
+        window.burgerPanicGame.showDevToast('🧂 PIMIENTA RECARGADA: 9');
+      }
+    });
+  }
+
+  const devLivesBtn = document.getElementById('dev-btn-lives');
+  if (devLivesBtn) {
+    devLivesBtn.addEventListener('click', () => {
+      if (window.burgerPanicGame.player) {
+        window.burgerPanicGame.player.lives = 9;
+        window.burgerPanicGame.showDevToast('❤️ VIDAS RECARGADAS: 9');
+      }
+    });
+  }
+
+  // Keyboard Shortcuts for Dev Mode & Inspection
+  window.addEventListener('keydown', (e) => {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
+
+    // Toggle Dev Mode with key 'D'
+    if (e.key === 'd' || e.key === 'D') {
+      window.burgerPanicGame.toggleDevMode();
+      return;
+    }
+
+    if (window.burgerPanicGame.devMode) {
+      if (e.key === 'n' || e.key === 'N') {
+        const nextStage = ((window.burgerPanicGame.stageIndex || 0) + 1) + 1;
+        window.burgerPanicGame.jumpToStage(nextStage);
+      } else if (e.key === 'p' || e.key === 'P') {
+        const prevStage = ((window.burgerPanicGame.stageIndex || 0) + 1) - 1;
+        window.burgerPanicGame.jumpToStage(prevStage);
+      } else if (e.key >= '1' && e.key <= '9') {
+        window.burgerPanicGame.jumpToStage(parseInt(e.key, 10));
+      } else if (e.key === '0') {
+        window.burgerPanicGame.jumpToStage(10);
+      } else if (e.key === 'l' || e.key === 'L') {
+        if (window.burgerPanicGame.player) {
+          window.burgerPanicGame.player.lives = 9;
+          window.burgerPanicGame.showDevToast('❤️ VIDAS: 9');
+        }
+      } else if (e.key === 'k' || e.key === 'K') {
+        if (window.burgerPanicGame.player) {
+          window.burgerPanicGame.player.peppers = 9;
+          window.burgerPanicGame.updatePepperUI();
+          window.burgerPanicGame.showDevToast('🧂 PIMIENTA: 9');
+        }
+      }
+    }
+  });
+
+  // Initial apply of dev mode UI state
+  window.burgerPanicGame.applyDevModeUI();
+
+  // Expose global dev helpers for console use
+  window.game = window.burgerPanicGame;
+  window.toggleDevMode = (force) => window.burgerPanicGame.toggleDevMode(force);
+  window.unlockAllLevels = () => window.burgerPanicGame.toggleDevMode(true);
+  window.jumpToStage = (n) => window.burgerPanicGame.jumpToStage(n);
 });

@@ -22,12 +22,41 @@
     <header class="arcade-header">
       <div class="logo-badge">BURGER PANIC</div>
       <div class="header-actions">
+        <button id="btn-dev" class="arcade-btn-mini" title="Modo Desarrollador (Todos los niveles abiertos)" aria-label="Modo Desarrollador">🛠️</button>
         <button id="btn-map" class="arcade-btn-mini" aria-label="Mapa de Niveles">🗺️</button>
         <button id="btn-sound" class="arcade-btn-mini" aria-label="Sonido">🔊</button>
         <button id="btn-pause" class="arcade-btn-mini" aria-label="Pausa">⏸</button>
         <button id="btn-help" class="arcade-btn-mini" aria-label="Ayuda">❓</button>
       </div>
     </header>
+
+    <!-- Developer Mode Toolbar (Desbloqueo de Niveles & Inspección Rápida) -->
+    <div id="dev-toolbar" class="dev-toolbar hidden">
+      <div class="dev-toolbar-header">
+        <span class="dev-tag">🛠️ DEV</span>
+        <select id="dev-stage-select" class="dev-select" aria-label="Seleccionar Nivel">
+          <option value="1">1: Cocina Clásica</option>
+          <option value="2">2: Pizzería Retro</option>
+          <option value="3">3: Bistró Gourmet</option>
+          <option value="4">4: Marisquería Pulpo (Rampa)</option>
+          <option value="5">5: Ciber-Gato (2 Rampas)</option>
+          <option value="6">6: Pastelería Felina (Pasarelas)</option>
+          <option value="7">7: Asador Castillo (Elevador)</option>
+          <option value="8">8: Forja Dragón (Elevador+Rampa)</option>
+          <option value="9">9: Cocina Alta Mar (Elevador+Pasarela)</option>
+          <option value="10">10: Heladería Sub-Zero (Balanceo)</option>
+          <option value="11">11: Tren Bento (Balanceo+Elevador)</option>
+          <option value="12">12: Wok Panda (Balsa+Rampa+Elevador)</option>
+          <option value="13">13: Cosmic Diner (Columpio+Elevador)</option>
+          <option value="14">14: Costillas Jurásicas (Columpio+Elevador)</option>
+          <option value="15">15: Banquete Imperial (Gran Final)</option>
+        </select>
+        <button id="dev-btn-prev" class="dev-btn" title="Nivel Anterior">◀</button>
+        <button id="dev-btn-next" class="dev-btn" title="Nivel Siguiente">▶</button>
+        <button id="dev-btn-peppers" class="dev-btn" title="Recargar 9 Pimientas">🧂x9</button>
+        <button id="dev-btn-lives" class="dev-btn" title="Recargar 9 Vidas">❤️x9</button>
+      </div>
+    </div>
 
     <!-- Game Screen (Clean HD Display without CRT scanlines) -->
     <main class="screen-wrapper">
