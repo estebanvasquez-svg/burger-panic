@@ -573,33 +573,9 @@ class Player {
       return;
     }
 
-    // Invulnerability Phase Shift Shield (Metroid Screw Attack / Flash Shift Aura)
-    if (this.invulnerableTimer > 0) {
-      ctx.save();
-      const shieldPhase = (Date.now() / 70);
-      const shieldRadius = 14 + Math.sin(shieldPhase) * 2;
-      const footX = this.x + 8;
-      const footY = this.y + 4;
-
-      // Hexagonal / Circular Plasma Energy Aura
-      ctx.beginPath();
-      ctx.arc(footX, footY, shieldRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = Math.floor(shieldPhase) % 2 === 0 ? '#00f0ff' : '#ffe600';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(0, 240, 255, 0.2)';
-      ctx.fill();
-
-      // Orbiting plasma spark nodes
-      for (let i = 0; i < 3; i++) {
-        const ang = shieldPhase + (i * (Math.PI * 2 / 3));
-        const px = footX + Math.cos(ang) * shieldRadius;
-        const py = footY + Math.sin(ang) * shieldRadius;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(Math.round(px) - 1, Math.round(py) - 1, 2, 2);
-      }
-      ctx.restore();
+    // Invulnerability blink
+    if (this.invulnerableTimer > 0 && Math.floor(this.invulnerableTimer / 6) % 2 === 0) {
+      return;
     }
 
     let atlasName = 'detenido_1';
@@ -1199,35 +1175,16 @@ class Enemy {
       }
     }
 
-    // If stunned, draw Metroid Ice Beam freeze crystals & crackling plasma arcs
+    // If stunned, draw cartoon dizzy stars above head
     if (this.state === 'stunned') {
-      const now = Date.now();
-      // Crackling high-voltage plasma arcs around enemy
-      ctx.strokeStyle = Math.floor(now / 70) % 2 === 0 ? '#00f0ff' : '#fffa65';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      const aX = this.x + 4 + (Math.sin(now / 50) * 4);
-      const aY = this.y - 2;
-      ctx.moveTo(aX, aY);
-      ctx.lineTo(aX + 4, aY + 3);
-      ctx.lineTo(aX + 2, aY + 8);
-      ctx.lineTo(aX + 6, aY + 12);
-      ctx.stroke();
-
-      // Translucent Ice/Stun Crystal Shell
-      ctx.fillStyle = 'rgba(0, 240, 255, 0.25)';
-      ctx.fillRect(this.x - 1, this.y - 1, this.width + 2, this.height + 2);
-
-      // Orbiting plasma spark nodes
-      ctx.fillStyle = '#00f0ff';
-      const starPhase = (now / 70) % (Math.PI * 2);
-      const s1x = this.x + 8 + Math.cos(starPhase) * 9;
-      const s1y = this.y - 3 + Math.sin(starPhase) * 3;
-      const s2x = this.x + 8 + Math.cos(starPhase + Math.PI) * 9;
-      const s2y = this.y - 3 + Math.sin(starPhase + Math.PI) * 3;
-      ctx.fillRect(Math.round(s1x), Math.round(s1y), 2, 2);
-      ctx.fillStyle = '#fffa65';
-      ctx.fillRect(Math.round(s2x), Math.round(s2y), 2, 2);
+      ctx.fillStyle = '#fcb400';
+      const starPhase = (Date.now() / 80) % (Math.PI * 2);
+      const s1x = this.x + 8 + Math.cos(starPhase) * 6;
+      const s1y = this.y - 4 + Math.sin(starPhase) * 2;
+      const s2x = this.x + 8 + Math.cos(starPhase + Math.PI) * 6;
+      const s2y = this.y - 4 + Math.sin(starPhase + Math.PI) * 2;
+      ctx.fillRect(s1x, s1y, 3, 3);
+      ctx.fillRect(s2x, s2y, 3, 3);
     }
 
     ctx.restore();
@@ -1235,7 +1192,7 @@ class Enemy {
 }
 
 // ========================================================
-// PEPPER CLOUD / METROID PLASMA BURST
+// PEPPER CLOUD (PARTICLE BURST)
 // ========================================================
 class PepperCloud {
   constructor(x, y, dir) {
@@ -1256,18 +1213,17 @@ class PepperCloud {
       baseAngle = 0;
     }
 
-    // Create 24 high-tech Metroid Ice Beam / Plasma Stun particles
-    const colors = ['#00f0ff', '#38bdf8', '#fffa65', '#ffffff', '#a7f3d0'];
-    for (let i = 0; i < 24; i++) {
-      const angle = baseAngle + (Math.random() - 0.5) * 1.35;
-      const spd = Math.random() * 3.2 + 1.2;
+    // Create 20 retro salt/pepper flakes expanding in direction cone
+    for (let i = 0; i < 20; i++) {
+      const angle = baseAngle + (Math.random() - 0.5) * 1.3;
+      const spd = Math.random() * 2.8 + 1.0;
       this.particles.push({
         x: x,
         y: y,
         vx: Math.cos(angle) * spd,
         vy: Math.sin(angle) * spd,
-        size: Math.random() < 0.4 ? 2 : (Math.random() < 0.8 ? 3 : 4),
-        color: colors[Math.floor(Math.random() * colors.length)]
+        size: Math.random() < 0.5 ? 2 : 3,
+        color: Math.random() < 0.75 ? '#ffffff' : '#e0e0f8'
       });
     }
   }
@@ -1286,6 +1242,7 @@ class PepperCloud {
         const ex = enemy.x + 8;
         const ey = enemy.y + 8;
 
+        // Check if any salt flake touches the enemy
         for (const p of this.particles) {
           if (Math.hypot(p.x - ex, p.y - ey) < 14) {
             enemy.stun();
@@ -1313,9 +1270,6 @@ class PepperCloud {
     for (const p of this.particles) {
       ctx.fillStyle = p.color;
       ctx.fillRect(Math.floor(p.x), Math.floor(p.y), p.size, p.size);
-      // Small glow halo
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.fillRect(Math.floor(p.x) - 1, Math.floor(p.y) - 1, p.size + 2, 1);
     }
   }
 }

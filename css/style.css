@@ -1,7 +1,4 @@
-/* =========================================================
-   GAME BOY ADVANCE (METROID SPECIAL EDITION)
-   Custom Hardware Shell, Screen Lens & Controls Deck
-   ========================================================= */
+/* Retro Arcade Mobile Styles for Burger Panic */
 
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -18,181 +15,97 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #07080f;
+  background-color: #0c0b10;
   font-family: 'Press Start 2P', monospace, sans-serif;
-  color: #f1f5f9;
+  color: #f4f4f4;
   touch-action: none;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: auto;
 }
 
-/* ---------------------------------
-   GBA CONSOLE HARDWARE CASING
-   --------------------------------- */
 #app-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 580px;
+  max-width: 600px;
   height: 100vh;
   height: 100dvh;
   margin: 0 auto;
-  /* Iconic GBA Indigo / Metroid Gunmetal Cobalt shell */
-  background: radial-gradient(ellipse at 50% 15%, #2a2d48 0%, #1c1e33 60%, #101120 100%);
+  background: radial-gradient(circle at 50% 20%, #1c1a29 0%, #0d0c14 100%);
   position: relative;
-  border-left: 3px solid #383c5e;
-  border-right: 3px solid #383c5e;
-  box-shadow: 
-    0 0 40px rgba(0, 0, 0, 0.95),
-    inset 0 2px 6px rgba(255, 255, 255, 0.12),
-    inset 0 -4px 10px rgba(0, 0, 0, 0.8);
+  border-left: 2px solid #222034;
+  border-right: 2px solid #222034;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
 }
 
 /* ---------------------------------
-   GBA TOP RIDGE & SHOULDER TRIGGERS
+   ARCADE HEADER / TOP BAR
    --------------------------------- */
-.arcade-header.gba-header {
+.arcade-header {
   flex-shrink: 0;
   width: 100%;
   height: 48px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 12px;
-  background: linear-gradient(180deg, #35395c 0%, #20233b 65%, #151728 100%);
-  border-bottom: 2px solid #00f0ff;
-  box-shadow: 0 3px 12px rgba(0, 240, 255, 0.25);
-  position: relative;
+  padding: 0 16px;
+  background: linear-gradient(180deg, #242238 0%, #141320 100%);
+  border-bottom: 2px solid #e40058;
+  box-shadow: 0 2px 8px rgba(228, 0, 88, 0.3);
   z-index: 10;
 }
 
-/* Molded GBA Shoulder Triggers (L & R) */
-.gba-shoulder-trigger {
-  width: 32px;
-  height: 22px;
-  background: linear-gradient(180deg, #484c75 0%, #292c45 60%, #1a1c2e 100%);
-  border: 1px solid #64699e;
-  border-bottom-color: #0d0e17;
-  border-radius: 4px 4px 2px 2px;
-  color: #a5abbf;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.8),
-    inset 0 1px 1px rgba(255, 255, 255, 0.35);
-  pointer-events: none;
-}
-
-.trigger-left {
-  border-top-left-radius: 8px;
-}
-
-.trigger-right {
-  border-top-right-radius: 8px;
-}
-
-/* Authentic GBA Power Indicator LED */
-.gba-power-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  margin-left: 4px;
-}
-
-.gba-power-led {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #80ffaa 0%, #00ff66 50%, #009933 100%);
-  border: 1px solid #14532d;
-  box-shadow: 
-    0 0 8px #00ff66,
-    0 0 16px rgba(0, 255, 102, 0.7),
-    inset 0 1px 2px rgba(255, 255, 255, 0.8);
-  animation: gbaPowerGlow 2.5s infinite alternate ease-in-out;
-}
-
-@keyframes gbaPowerGlow {
-  0% { box-shadow: 0 0 6px #00ff66, 0 0 12px rgba(0, 255, 102, 0.5); }
-  100% { box-shadow: 0 0 10px #00ff66, 0 0 20px rgba(0, 255, 102, 0.9); }
-}
-
-.gba-power-label {
-  font-size: 5px;
-  color: #6ee7b7;
-  letter-spacing: 0.5px;
-  font-weight: bold;
-}
-
-/* GBA Metallic Chrome Logo */
-.gba-logo-badge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1.1;
-}
-
-.gba-logo-main {
-  font-size: 9px;
-  color: #e2e8f0;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 240, 255, 0.4);
+.logo-badge {
+  font-size: 11px;
+  color: #fcb400;
+  text-shadow: 2px 2px #e40058;
   letter-spacing: 1px;
-}
-
-.gba-logo-sub {
-  font-size: 7.5px;
-  color: #38bdf8;
-  font-style: italic;
-  letter-spacing: 1.5px;
-  text-shadow: 0 0 5px rgba(56, 189, 248, 0.8);
 }
 
 .header-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .arcade-btn-mini {
-  background: linear-gradient(180deg, #3d4168 0%, #242740 60%, #161829 100%);
-  border: 1px solid #6b72a6;
-  border-top-color: #8b92d1;
-  border-bottom-color: #0e0f1a;
-  border-radius: 4px;
+  background: linear-gradient(180deg, #373352 0%, #201e33 60%, #151322 100%);
+  border: 1px solid #6b668f;
+  border-top-color: #8c86b8;
+  border-bottom-color: #0c0b14;
+  border-radius: 5px;
   color: #fff;
-  font-size: 12px;
-  padding: 4px 8px;
+  font-size: 13px;
+  padding: 5px 9px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.25);
   transition: all 0.08s ease;
+  position: relative;
 }
 
 .arcade-btn-mini:hover {
-  background: linear-gradient(180deg, #4d5282 0%, #2f3354 60%, #1e2036 100%);
-  border-color: #38bdf8;
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+  background: linear-gradient(180deg, #444066 0%, #292642 60%, #1a182b 100%);
+  border-color: #a49ed4;
+  box-shadow: 0 0 10px rgba(0, 228, 255, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.4);
 }
 
 .arcade-btn-mini:active {
-  transform: translateY(1.5px) scale(0.94);
-  background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
-  border-color: #38bdf8;
+  transform: translateY(2px) scale(0.94);
+  background: linear-gradient(180deg, #e40058 0%, #99003b 100%);
+  border-color: #ff4d88;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 15px rgba(228, 0, 88, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 #btn-dev.active {
-  background: linear-gradient(180deg, #00ff66 0%, #059669 100%);
+  background: linear-gradient(180deg, #00ff55 0%, #009933 100%);
   color: #000;
-  border-color: #6ee7b7;
-  box-shadow: 0 0 10px rgba(0, 255, 102, 0.8);
+  border-color: #80ffaa;
+  box-shadow: 0 0 12px rgba(0, 255, 85, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+  font-weight: bold;
 }
 
 /* ---------------------------------
@@ -201,14 +114,14 @@ html, body {
 .dev-toolbar {
   flex-shrink: 0;
   width: 100%;
-  background: linear-gradient(180deg, #111425 0%, #080a14 100%);
-  border-bottom: 2px solid #00ff66;
+  background: linear-gradient(180deg, #18152c 0%, #0d0c18 100%);
+  border-bottom: 2px solid #00e436;
   padding: 5px 8px;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 15;
-  box-shadow: 0 3px 10px rgba(0, 255, 102, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 228, 54, 0.25);
 }
 
 .dev-toolbar.hidden {
@@ -226,28 +139,28 @@ html, body {
 
 .dev-tag {
   font-family: 'Press Start 2P', monospace;
-  font-size: 7px;
-  color: #00ff66;
-  text-shadow: 0 0 5px rgba(0, 255, 102, 0.8);
+  font-size: 7.5px;
+  color: #00e436;
+  text-shadow: 0 0 5px rgba(0, 228, 54, 0.7);
   letter-spacing: 0.5px;
 }
 
 .dev-select {
-  background: #171a2e;
-  border: 1px solid #00ff66;
+  background: #1e1b36;
+  border: 1px solid #00e436;
   border-radius: 4px;
   color: #fce4a0;
   font-family: 'Press Start 2P', monospace;
   font-size: 7px;
-  padding: 4px;
+  padding: 4px 4px;
   cursor: pointer;
-  max-width: 180px;
+  max-width: 175px;
   outline: none;
 }
 
 .dev-btn {
-  background: #252844;
-  border: 1px solid #4a4f78;
+  background: #252240;
+  border: 1px solid #5b587a;
   border-radius: 3px;
   color: #fff;
   font-family: 'Press Start 2P', monospace;
@@ -258,13 +171,36 @@ html, body {
 }
 
 .dev-btn:active {
-  background: #00ff66;
+  background: #00e436;
   color: #000;
   transform: scale(0.92);
 }
 
+.dev-toast {
+  position: absolute;
+  top: 55px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 16, 32, 0.95);
+  border: 1.5px solid #00e436;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7.5px;
+  color: #00e436;
+  text-align: center;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 228, 54, 0.4);
+  transition: opacity 0.3s;
+}
+
+.dev-toast.hidden {
+  display: none;
+}
+
 /* ---------------------------------
-   AUTHENTIC GBA SCREEN LENS & DISPLAY
+   GAME SCREEN / MODERN HD DISPLAY
    --------------------------------- */
 .screen-wrapper {
   position: relative;
@@ -274,23 +210,18 @@ html, body {
   flex: 1;
   min-height: 0;
   width: 100%;
-  padding: 4px 10px 8px 10px;
-  background: radial-gradient(circle at 50% 25%, #1e2136 0%, #0a0b14 100%);
+  padding: 6px 10px;
+  background: radial-gradient(circle at 50% 30%, #161426 0%, #06050a 100%);
   overflow: hidden;
 }
 
-/* Molded GBA Screen Bezel / Lens */
-.bezel.gba-bezel {
+.bezel {
   position: relative;
-  background: #0b0d18;
-  border: 3px solid #1a1d2e;
-  border-radius: 12px 12px 20px 20px;
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.9),
-    0 0 20px rgba(0, 240, 255, 0.12),
-    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  background: #080710;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(130, 80, 255, 0.18);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -300,91 +231,38 @@ html, body {
   aspect-ratio: 240 / 320;
 }
 
-/* Top Lens Bezel Trim */
-.gba-lens-top-trim {
-  width: 100%;
-  background: #080a14;
-  padding: 3px 0;
-  text-align: center;
-  border-bottom: 1px solid rgba(0, 240, 255, 0.15);
-  pointer-events: none;
-  z-index: 5;
-}
-
-.gba-lens-text {
-  font-size: 5px;
-  color: #38bdf8;
-  letter-spacing: 1px;
-  font-weight: bold;
-}
-
-/* Canvas Display */
 canvas#gameCanvas {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background-color: #030712;
+  background-color: #050508;
+  border-radius: 8px;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
 }
 
-/* Bottom Lens Logo */
-.gba-lens-bottom-trim {
-  width: 100%;
-  background: #080a14;
-  padding: 4px 0 3px 0;
-  text-align: center;
-  border-top: 1px solid rgba(0, 240, 255, 0.15);
-  pointer-events: none;
-  z-index: 5;
-}
-
-.gba-lens-logo-text {
-  font-size: 6px;
-  color: #94a3b8;
-  letter-spacing: 1px;
-}
-
-.gba-adv-italic {
-  color: #38bdf8;
-  font-style: italic;
-  font-weight: bold;
-}
-
-/* Subtle Glass Lens Glare */
-.gba-screen-glare {
-  position: absolute;
-  top: -40%;
-  left: -20%;
-  width: 140%;
-  height: 80%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 65%);
-  pointer-events: none;
-  transform: rotate(-12deg);
-  z-index: 6;
+/* CRT Scanlines Overlay Completely Removed */
+.scanlines {
+  display: none !important;
 }
 
 /* ---------------------------------
-   GBA CONTROLS DECK (LOWER HALF)
+   ARCADE CABINET CONTROL PANEL (CPO)
    --------------------------------- */
-.controls-deck.gba-controls-deck {
+.controls-deck {
   flex-shrink: 0;
   width: 100%;
   height: 185px;
-  /* Ergonomic curved lower casing */
-  background: radial-gradient(ellipse at 50% 0%, #272a44 0%, #181a2e 55%, #0e0f1a 100%);
-  border-top: 3px solid #3d4268;
-  border-radius: 0 0 24px 24px;
+  background: radial-gradient(ellipse at 50% -10%, #29263d 0%, #171524 55%, #0a0912 100%);
+  border-top: 4px solid #5a557a;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px 8px 16px;
+  padding: 12px 18px 8px 18px;
   position: relative;
-  box-shadow: 
-    inset 0 2px 4px rgba(255, 255, 255, 0.12),
-    0 -4px 16px rgba(0, 0, 0, 0.85);
+  box-shadow: inset 0 3px 8px rgba(255, 255, 255, 0.12), 0 -4px 15px rgba(0, 0, 0, 0.85);
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
@@ -395,275 +273,414 @@ canvas#gameCanvas {
   display: none !important;
 }
 
-/* ---------------------------------
-   AUTHENTIC GBA CROSS D-PAD
-   --------------------------------- */
-.dpad-container.gba-dpad-container {
+/* Chrome / Metallic Corner Screws */
+.cpo-screw {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e2e2ec 0%, #85829e 60%, #3a3748 100%);
+  border: 1px solid #1f1d2a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  z-index: 2;
+}
+
+.cpo-screw::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 2px;
+  width: 6px;
+  height: 1px;
+  background: #2a2738;
+}
+
+.cpo-screw-tl { top: 6px; left: 8px; }
+.cpo-screw-tr { top: 6px; right: 8px; }
+.cpo-screw-bl { bottom: 6px; left: 8px; }
+.cpo-screw-br { bottom: 6px; right: 8px; }
+
+/* Retro Arcade Racing Stripes (Neon Cabinet Art) */
+.cpo-stripes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  display: flex;
+  flex-direction: column;
+  z-index: 3;
+}
+
+.cpo-stripe {
+  width: 100%;
+  height: 1px;
+}
+
+.stripe-magenta { background: #ff0055; box-shadow: 0 0 6px rgba(255, 0, 85, 0.8); }
+.stripe-cyan    { background: #00f0ff; box-shadow: 0 0 6px rgba(0, 240, 255, 0.8); }
+.stripe-amber   { background: #ffcc00; box-shadow: 0 0 6px rgba(255, 204, 0, 0.8); }
+
+/* Center Cabinet Plaque & 1P Start / Pause Arcade Pushbutton */
+.cpo-center-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  pointer-events: auto;
+  z-index: 5;
+}
+
+.cpo-brand-tag {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #ffcc00;
+  text-shadow: 0 0 6px rgba(255, 204, 0, 0.7), 1px 1px 0 #ff0055;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+.arcade-pause-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Molded Bezel Ring for 1P Arcade Button */
+.pause-bezel-outer {
   position: relative;
-  width: 130px;
-  height: 130px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4b4669 0%, #201e2e 50%, #0d0c14 100%);
+  padding: 3px;
+  border: 1px solid #141320;
+  box-shadow: 
+    0 6px 14px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.7),
+    inset 0 2px 2px rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Plunger Button - Retro Illuminated Acrylic Look */
+.arcade-pause-btn {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6d9 0%, #ffcc00 55%, #cc8800 100%);
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(255, 204, 0, 0.5),
+    inset 0 2px 3px rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  transition: all 0.08s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.arcade-pause-btn:active {
+  transform: translateY(2px) scale(0.92);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+
+.arcade-pause-btn .pause-lens {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.arcade-pause-btn .pause-icon {
+  font-size: 13px;
+  line-height: 1;
+  color: #1a0f00;
+  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.4));
+}
+
+.arcade-pause-btn .pause-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 5.5px;
+  color: #1a0f00;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+  font-weight: bold;
+}
+
+/* Pulsating Green/Cyan Glow when Game is Paused (Waiting for Player to RESUME) */
+.arcade-pause-btn.paused {
+  background: radial-gradient(circle at 35% 30%, #c4ffef 0%, #00f0a0 55%, #008f57 100%);
+  border-color: #ffffff;
+  animation: arcadePausePulse 0.9s infinite alternate ease-in-out;
+}
+
+.arcade-pause-btn.paused .pause-icon,
+.arcade-pause-btn.paused .pause-label {
+  color: #032b1a;
+}
+
+@keyframes arcadePausePulse {
+  0% {
+    box-shadow: 0 0 10px rgba(0, 240, 160, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.8);
+    transform: scale(0.97);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(0, 240, 160, 0.95), 0 0 32px rgba(0, 240, 160, 0.5), inset 0 2px 4px #ffffff;
+    transform: scale(1.03);
+  }
+}
+
+.pause-cpo-sublabel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: #00f0ff;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.7), 0 1px 2px #000;
+  pointer-events: none;
+}
+
+.cpo-speaker-grill {
+  display: flex;
+  gap: 3px;
+  padding: 2px 6px;
+  pointer-events: none;
+}
+
+.cpo-speaker-grill span {
+  width: 3px;
+  height: 8px;
+  background: #09080e;
+  border-radius: 2px;
+  border: 1px solid #2d2940;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* ---------------------------------
+   ARCADE JOYSTICK (SANWA D-PAD)
+   --------------------------------- */
+.dpad-container {
+  position: relative;
+  width: 136px;
+  height: 136px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.dpad-cpo-label {
+.joystick-cpo-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: 5.5px;
-  color: #64748b;
-  letter-spacing: 1px;
+  font-size: 6px;
+  color: #928cb0;
+  letter-spacing: 0.5px;
   margin-bottom: 4px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
-.dpad.gba-cross-dpad {
+.dpad {
   position: relative;
-  width: 114px;
-  height: 114px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  background: radial-gradient(circle at 45% 45%, #25283e 0%, #151726 65%, #0c0d16 100%);
-  border: 2px solid #333754;
+  background: radial-gradient(circle at 45% 45%, #2a273b 0%, #161424 60%, #0c0b14 100%);
+  border: 3px solid #3c3854;
   box-shadow: 
-    0 6px 16px rgba(0, 0, 0, 0.9),
-    inset 0 2px 4px rgba(0, 0, 0, 0.8);
+    0 8px 20px rgba(0, 0, 0, 0.9),
+    inset 0 3px 6px rgba(0, 0, 0, 0.9),
+    0 0 0 2px #100f1a;
   display: flex;
   align-items: center;
   justify-content: center;
   touch-action: none;
 }
 
-/* Cross Arm Arms */
-.dpad-cross-base {
+.dpad-bezel-ring {
   position: absolute;
-  width: 96px;
-  height: 32px;
-  background: #1e2030;
-  border-radius: 4px;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
   pointer-events: none;
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1);
 }
 
-.dpad-cross-base::before {
-  content: '';
+/* Directional Buttons */
+.dpad-btn {
   position: absolute;
-  top: -32px;
-  left: 32px;
-  width: 32px;
-  height: 96px;
-  background: #1e2030;
-  border-radius: 4px;
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1);
-}
-
-/* Directional Buttons on GBA Cross */
-.gba-cross-dpad .dpad-btn {
-  position: absolute;
-  background: linear-gradient(180deg, #2f324c 0%, #1c1e30 100%);
-  border: 1px solid #45496e;
-  color: #94a3b8;
-  font-size: 11px;
+  background: linear-gradient(180deg, #373350 0%, #211e33 100%);
+  border: 1px solid #4f4a73;
+  color: #8c86b2;
+  font-size: 13px;
   font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.2);
   transition: all 0.06s ease;
-  z-index: 2;
+  z-index: 1;
 }
 
-.gba-cross-dpad .dpad-arrow {
+.dpad-arrow {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
   pointer-events: none;
 }
 
-.gba-cross-dpad .dpad-up {
-  top: 7px;
+.dpad-up {
+  top: 5px;
   left: 41px;
-  width: 32px;
-  height: 30px;
-  border-radius: 5px 5px 2px 2px;
-}
-
-.gba-cross-dpad .dpad-down {
-  bottom: 7px;
-  left: 41px;
-  width: 32px;
-  height: 30px;
-  border-radius: 2px 2px 5px 5px;
-}
-
-.gba-cross-dpad .dpad-left {
-  left: 7px;
-  top: 41px;
-  width: 30px;
-  height: 32px;
-  border-radius: 5px 2px 2px 5px;
-}
-
-.gba-cross-dpad .dpad-right {
-  right: 7px;
-  top: 41px;
-  width: 30px;
-  height: 32px;
-  border-radius: 2px 5px 5px 2px;
-}
-
-.gba-cross-dpad .dpad-btn.active,
-.gba-cross-dpad .dpad-btn:active {
-  background: linear-gradient(180deg, #00f0ff 0%, #0284c7 100%);
-  border-color: #38bdf8;
-  color: #031324;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.5);
-  transform: scale(0.95);
-}
-
-/* Molded GBA Thumb Center Dish Depression */
-.gba-center-dish {
-  position: absolute;
   width: 38px;
+  height: 34px;
+  border-radius: 8px 8px 3px 3px;
+}
+
+.dpad-down {
+  bottom: 5px;
+  left: 41px;
+  width: 38px;
+  height: 34px;
+  border-radius: 3px 3px 8px 8px;
+}
+
+.dpad-left {
+  left: 5px;
+  top: 41px;
+  width: 34px;
   height: 38px;
+  border-radius: 8px 3px 3px 8px;
+}
+
+.dpad-right {
+  right: 5px;
+  top: 41px;
+  width: 34px;
+  height: 38px;
+  border-radius: 3px 8px 8px 3px;
+}
+
+.dpad-btn.active,
+.dpad-btn:active {
+  background: linear-gradient(180deg, #ffcc00 0%, #e69900 100%);
+  border-color: #ffe680;
+  color: #1a0f00;
+  box-shadow: 0 0 14px rgba(255, 204, 0, 0.9), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  transform: scale(0.94);
+}
+
+/* Rubber Dust Washer */
+.joystick-washer {
+  position: absolute;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 40%, #1e2030 0%, #12131d 60%, #090a0f 100%);
-  border: 1px solid #2e324c;
-  box-shadow: 
-    inset 0 3px 6px rgba(0, 0, 0, 0.9),
-    0 1px 2px rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: radial-gradient(circle, #181622 40%, #0d0c14 100%);
+  border: 2px solid #28253a;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9), 0 2px 6px rgba(0, 0, 0, 0.7);
   pointer-events: none;
+  z-index: 2;
+}
+
+/* 3D Japanese Arcade Ball-Top Lever */
+.joystick-ball {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff5277 0%, #e40058 45%, #940035 80%, #4a0018 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.6);
   z-index: 3;
-}
-
-.dish-inner-circle {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #151722 0%, #0d0e14 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* ---------------------------------
-   GBA CENTER GROUP: SPEAKER & START PILL
-   --------------------------------- */
-.gba-center-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-/* Authentic GBA Diagonal 6-Hole Speaker Cluster */
-.gba-speaker-cluster {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
   pointer-events: none;
+  transition: transform 0.08s ease-out;
 }
 
-.speaker-row {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-}
-
-.speaker-row span {
-  width: 4px;
-  height: 4px;
+.ball-specular {
+  position: absolute;
+  top: 5px;
+  left: 8px;
+  width: 14px;
+  height: 9px;
   border-radius: 50%;
-  background: #090a12;
-  border: 1px solid #23273e;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.95);
-}
-
-/* GBA Rubber Pill START / PAUSE Button */
-.gba-start-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-
-.gba-pill-btn {
-  width: 52px;
-  height: 24px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #383c5e 0%, #1e2034 60%, #111320 100%);
-  border: 1.5px solid #4a507a;
-  box-shadow: 
-    0 4px 8px rgba(0, 0, 0, 0.8),
-    inset 0 1px 2px rgba(255, 255, 255, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.08s ease;
-  transform: rotate(-18deg); /* Slanted like authentic GBA Start/Select */
-}
-
-.gba-pill-btn:active {
-  transform: rotate(-18deg) translateY(2px) scale(0.92);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), inset 0 2px 4px rgba(0, 0, 0, 0.7);
-}
-
-.gba-pill-btn .pause-icon {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 6px;
-  color: #94a3b8;
-  letter-spacing: 0.5px;
-}
-
-.gba-sublabel {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 5px;
-  color: #64748b;
-  letter-spacing: 0.5px;
-}
-
-/* Pulsating Pause Signal */
-.gba-pill-btn.paused {
-  background: linear-gradient(135deg, #00ff66 0%, #059669 100%);
-  border-color: #6ee7b7;
-  animation: gbaStartPulse 0.8s infinite alternate ease-in-out;
-}
-
-.gba-pill-btn.paused .pause-icon {
-  color: #022c22;
-}
-
-@keyframes gbaStartPulse {
-  0% { transform: rotate(-18deg) scale(0.96); box-shadow: 0 0 8px #00ff66; }
-  100% { transform: rotate(-18deg) scale(1.04); box-shadow: 0 0 16px #00ff66; }
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 80%);
+  transform: rotate(-30deg);
 }
 
 /* ---------------------------------
-   AUTHENTIC GBA SLANTED A & B BUTTONS
+   ACTION BUTTONS (SANWA ARCADE SLANT)
    --------------------------------- */
-.action-container.gba-action-container {
+.action-container {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  transform: rotate(-15deg); /* Authentic GBA Button Incline */
+  gap: 16px;
+  position: relative;
 }
 
-.gba-btn-wrap-b {
-  margin-top: -16px;
+.arcade-button-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
-.gba-btn-wrap-a {
+/* Ergonomic Japanese Arcade Slant: Button A is lower, Button B is higher */
+.btn-wrap-jump {
   margin-top: 14px;
 }
 
-/* Molded GBA Pill Buttons */
-.gba-action-btn {
-  width: 58px;
-  height: 58px;
+.btn-wrap-pepper {
+  margin-top: -12px;
+}
+
+.button-cpo-sublabel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: #8f8aa8;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* Sanwa Outer Mounting Bezel Ring */
+.button-bezel-outer {
+  position: relative;
+  width: 82px;
+  height: 82px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, #4b4669 0%, #201e2e 50%, #0d0c14 100%);
+  padding: 3px;
+  border: 1px solid #141320;
+  box-shadow: 
+    0 8px 18px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.7),
+    inset 0 2px 2px rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Plunger Button Base */
+.btn-arcade-action {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -671,91 +688,194 @@ canvas#gameCanvas {
   cursor: pointer;
   outline: none;
   transition: all 0.06s ease;
+  overflow: visible;
+}
+
+.btn-plunger-cap {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 
-/* Button A: Metroid Varia Crimson */
-.gba-action-btn.gba-btn-a {
-  background: radial-gradient(circle at 35% 25%, #ff4d88 0%, #e11d48 45%, #9f1239 80%, #4c0519 100%);
-  box-shadow: 
-    0 6px 14px rgba(0, 0, 0, 0.85),
-    0 0 14px rgba(225, 29, 72, 0.5),
-    inset 0 2px 4px rgba(255, 255, 255, 0.6),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.5);
-}
-
-.gba-action-btn.gba-btn-a:active,
-.gba-action-btn.gba-btn-a.active {
-  transform: translateY(3px) scale(0.94);
-  background: radial-gradient(circle at 50% 50%, #ff1a66 0%, #881337 100%);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), inset 0 3px 6px rgba(0, 0, 0, 0.7);
-}
-
-/* Button B: Plasma Cyan / Deep Navy */
-.gba-action-btn.gba-btn-b {
-  background: radial-gradient(circle at 35% 25%, #67e8f9 0%, #0284c7 45%, #0369a1 80%, #082f49 100%);
-  box-shadow: 
-    0 6px 14px rgba(0, 0, 0, 0.85),
-    0 0 14px rgba(2, 132, 199, 0.5),
-    inset 0 2px 4px rgba(255, 255, 255, 0.6),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.5);
-}
-
-.gba-action-btn.gba-btn-b:active,
-.gba-action-btn.gba-btn-b.active {
-  transform: translateY(3px) scale(0.94);
-  background: radial-gradient(circle at 50% 50%, #00f0ff 0%, #075985 100%);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), inset 0 3px 6px rgba(0, 0, 0, 0.7);
-}
-
+/* Bold Arcade Key Badge (A / B) */
 .btn-arcade-key {
   position: absolute;
-  top: 4px;
+  top: 5px;
   font-family: 'Press Start 2P', monospace;
   font-size: 8px;
-  color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Button A: JUMP / ESCAPE (Electric Arcade Cyan) */
+.btn-arcade-action.btn-jump {
+  background: radial-gradient(circle at 35% 25%, #6bf6ff 0%, #00b4d8 45%, #0077b6 80%, #023e8a 100%);
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.8),
+    0 0 16px rgba(0, 228, 255, 0.5),
+    inset 0 3px 5px rgba(255, 255, 255, 0.6),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.btn-arcade-action.btn-jump:active,
+.btn-arcade-action.btn-jump.active {
+  transform: translateY(4px) scale(0.96);
+  background: radial-gradient(circle at 50% 50%, #00e1ff 0%, #005f9e 80%, #003259 100%);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    0 0 25px rgba(0, 240, 255, 0.95),
+    inset 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* Button B: PEPPER / ATTACK (Fiery Arcade Crimson Red) */
+.btn-arcade-action.btn-pepper {
+  background: radial-gradient(circle at 35% 25%, #ff5c7c 0%, #e40058 45%, #b50043 80%, #54001e 100%);
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.8),
+    0 0 16px rgba(255, 0, 85, 0.5),
+    inset 0 3px 5px rgba(255, 255, 255, 0.6),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.btn-arcade-action.btn-pepper:active,
+.btn-arcade-action.btn-pepper.active {
+  transform: translateY(4px) scale(0.96);
+  background: radial-gradient(circle at 50% 50%, #ff1a66 0%, #8c0033 80%, #400017 100%);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    0 0 25px rgba(255, 0, 85, 0.95),
+    inset 0 4px 8px rgba(0, 0, 0, 0.7);
 }
 
 .action-icon {
-  font-size: 20px;
+  font-size: 26px;
   line-height: 1;
-  margin-top: 8px;
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.8));
+  margin-top: 6px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
 }
 
-.button-cpo-sublabel {
+.action-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: 5.5px;
-  color: #94a3b8;
+  font-size: 7px;
+  color: #fff;
   letter-spacing: 0.5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-  margin-top: 4px;
+  text-shadow: 1px 1px 2px #000;
+  margin-top: 2px;
 }
 
-/* Molded Ammo Badge */
+/* Molded Arcade Token / Coin Badge */
 .pepper-badge {
   position: absolute;
-  top: -3px;
-  right: -3px;
-  background: radial-gradient(circle at 35% 35%, #fde047 0%, #eab308 60%, #a16207 100%);
+  top: -4px;
+  right: -4px;
+  background: radial-gradient(circle at 35% 35%, #ffe680 0%, #fcb400 60%, #b87c00 100%);
   color: #1a0f00;
-  border: 1.5px solid #fff;
+  border: 2px solid #fff;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Press Start 2P', monospace;
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: bold;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 6px rgba(234, 179, 8, 0.8);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8), 0 0 8px rgba(252, 180, 0, 0.7);
   z-index: 4;
 }
 
+/* Responsive adjustments */
+@media (min-width: 440px) {
+  .controls-deck {
+    height: 195px;
+    padding: 14px 24px 10px 24px;
+  }
+  .dpad-container {
+    width: 146px;
+    height: 146px;
+  }
+  .dpad {
+    width: 130px;
+    height: 130px;
+  }
+  .button-bezel-outer {
+    width: 90px;
+    height: 90px;
+  }
+  .action-icon {
+    font-size: 28px;
+  }
+  .action-label {
+    font-size: 8px;
+  }
+  .action-container {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 360px) {
+  .controls-deck {
+    height: 175px;
+    padding: 8px 10px 6px 10px;
+  }
+  .dpad-container {
+    width: 120px;
+    height: 120px;
+  }
+  .dpad {
+    width: 108px;
+    height: 108px;
+  }
+  .dpad-up, .dpad-down {
+    left: 36px;
+    width: 34px;
+    height: 30px;
+  }
+  .dpad-left, .dpad-right {
+    top: 36px;
+    width: 30px;
+    height: 34px;
+  }
+  .button-bezel-outer {
+    width: 72px;
+    height: 72px;
+  }
+  .action-icon {
+    font-size: 22px;
+  }
+  .action-label {
+    font-size: 6px;
+  }
+  .action-container {
+    gap: 8px;
+  }
+  .cpo-brand-tag,
+  .cpo-speaker-grill {
+    display: none;
+  }
+  .cpo-center-badge {
+    display: flex;
+    transform: scale(0.85);
+  }
+  .pause-bezel-outer {
+    width: 46px;
+    height: 46px;
+  }
+  .arcade-pause-btn .pause-icon {
+    font-size: 11px;
+  }
+  .arcade-pause-btn .pause-label {
+    font-size: 5px;
+  }
+}
+
 /* ---------------------------------
-   MODAL / MISSION BRIEFING
+   MODAL HELP & INSTRUCTIONS
    --------------------------------- */
 .modal-overlay {
   position: absolute;
@@ -763,8 +883,8 @@ canvas#gameCanvas {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(3, 7, 18, 0.88);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -777,54 +897,52 @@ canvas#gameCanvas {
 }
 
 .modal-content {
-  background: #0b1120;
-  border: 2px solid #00f0ff;
+  background: #191726;
+  border: 3px solid #fcb400;
   border-radius: 8px;
-  padding: 18px;
+  padding: 20px;
   max-width: 360px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 0 30px rgba(0, 240, 255, 0.35);
+  box-shadow: 0 0 25px rgba(252, 180, 0, 0.4);
 }
 
 .modal-content h2 {
-  color: #00ff66;
-  font-size: 11px;
-  margin-bottom: 12px;
-  text-shadow: 0 0 8px rgba(0, 255, 102, 0.7);
-  letter-spacing: 1px;
+  color: #e40058;
+  font-size: 13px;
+  margin-bottom: 14px;
+  text-shadow: 2px 2px #000;
 }
 
 .instructions-list {
   text-align: left;
-  font-size: 7.5px;
+  font-size: 8px;
   line-height: 1.6;
-  margin-bottom: 16px;
-  color: #cbd5e1;
+  margin-bottom: 18px;
+  color: #d8d4ec;
 }
 
 .instructions-list li {
-  margin-bottom: 7px;
+  margin-bottom: 8px;
 }
 
 .instructions-list strong {
-  color: #00f0ff;
+  color: #fcb400;
 }
 
 .arcade-btn-primary {
-  background: linear-gradient(180deg, #ff0055 0%, #be123c 100%);
+  background: #e40058;
   color: #fff;
-  border: 1.5px solid #00f0ff;
+  border: 2px solid #fff;
   padding: 8px 16px;
   font-family: inherit;
-  font-size: 8px;
+  font-size: 9px;
   border-radius: 4px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-  letter-spacing: 1px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
 }
 
 .arcade-btn-primary:active {
   transform: scale(0.95);
-  background: #9f1239;
+  background: #c0003c;
 }
