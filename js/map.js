@@ -276,2185 +276,992 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 4: El Pulpo Chef (Silueta de Pulpo)
+      // STAGE 4: LA MARISQUERÍA DEL PULPO (Wide Screen: 360px)
       // ==========================================
       {
         stageNumber: 4,
         name: 'LA MARISQUERÍA DEL PULPO',
-        background: 'bg_stage_4',
+        width: 360,
         bonusSpots: [
-          { x: 24, y: 144 },
-          { x: 112, y: 48 },
-          { x: 196, y: 144 },
-          { x: 112, y: 192 }
+          { x: 54, y: 144 },
+          { x: 160, y: 96 },
+          { x: 260, y: 144 },
+          { x: 180, y: 240 }
         ],
         floors: [
-          // Y = 48 (Octopus Head Dome & Curled outer tentacle tips)
-          { y: 48, x1: 14, x2: 58 },
-          { y: 48, x1: 72, x2: 168 },
-          { y: 48, x1: 182, x2: 226 },
-
-          // Y = 96 (Head Base & Upper Tentacle arches)
-          { y: 96, x1: 14, x2: 64 },
-          { y: 96, x1: 72, x2: 168 },
-          { y: 96, x1: 176, x2: 226 },
-
-          // Y = 144 (Tentacle Branches with jump gaps)
-          { y: 144, x1: 14, x2: 58 },
-          { y: 144, x1: 70, x2: 114 },
-          { y: 144, x1: 126, x2: 170 },
-          { y: 144, x1: 182, x2: 226 },
-
-          // Y = 192 (Tentacle Mid Sections)
-          { y: 192, x1: 14, x2: 58 },
-          { y: 192, x1: 70, x2: 114 },
-          { y: 192, x1: 126, x2: 170 },
-          { y: 192, x1: 182, x2: 226 },
-
-          // Y = 240 (Tentacle Lower Tips)
-          { y: 240, x1: 14, x2: 58 },
-          { y: 240, x1: 70, x2: 114 },
-          { y: 240, x1: 126, x2: 170 },
-          { y: 240, x1: 182, x2: 226 },
-
-          // Y = 288 (Bottom seafloor & Plate base)
-          { y: 288, x1: 12, x2: 228 }
+          { y: 48, x1: 16, x2: 94 },
+          { y: 48, x1: 114, x2: 246 },
+          { y: 48, x1: 266, x2: 344 },
+          { y: 96, x1: 16, x2: 140 },
+          { y: 96, x1: 164, x2: 280 },
+          { y: 96, x1: 298, x2: 344 },
+          { y: 144, x1: 16, x2: 80 },
+          { y: 144, x1: 100, x2: 190 },
+          { y: 144, x1: 210, x2: 300 },
+          { y: 144, x1: 316, x2: 344 },
+          { y: 192, x1: 16, x2: 120 },
+          { y: 192, x1: 140, x2: 220 },
+          { y: 192, x1: 240, x2: 344 },
+          { y: 240, x1: 16, x2: 100 },
+          { y: 240, x1: 120, x2: 240 },
+          { y: 240, x1: 260, x2: 344 },
+          { y: 288, x1: 12, x2: 348 }
         ],
         ladders: [
-          // Outer left tentacle ladders
-          { x: 18, y1: 48, y2: 144 },
-          { x: 42, y1: 96, y2: 240 },
-          { x: 22, y1: 192, y2: 288 },
-
-          // Inner left tentacle ladders
-          { x: 74, y1: 48, y2: 192 },
-          { x: 98, y1: 96, y2: 240 },
-          { x: 78, y1: 192, y2: 288 },
-
-          // Center suction column
-          { x: 112, y1: 48, y2: 288 },
-
-          // Inner right tentacle ladders
-          { x: 142, y1: 96, y2: 240 },
-          { x: 166, y1: 48, y2: 192 },
-          { x: 162, y1: 192, y2: 288 },
-
-          // Outer right tentacle ladders
-          { x: 190, y1: 96, y2: 240 },
-          { x: 214, y1: 48, y2: 144 },
-          { x: 218, y1: 192, y2: 288 }
+          { x: 18, y1: 48, y2: 288 },
+          { x: 340, y1: 48, y2: 288 },
+          { x: 70, y1: 48, y2: 144 },
+          { x: 120, y1: 96, y2: 240 },
+          { x: 150, y1: 48, y2: 192 },
+          { x: 175, y1: 144, y2: 288 },
+          { x: 210, y1: 48, y2: 144 },
+          { x: 250, y1: 96, y2: 240 },
+          { x: 280, y1: 144, y2: 288 },
+          { x: 310, y1: 48, y2: 192 }
         ],
         burgers: [
-          // Burger 0: Outer Left Tentacle (col: 0)
-          { col: 0, x: 22, y: 48, type: 'bun_top' },
-          { col: 0, x: 22, y: 96, type: 'lettuce' },
-          { col: 0, x: 22, y: 144, type: 'cheese' },
-          { col: 0, x: 22, y: 192, type: 'patty' },
-          { col: 0, x: 22, y: 240, type: 'bun_bottom' },
-
-          // Burger 1: Inner Left Tentacle (col: 1)
-          { col: 1, x: 78, y: 48, type: 'bun_top' },
-          { col: 1, x: 78, y: 96, type: 'tomato' },
-          { col: 1, x: 78, y: 144, type: 'cheese' },
-          { col: 1, x: 78, y: 192, type: 'patty' },
-          { col: 1, x: 78, y: 240, type: 'bun_bottom' },
-
-          // Burger 2: Inner Right Tentacle (col: 2)
-          { col: 2, x: 132, y: 48, type: 'bun_top' },
-          { col: 2, x: 132, y: 96, type: 'lettuce' },
-          { col: 2, x: 132, y: 144, type: 'patty' },
-          { col: 2, x: 132, y: 192, type: 'cheese' },
-          { col: 2, x: 132, y: 240, type: 'bun_bottom' },
-
-          // Burger 3: Outer Right Tentacle (col: 3)
-          { col: 3, x: 188, y: 48, type: 'bun_top' },
-          { col: 3, x: 188, y: 96, type: 'tomato' },
-          { col: 3, x: 188, y: 144, type: 'patty' },
-          { col: 3, x: 188, y: 192, type: 'cheese' },
-          { col: 3, x: 188, y: 240, type: 'bun_bottom' }
+          { col: 0, x: 36, y: 48, type: 'bun_top' },
+          { col: 0, x: 36, y: 96, type: 'lettuce' },
+          { col: 0, x: 36, y: 144, type: 'tomato' },
+          { col: 0, x: 36, y: 192, type: 'patty' },
+          { col: 0, x: 36, y: 240, type: 'bun_bottom' },
+          { col: 1, x: 126, y: 48, type: 'bun_top' },
+          { col: 1, x: 126, y: 96, type: 'cheese' },
+          { col: 1, x: 126, y: 144, type: 'patty' },
+          { col: 1, x: 126, y: 192, type: 'bun_bottom' },
+          { col: 2, x: 222, y: 48, type: 'bun_top' },
+          { col: 2, x: 222, y: 96, type: 'lettuce' },
+          { col: 2, x: 222, y: 144, type: 'cheese' },
+          { col: 2, x: 222, y: 192, type: 'patty' },
+          { col: 2, x: 222, y: 240, type: 'bun_bottom' },
+          { col: 3, x: 304, y: 48, type: 'bun_top' },
+          { col: 3, x: 304, y: 96, type: 'tomato' },
+          { col: 3, x: 304, y: 144, type: 'patty' },
+          { col: 3, x: 304, y: 192, type: 'bun_bottom' }
         ],
         plates: [
-          { x: 22, y: 288 },
-          { x: 78, y: 288 },
-          { x: 132, y: 288 },
-          { x: 188, y: 288 }
+          { x: 34, y: 288 },
+          { x: 124, y: 288 },
+          { x: 220, y: 288 },
+          { x: 302, y: 288 }
         ],
-        playerStart: { x: 112, y: 288 },
+        playerStart: { x: 176, y: 288 },
         enemies: [
-          { type: 'hotdog', x: 112, y: 48 },
-          { type: 'pickle', x: 22, y: 96 },
-          { type: 'pickle', x: 188, y: 96 },
-          { type: 'egg', x: 32, y: 48 }
+          { type: 'hotdog', x: 36, y: 48 },
+          { type: 'hotdog', x: 304, y: 48 },
+          { type: 'pickle', x: 126, y: 48 },
+          { type: 'egg', x: 222, y: 48 }
         ],
-        enemySpeed: 0.90
+        enemySpeed: 0.88
       },
 
       // ==========================================
-      // STAGE 5: La Cafetera Exprés (Silueta de Cafetera)
+      // STAGE 5: LA ESTACIÓN DE CAFÉ & BARISTA (Wide Screen: 370px)
       // ==========================================
       {
         stageNumber: 5,
         name: 'LA ESTACIÓN DE CAFÉ & BARISTA',
-        background: 'bg_stage_5',
+        width: 370,
         bonusSpots: [
-          { x: 26, y: 96 },
-          { x: 112, y: 48 },
-          { x: 186, y: 96 },
-          { x: 112, y: 192 }
+          { x: 44, y: 96 },
+          { x: 140, y: 144 },
+          { x: 230, y: 96 },
+          { x: 320, y: 144 }
         ],
         floors: [
-          // Y = 48 (Cup Warming Rack)
-          { y: 48, x1: 14, x2: 60 },
-          { y: 48, x1: 64, x2: 176 },
-          { y: 48, x1: 180, x2: 226 },
-
-          // Y = 96 (Red Console & Pressure Gauge)
-          { y: 96, x1: 14, x2: 60 },
-          { y: 96, x1: 72, x2: 114 },
-          { y: 96, x1: 126, x2: 168 },
-          { y: 96, x1: 180, x2: 226 },
-
-          // Y = 144 (Steam Nozzles & Portafilter)
-          { y: 144, x1: 14, x2: 58 },
-          { y: 144, x1: 70, x2: 114 },
-          { y: 144, x1: 126, x2: 170 },
-          { y: 144, x1: 182, x2: 226 },
-
-          // Y = 192 (Middle Chamber & Copper Pipes)
-          { y: 192, x1: 14, x2: 58 },
-          { y: 192, x1: 70, x2: 114 },
-          { y: 192, x1: 126, x2: 170 },
-          { y: 192, x1: 182, x2: 226 },
-
-          // Y = 240 (Lower Chamber Stands)
-          { y: 240, x1: 14, x2: 58 },
-          { y: 240, x1: 70, x2: 114 },
-          { y: 240, x1: 126, x2: 170 },
-          { y: 240, x1: 182, x2: 226 },
-
-          // Y = 288 (Drip Tray Base)
-          { y: 288, x1: 12, x2: 228 }
+          { y: 48, x1: 16, x2: 100 },
+          { y: 48, x1: 120, x2: 250 },
+          { y: 48, x1: 270, x2: 354 },
+          { y: 96, x1: 16, x2: 80 },
+          { y: 96, x1: 98, x2: 188 },
+          { y: 96, x1: 208, x2: 298 },
+          { y: 96, x1: 316, x2: 354 },
+          { y: 144, x1: 16, x2: 124 },
+          { y: 144, x1: 144, x2: 246 },
+          { y: 144, x1: 256, x2: 354 },
+          { y: 192, x1: 16, x2: 90 },
+          { y: 192, x1: 110, x2: 200 },
+          { y: 192, x1: 220, x2: 310 },
+          { y: 192, x1: 328, x2: 354 },
+          { y: 240, x1: 16, x2: 130 },
+          { y: 240, x1: 150, x2: 246 },
+          { y: 240, x1: 260, x2: 354 },
+          { y: 288, x1: 12, x2: 358 }
         ],
         ladders: [
-          { x: 20, y1: 48, y2: 240 },
-          { x: 44, y1: 144, y2: 288 },
-          { x: 76, y1: 48, y2: 192 },
-          { x: 98, y1: 96, y2: 240 },
-          { x: 80, y1: 192, y2: 288 },
-          { x: 112, y1: 48, y2: 288 },
-          { x: 142, y1: 96, y2: 240 },
-          { x: 164, y1: 48, y2: 192 },
-          { x: 160, y1: 192, y2: 288 },
-          { x: 194, y1: 144, y2: 288 },
-          { x: 218, y1: 48, y2: 240 }
+          { x: 18, y1: 48, y2: 288 },
+          { x: 350, y1: 48, y2: 288 },
+          { x: 60, y1: 48, y2: 144 },
+          { x: 78, y1: 144, y2: 240 },
+          { x: 124, y1: 48, y2: 192 },
+          { x: 156, y1: 96, y2: 288 },
+          { x: 210, y1: 48, y2: 144 },
+          { x: 226, y1: 144, y2: 240 },
+          { x: 274, y1: 48, y2: 192 },
+          { x: 306, y1: 96, y2: 288 }
         ],
         burgers: [
-          // Burger 0: Steam Wand Left (col: 0)
-          { col: 0, x: 26, y: 48, type: 'bun_top' },
-          { col: 0, x: 26, y: 96, type: 'lettuce' },
-          { col: 0, x: 26, y: 144, type: 'cheese' },
-          { col: 0, x: 26, y: 192, type: 'patty' },
-          { col: 0, x: 26, y: 240, type: 'bun_bottom' },
-
-          // Burger 1: Group Head Left (col: 1)
-          { col: 1, x: 80, y: 48, type: 'bun_top' },
-          { col: 1, x: 80, y: 96, type: 'tomato' },
-          { col: 1, x: 80, y: 144, type: 'cheese' },
-          { col: 1, x: 80, y: 192, type: 'patty' },
-          { col: 1, x: 80, y: 240, type: 'bun_bottom' },
-
-          // Burger 2: Group Head Right (col: 2)
-          { col: 2, x: 134, y: 48, type: 'bun_top' },
-          { col: 2, x: 134, y: 96, type: 'cheese' },
-          { col: 2, x: 134, y: 144, type: 'lettuce' },
-          { col: 2, x: 134, y: 192, type: 'patty' },
-          { col: 2, x: 134, y: 240, type: 'bun_bottom' },
-
-          // Burger 3: Steam Wand Right (col: 3)
-          { col: 3, x: 186, y: 48, type: 'bun_top' },
-          { col: 3, x: 186, y: 96, type: 'tomato' },
-          { col: 3, x: 186, y: 144, type: 'cheese' },
-          { col: 3, x: 186, y: 192, type: 'patty' },
-          { col: 3, x: 186, y: 240, type: 'bun_bottom' }
+          { col: 0, x: 32, y: 48, type: 'bun_top' },
+          { col: 0, x: 32, y: 96, type: 'lettuce' },
+          { col: 0, x: 32, y: 144, type: 'patty' },
+          { col: 0, x: 32, y: 192, type: 'bun_bottom' },
+          { col: 1, x: 124, y: 48, type: 'bun_top' },
+          { col: 1, x: 124, y: 96, type: 'cheese' },
+          { col: 1, x: 124, y: 144, type: 'tomato' },
+          { col: 1, x: 124, y: 192, type: 'patty' },
+          { col: 1, x: 124, y: 240, type: 'bun_bottom' },
+          { col: 2, x: 218, y: 48, type: 'bun_top' },
+          { col: 2, x: 218, y: 96, type: 'lettuce' },
+          { col: 2, x: 218, y: 144, type: 'patty' },
+          { col: 2, x: 218, y: 192, type: 'bun_bottom' },
+          { col: 3, x: 312, y: 48, type: 'bun_top' },
+          { col: 3, x: 312, y: 96, type: 'cheese' },
+          { col: 3, x: 312, y: 144, type: 'tomato' },
+          { col: 3, x: 312, y: 192, type: 'patty' },
+          { col: 3, x: 312, y: 240, type: 'bun_bottom' }
         ],
         plates: [
-          { x: 24, y: 288 },
-          { x: 78, y: 288 },
-          { x: 132, y: 288 },
-          { x: 186, y: 288 }
+          { x: 30, y: 288 },
+          { x: 122, y: 288 },
+          { x: 216, y: 288 },
+          { x: 310, y: 288 }
         ],
-        playerStart: { x: 112, y: 288 },
+        playerStart: { x: 184, y: 288 },
         enemies: [
-          { type: 'hotdog', x: 112, y: 48 },
-          { type: 'pickle', x: 26, y: 96 },
-          { type: 'pickle', x: 186, y: 96 },
-          { type: 'egg', x: 32, y: 48 }
+          { type: 'hotdog', x: 32, y: 48 },
+          { type: 'hotdog', x: 312, y: 48 },
+          { type: 'pickle', x: 124, y: 48 },
+          { type: 'egg', x: 218, y: 48 }
         ],
-        enemySpeed: 0.95
+        enemySpeed: 0.92
       },
 
       // ==========================================
-      // STAGE 6: El Gato Michi (Silueta Esculpida de Gato)
+      // STAGE 6: LA PASTELERÍA FELINA (Wide Screen: 380px)
       // ==========================================
       {
         stageNumber: 6,
         name: 'LA PASTELERÍA FELINA',
-        background: 'bg_stage_6',
+        width: 380,
         bonusSpots: [
-          { x: 54, y: 32 },    // Punta de oreja izquierda (Pescadito / Helado)
-          { x: 186, y: 32 },   // Punta de oreja derecha
-          { x: 204, y: 144 },  // Punta de la cola enroscada
-          { x: 112, y: 162 }   // Cascabel de Oro en el pecho (Vida Extra ⭐⭐⭐)
+          { x: 38, y: 144 },
+          { x: 144, y: 96 },
+          { x: 240, y: 144 },
+          { x: 336, y: 96 }
         ],
         floors: [
-          // 1. Puntas de las Orejas (Cúspides triangulares en Y=32)
-          { y: 32, x1: 42, x2: 66 },   // Punta Oreja Izquierda
-          { y: 32, x1: 174, x2: 198 }, // Punta Oreja Derecha
-
-          // 2. Base de Orejas y Frente del Gato (Y=52 y Y=64)
-          { y: 52, x1: 20, x2: 60 },   // Base Oreja Izq
-          { y: 52, x1: 180, x2: 220 }, // Base Oreja Der
-          { y: 64, x1: 84, x2: 156 },  // Frente / Cabeza
-
-          // 3. Bigotes Superiores y Mejillas (Y=96 y Y=100)
-          { y: 96, x1: 10, x2: 56 },   // Bigote Superior Izq
-          { y: 96, x1: 184, x2: 230 }, // Bigote Superior Der
-          { y: 100, x1: 72, x2: 168 }, // Rostro / Mejillas Tiernas
-
-          // 4. Bigotes Inferiores (Y=116)
-          { y: 116, x1: 14, x2: 50 },  // Bigote Inferior Izq
-          { y: 116, x1: 190, x2: 226 },// Bigote Inferior Der
-
-          // 5. Punta de la Cola Rizada (Y=144)
-          { y: 144, x1: 180, x2: 224 },// Punta Cola Curvada
-
-          // 6. Collar Rojo, Cascabel y Patitas Delanteras (Y=144, Y=152, Y=162)
-          { y: 144, x1: 76, x2: 164 }, // Collar Rojo
-          { y: 152, x1: 24, x2: 64 },  // Pata Delantera Izquierda
-          { y: 152, x1: 172, x2: 214 },// Pata Delantera Derecha
-          { y: 162, x1: 106, x2: 134 },// Cascabel Dorado (Vida Extra)
-
-          // 7. Arco Superior de la Cola (Y=174)
-          { y: 174, x1: 190, x2: 226 },// Arco Superior de la Cola
-
-          // 8. Pancita Esponjosa y Flanco (Y=196, Y=200, Y=208)
-          { y: 196, x1: 68, x2: 172 }, // Pancita Calientita del Gato
-          { y: 200, x1: 20, x2: 58 },  // Flanco Izquierdo
-          { y: 208, x1: 176, x2: 218 },// Curva Media de la Cola
-
-          // 9. Patas Traseras y Base de la Cola (Y=244)
-          { y: 244, x1: 18, x2: 66 },  // Pata Trasera Izquierda
-          { y: 244, x1: 74, x2: 166 }, // Patitas Sentadas
-          { y: 244, x1: 172, x2: 208 },// Base de la Cola
-
-          // 10. Tapete / Cesta del Gato (Y=288)
-          { y: 288, x1: 12, x2: 228 }  // Base inferior con los 4 platos
+          { y: 48, x1: 16, x2: 110 },
+          { y: 48, x1: 130, x2: 250 },
+          { y: 48, x1: 270, x2: 364 },
+          { y: 96, x1: 16, x2: 144 },
+          { y: 96, x1: 164, x2: 288 },
+          { y: 96, x1: 306, x2: 364 },
+          { y: 144, x1: 16, x2: 88 },
+          { y: 144, x1: 108, x2: 204 },
+          { y: 144, x1: 224, x2: 320 },
+          { y: 144, x1: 338, x2: 364 },
+          { y: 192, x1: 16, x2: 134 },
+          { y: 192, x1: 154, x2: 264 },
+          { y: 192, x1: 284, x2: 364 },
+          { y: 240, x1: 16, x2: 96 },
+          { y: 240, x1: 116, x2: 224 },
+          { y: 240, x1: 244, x2: 364 },
+          { y: 288, x1: 12, x2: 368 }
         ],
         ladders: [
-          // Orejas a bigotes
-          { x: 48, y1: 32, y2: 96 },
-          { x: 192, y1: 32, y2: 96 },
-
-          // Frente a mejillas y collar
-          { x: 96, y1: 64, y2: 144 },
-          { x: 144, y1: 64, y2: 144 },
-
-          // Bigotes a patas y tapete (Columna izquierda)
-          { x: 24, y1: 96, y2: 244 },
-          { x: 46, y1: 152, y2: 288 },
-
-          // Pecho, pancita y árbol rascador central
-          { x: 80, y1: 144, y2: 244 },
-          { x: 112, y1: 100, y2: 288 },
-          { x: 160, y1: 144, y2: 244 },
-
-          // Cola enroscada a tapete (Columna derecha)
-          { x: 204, y1: 144, y2: 208 },
-          { x: 192, y1: 208, y2: 288 },
-          { x: 178, y1: 152, y2: 244 }
+          { x: 18, y1: 48, y2: 288 },
+          { x: 360, y1: 48, y2: 288 },
+          { x: 64, y1: 48, y2: 144 },
+          { x: 86, y1: 96, y2: 240 },
+          { x: 132, y1: 48, y2: 192 },
+          { x: 170, y1: 96, y2: 288 },
+          { x: 226, y1: 48, y2: 144 },
+          { x: 254, y1: 96, y2: 240 },
+          { x: 290, y1: 48, y2: 192 },
+          { x: 328, y1: 96, y2: 288 }
         ],
         burgers: [
-          // Pila 0 (x=26): Oreja Izq -> Bigote Izq -> Pata Izq -> Flanco -> Pata Trasera
-          { col: 0, x: 26, y: 52, type: 'bun_top' },
-          { col: 0, x: 26, y: 96, type: 'lettuce' },
-          { col: 0, x: 26, y: 152, type: 'cheese' },
-          { col: 0, x: 26, y: 200, type: 'patty' },
-          { col: 0, x: 26, y: 244, type: 'bun_bottom' },
-
-          // Pila 1 (x=80): Frente Izq -> Mejilla Izq -> Collar -> Pancita -> Pata Sentada
-          { col: 1, x: 80, y: 64, type: 'bun_top' },
-          { col: 1, x: 80, y: 100, type: 'tomato' },
-          { col: 1, x: 80, y: 144, type: 'cheese' },
-          { col: 1, x: 80, y: 196, type: 'patty' },
-          { col: 1, x: 80, y: 244, type: 'bun_bottom' },
-
-          // Pila 2 (x=134): Frente Der -> Mejilla Der -> Collar -> Pancita -> Pata Sentada
-          { col: 2, x: 134, y: 64, type: 'bun_top' },
-          { col: 2, x: 134, y: 100, type: 'cheese' },
-          { col: 2, x: 134, y: 144, type: 'lettuce' },
-          { col: 2, x: 134, y: 196, type: 'patty' },
-          { col: 2, x: 134, y: 244, type: 'bun_bottom' },
-
-          // Pila 3 (x=186): Oreja Der -> Bigote Der -> Pata Der -> Curva Cola -> Base Cola
-          { col: 3, x: 186, y: 52, type: 'bun_top' },
-          { col: 3, x: 186, y: 96, type: 'tomato' },
-          { col: 3, x: 186, y: 152, type: 'cheese' },
-          { col: 3, x: 186, y: 208, type: 'patty' },
-          { col: 3, x: 186, y: 244, type: 'bun_bottom' }
+          { col: 0, x: 32, y: 48, type: 'bun_top' },
+          { col: 0, x: 32, y: 96, type: 'lettuce' },
+          { col: 0, x: 32, y: 144, type: 'cheese' },
+          { col: 0, x: 32, y: 192, type: 'patty' },
+          { col: 0, x: 32, y: 240, type: 'bun_bottom' },
+          { col: 1, x: 130, y: 48, type: 'bun_top' },
+          { col: 1, x: 130, y: 96, type: 'tomato' },
+          { col: 1, x: 130, y: 144, type: 'patty' },
+          { col: 1, x: 130, y: 192, type: 'bun_bottom' },
+          { col: 2, x: 230, y: 48, type: 'bun_top' },
+          { col: 2, x: 230, y: 96, type: 'lettuce' },
+          { col: 2, x: 230, y: 144, type: 'cheese' },
+          { col: 2, x: 230, y: 192, type: 'patty' },
+          { col: 2, x: 230, y: 240, type: 'bun_bottom' },
+          { col: 3, x: 326, y: 48, type: 'bun_top' },
+          { col: 3, x: 326, y: 96, type: 'tomato' },
+          { col: 3, x: 326, y: 144, type: 'patty' },
+          { col: 3, x: 326, y: 192, type: 'bun_bottom' }
         ],
         plates: [
-          { x: 24, y: 288 },
-          { x: 78, y: 288 },
-          { x: 132, y: 288 },
-          { x: 186, y: 288 }
+          { x: 30, y: 288 },
+          { x: 128, y: 288 },
+          { x: 228, y: 288 },
+          { x: 324, y: 288 }
         ],
-        playerStart: { x: 112, y: 288 },
+        playerStart: { x: 190, y: 288 },
         enemies: [
-          { type: 'hotdog', x: 112, y: 64 },
-          { type: 'pickle', x: 26, y: 96 },
-          { type: 'pickle', x: 186, y: 96 },
-          { type: 'egg', x: 52, y: 32 }
+          { type: 'hotdog', x: 32, y: 48 },
+          { type: 'hotdog', x: 326, y: 48 },
+          { type: 'pickle', x: 130, y: 48 },
+          { type: 'egg', x: 230, y: 48 }
+        ],
+        enemySpeed: 0.96
+      },
+
+      // ==========================================
+      // STAGE 7: EL ASADOR DEL CASTILLO (Wide Screen: 360px)
+      // ==========================================
+      {
+        stageNumber: 7,
+        name: 'EL ASADOR DEL CASTILLO',
+        width: 360,
+        bonusSpots: [
+          { x: 36, y: 96 },
+          { x: 132, y: 144 },
+          { x: 224, y: 96 },
+          { x: 314, y: 144 }
+        ],
+        floors: [
+          { y: 48, x1: 16, x2: 88 },
+          { y: 48, x1: 108, x2: 244 },
+          { y: 48, x1: 264, x2: 344 },
+          { y: 96, x1: 16, x2: 130 },
+          { y: 96, x1: 150, x2: 270 },
+          { y: 96, x1: 288, x2: 344 },
+          { y: 144, x1: 16, x2: 94 },
+          { y: 144, x1: 114, x2: 244 },
+          { y: 144, x1: 260, x2: 344 },
+          { y: 192, x1: 16, x2: 140 },
+          { y: 192, x1: 160, x2: 304 },
+          { y: 192, x1: 314, x2: 344 },
+          { y: 240, x1: 16, x2: 100 },
+          { y: 240, x1: 120, x2: 260 },
+          { y: 240, x1: 270, x2: 344 },
+          { y: 288, x1: 12, x2: 348 }
+        ],
+        ladders: [
+          { x: 18, y1: 48, y2: 288 },
+          { x: 340, y1: 48, y2: 288 },
+          { x: 54, y1: 48, y2: 144 },
+          { x: 80, y1: 96, y2: 240 },
+          { x: 118, y1: 48, y2: 192 },
+          { x: 170, y1: 96, y2: 288 },
+          { x: 218, y1: 48, y2: 144 },
+          { x: 236, y1: 96, y2: 240 },
+          { x: 280, y1: 48, y2: 192 },
+          { x: 310, y1: 96, y2: 288 }
+        ],
+        burgers: [
+          { col: 0, x: 30, y: 48, type: 'bun_top' },
+          { col: 0, x: 30, y: 96, type: 'lettuce' },
+          { col: 0, x: 30, y: 144, type: 'patty' },
+          { col: 0, x: 30, y: 192, type: 'bun_bottom' },
+          { col: 1, x: 122, y: 48, type: 'bun_top' },
+          { col: 1, x: 122, y: 96, type: 'cheese' },
+          { col: 1, x: 122, y: 144, type: 'tomato' },
+          { col: 1, x: 122, y: 192, type: 'patty' },
+          { col: 1, x: 122, y: 240, type: 'bun_bottom' },
+          { col: 2, x: 214, y: 48, type: 'bun_top' },
+          { col: 2, x: 214, y: 96, type: 'lettuce' },
+          { col: 2, x: 214, y: 144, type: 'patty' },
+          { col: 2, x: 214, y: 192, type: 'bun_bottom' },
+          { col: 3, x: 306, y: 48, type: 'bun_top' },
+          { col: 3, x: 306, y: 96, type: 'cheese' },
+          { col: 3, x: 306, y: 144, type: 'tomato' },
+          { col: 3, x: 306, y: 192, type: 'patty' },
+          { col: 3, x: 306, y: 240, type: 'bun_bottom' }
+        ],
+        plates: [
+          { x: 28, y: 288 },
+          { x: 120, y: 288 },
+          { x: 212, y: 288 },
+          { x: 304, y: 288 }
+        ],
+        playerStart: { x: 170, y: 288 },
+        enemies: [
+          { type: 'hotdog', x: 30, y: 48 },
+          { type: 'hotdog', x: 306, y: 48 },
+          { type: 'pickle', x: 122, y: 48 },
+          { type: 'egg', x: 214, y: 48 }
         ],
         enemySpeed: 1.0
       },
 
       // ==========================================
-      // STAGE 7: El Castillo Medieval (Silueta de Fortaleza)
-      // ==========================================
-      {
-        stageNumber: 7,
-        name: 'EL ASADOR DEL CASTILLO',
-        background: 'bg_stage_7',
-        bonusSpots: [
-          { x: 24, y: 144 },
-          { x: 112, y: 48 },
-          { x: 188, y: 144 },
-          { x: 112, y: 192 }
-        ],
-        floors: [
-          { y: 48, x1: 18, x2: 68 },
-          { y: 48, x1: 88, x2: 152 },
-          { y: 48, x1: 172, x2: 222 },
-          { y: 96, x1: 18, x2: 68 },
-          { y: 96, x1: 76, x2: 164 },
-          { y: 96, x1: 172, x2: 222 },
-          { y: 144, x1: 18, x2: 60 },
-          { y: 144, x1: 74, x2: 114 },
-          { y: 144, x1: 126, x2: 166 },
-          { y: 144, x1: 180, x2: 222 },
-          { y: 192, x1: 16, x2: 64 },
-          { y: 192, x1: 72, x2: 168 },
-          { y: 192, x1: 176, x2: 224 },
-          { y: 240, x1: 14, x2: 66 },
-          { y: 240, x1: 70, x2: 114 },
-          { y: 240, x1: 126, x2: 170 },
-          { y: 240, x1: 174, x2: 226 },
-          { y: 288, x1: 12, x2: 228 }
-        ],
-        ladders: [
-          { x: 22, y1: 48, y2: 240 },
-          { x: 46, y1: 144, y2: 288 },
-          { x: 78, y1: 48, y2: 192 },
-          { x: 98, y1: 96, y2: 240 },
-          { x: 82, y1: 192, y2: 288 },
-          { x: 112, y1: 48, y2: 288 },
-          { x: 142, y1: 96, y2: 240 },
-          { x: 162, y1: 48, y2: 192 },
-          { x: 158, y1: 192, y2: 288 },
-          { x: 194, y1: 144, y2: 288 },
-          { x: 218, y1: 48, y2: 240 }
-        ],
-        burgers: [
-          { col: 0, x: 24, y: 48, type: 'bun_top' },
-          { col: 0, x: 24, y: 96, type: 'lettuce' },
-          { col: 0, x: 24, y: 144, type: 'cheese' },
-          { col: 0, x: 24, y: 192, type: 'patty' },
-          { col: 0, x: 24, y: 240, type: 'bun_bottom' },
-
-          { col: 1, x: 78, y: 48, type: 'bun_top' },
-          { col: 1, x: 78, y: 96, type: 'tomato' },
-          { col: 1, x: 78, y: 144, type: 'cheese' },
-          { col: 1, x: 78, y: 192, type: 'patty' },
-          { col: 1, x: 78, y: 240, type: 'bun_bottom' },
-
-          { col: 2, x: 134, y: 48, type: 'bun_top' },
-          { col: 2, x: 134, y: 96, type: 'cheese' },
-          { col: 2, x: 134, y: 144, type: 'lettuce' },
-          { col: 2, x: 134, y: 192, type: 'patty' },
-          { col: 2, x: 134, y: 240, type: 'bun_bottom' },
-
-          { col: 3, x: 188, y: 48, type: 'bun_top' },
-          { col: 3, x: 188, y: 96, type: 'tomato' },
-          { col: 3, x: 188, y: 144, type: 'cheese' },
-          { col: 3, x: 188, y: 192, type: 'patty' },
-          { col: 3, x: 188, y: 240, type: 'bun_bottom' }
-        ],
-        plates: [
-          { x: 24, y: 288 },
-          { x: 78, y: 288 },
-          { x: 132, y: 288 },
-          { x: 186, y: 288 }
-        ],
-        playerStart: { x: 112, y: 288 },
-        enemies: [
-          { type: 'hotdog', x: 112, y: 48 },
-          { type: 'pickle', x: 24, y: 96 },
-          { type: 'pickle', x: 188, y: 96 },
-          { type: 'egg', x: 36, y: 48 }
-        ],
-        enemySpeed: 1.05
-      },
-
-      // ==========================================
-      // STAGE 8: El Dragón de Fuego (Silueta de Dragón Mítico)
+      // STAGE 8: EL HORNO DEL DRAGÓN (Wide Screen: 380px)
       // ==========================================
       {
         stageNumber: 8,
         name: 'EL HORNO DEL DRAGÓN',
-        background: 'bg_stage_8',
+        width: 380,
         bonusSpots: [
-          { x: 26, y: 96 },
-          { x: 112, y: 48 },
-          { x: 186, y: 96 },
-          { x: 112, y: 192 }
+          { x: 40, y: 144 },
+          { x: 142, y: 96 },
+          { x: 240, y: 144 },
+          { x: 338, y: 96 }
         ],
         floors: [
-          { y: 48, x1: 16, x2: 64 },
-          { y: 48, x1: 76, x2: 164 },
-          { y: 48, x1: 176, x2: 224 },
-          { y: 96, x1: 16, x2: 64 },
-          { y: 96, x1: 74, x2: 166 },
-          { y: 96, x1: 176, x2: 224 },
-          { y: 144, x1: 14, x2: 58 },
-          { y: 144, x1: 70, x2: 114 },
-          { y: 144, x1: 126, x2: 170 },
-          { y: 144, x1: 182, x2: 226 },
-          { y: 192, x1: 14, x2: 60 },
-          { y: 192, x1: 72, x2: 168 },
-          { y: 192, x1: 180, x2: 226 },
-          { y: 240, x1: 16, x2: 66 },
-          { y: 240, x1: 72, x2: 114 },
-          { y: 240, x1: 126, x2: 168 },
-          { y: 240, x1: 174, x2: 224 },
-          { y: 288, x1: 12, x2: 228 }
+          { y: 48, x1: 16, x2: 104 },
+          { y: 48, x1: 124, x2: 256 },
+          { y: 48, x1: 276, x2: 364 },
+          { y: 96, x1: 16, x2: 136 },
+          { y: 96, x1: 156, x2: 280 },
+          { y: 96, x1: 300, x2: 364 },
+          { y: 144, x1: 16, x2: 90 },
+          { y: 144, x1: 110, x2: 214 },
+          { y: 144, x1: 234, x2: 330 },
+          { y: 144, x1: 346, x2: 364 },
+          { y: 192, x1: 16, x2: 140 },
+          { y: 192, x1: 160, x2: 270 },
+          { y: 192, x1: 290, x2: 364 },
+          { y: 240, x1: 16, x2: 100 },
+          { y: 240, x1: 120, x2: 234 },
+          { y: 240, x1: 254, x2: 364 },
+          { y: 288, x1: 12, x2: 368 }
         ],
         ladders: [
-          { x: 20, y1: 48, y2: 240 },
-          { x: 42, y1: 144, y2: 288 },
-          { x: 76, y1: 48, y2: 192 },
-          { x: 96, y1: 96, y2: 240 },
-          { x: 80, y1: 192, y2: 288 },
-          { x: 112, y1: 48, y2: 288 },
-          { x: 144, y1: 96, y2: 240 },
-          { x: 164, y1: 48, y2: 192 },
-          { x: 160, y1: 192, y2: 288 },
-          { x: 196, y1: 144, y2: 288 },
-          { x: 218, y1: 48, y2: 240 }
+          { x: 18, y1: 48, y2: 288 },
+          { x: 360, y1: 48, y2: 288 },
+          { x: 60, y1: 48, y2: 144 },
+          { x: 84, y1: 96, y2: 240 },
+          { x: 130, y1: 48, y2: 192 },
+          { x: 172, y1: 96, y2: 288 },
+          { x: 222, y1: 48, y2: 144 },
+          { x: 258, y1: 96, y2: 240 },
+          { x: 288, y1: 48, y2: 192 },
+          { x: 324, y1: 96, y2: 288 }
         ],
         burgers: [
-          { col: 0, x: 26, y: 48, type: 'bun_top' },
-          { col: 0, x: 26, y: 96, type: 'lettuce' },
-          { col: 0, x: 26, y: 144, type: 'cheese' },
-          { col: 0, x: 26, y: 192, type: 'patty' },
-          { col: 0, x: 26, y: 240, type: 'bun_bottom' },
-
-          { col: 1, x: 80, y: 48, type: 'bun_top' },
-          { col: 1, x: 80, y: 96, type: 'tomato' },
-          { col: 1, x: 80, y: 144, type: 'cheese' },
-          { col: 1, x: 80, y: 192, type: 'patty' },
-          { col: 1, x: 80, y: 240, type: 'bun_bottom' },
-
-          { col: 2, x: 132, y: 48, type: 'bun_top' },
-          { col: 2, x: 132, y: 96, type: 'cheese' },
-          { col: 2, x: 132, y: 144, type: 'lettuce' },
-          { col: 2, x: 132, y: 192, type: 'patty' },
-          { col: 2, x: 132, y: 240, type: 'bun_bottom' },
-
-          { col: 3, x: 186, y: 48, type: 'bun_top' },
-          { col: 3, x: 186, y: 96, type: 'tomato' },
-          { col: 3, x: 186, y: 144, type: 'cheese' },
-          { col: 3, x: 186, y: 192, type: 'patty' },
-          { col: 3, x: 186, y: 240, type: 'bun_bottom' }
+          { col: 0, x: 32, y: 48, type: 'bun_top' },
+          { col: 0, x: 32, y: 96, type: 'lettuce' },
+          { col: 0, x: 32, y: 144, type: 'cheese' },
+          { col: 0, x: 32, y: 192, type: 'patty' },
+          { col: 0, x: 32, y: 240, type: 'bun_bottom' },
+          { col: 1, x: 130, y: 48, type: 'bun_top' },
+          { col: 1, x: 130, y: 96, type: 'tomato' },
+          { col: 1, x: 130, y: 144, type: 'patty' },
+          { col: 1, x: 130, y: 192, type: 'bun_bottom' },
+          { col: 2, x: 230, y: 48, type: 'bun_top' },
+          { col: 2, x: 230, y: 96, type: 'lettuce' },
+          { col: 2, x: 230, y: 144, type: 'cheese' },
+          { col: 2, x: 230, y: 192, type: 'patty' },
+          { col: 2, x: 230, y: 240, type: 'bun_bottom' },
+          { col: 3, x: 328, y: 48, type: 'bun_top' },
+          { col: 3, x: 328, y: 96, type: 'tomato' },
+          { col: 3, x: 328, y: 144, type: 'patty' },
+          { col: 3, x: 328, y: 192, type: 'bun_bottom' }
         ],
         plates: [
-          { x: 24, y: 288 },
-          { x: 78, y: 288 },
-          { x: 132, y: 288 },
-          { x: 186, y: 288 }
+          { x: 30, y: 288 },
+          { x: 128, y: 288 },
+          { x: 228, y: 288 },
+          { x: 326, y: 288 }
         ],
-        playerStart: { x: 112, y: 288 },
+        playerStart: { x: 188, y: 288 },
         enemies: [
-          { type: 'hotdog', x: 112, y: 48 },
-          { type: 'pickle', x: 36, y: 96 },
-          { type: 'pickle', x: 186, y: 96 },
-          { type: 'egg', x: 36, y: 48 }
+          { type: 'hotdog', x: 32, y: 48 },
+          { type: 'hotdog', x: 328, y: 48 },
+          { type: 'pickle', x: 130, y: 48 },
+          { type: 'egg', x: 230, y: 48 }
         ],
-        enemySpeed: 1.10
+        enemySpeed: 1.04
       },
 
       // ==========================================
-      // STAGE 9: El Submarino Amarillo (Silueta de Submarino Kawaii)
+      // STAGE 9: LA COCINA DE ALTA MAR (Wide Screen: 390px)
       // ==========================================
       {
         stageNumber: 9,
         name: 'LA COCINA DE ALTA MAR',
-        background: 'bg_stage_9',
+        width: 390,
         bonusSpots: [
-          { x: 26, y: 96 },   // Timón superior
-          { x: 186, y: 96 },  // Proa con burbujas
-          { x: 112, y: 32 },  // Mirador del periscopio
-          { x: 112, y: 144 }  // Entre los ojos de buey (Vida Extra ⭐⭐⭐)
+          { x: 44, y: 96 },
+          { x: 148, y: 144 },
+          { x: 248, y: 96 },
+          { x: 348, y: 144 }
         ],
         floors: [
-          // Y = 32: Periscopio superior
-          { y: 32, x1: 108, x2: 148 },
-          // Y = 64: Torreta / Kiosko
-          { y: 64, x1: 16, x2: 62 },
-          { y: 64, x1: 88, x2: 152 },
-          { y: 64, x1: 178, x2: 224 },
-          // Y = 96: Cubierta superior y timón
-          { y: 96, x1: 16, x2: 62 },
-          { y: 96, x1: 74, x2: 166 },
-          { y: 96, x1: 178, x2: 224 },
-          // Y = 144: Eje de hélice y ojos de buey
-          { y: 144, x1: 14, x2: 58 },
-          { y: 144, x1: 70, x2: 114 },
-          { y: 144, x1: 126, x2: 170 },
-          { y: 144, x1: 182, x2: 226 },
-          // Y = 196: Cámara central del casco
-          { y: 196, x1: 16, x2: 60 },
-          { y: 196, x1: 68, x2: 172 },
-          { y: 196, x1: 180, x2: 224 },
-          // Y = 244: Hélice y tanques de lastre
-          { y: 244, x1: 18, x2: 64 },
-          { y: 244, x1: 72, x2: 114 },
-          { y: 244, x1: 126, x2: 168 },
-          { y: 244, x1: 176, x2: 222 },
-          // Y = 288: Fondo marino
-          { y: 288, x1: 12, x2: 228 }
+          { y: 48, x1: 16, x2: 114 },
+          { y: 48, x1: 134, x2: 264 },
+          { y: 48, x1: 284, x2: 374 },
+          { y: 96, x1: 16, x2: 148 },
+          { y: 96, x1: 168, x2: 298 },
+          { y: 96, x1: 318, x2: 374 },
+          { y: 144, x1: 16, x2: 96 },
+          { y: 144, x1: 116, x2: 224 },
+          { y: 144, x1: 244, x2: 344 },
+          { y: 144, x1: 358, x2: 374 },
+          { y: 192, x1: 16, x2: 144 },
+          { y: 192, x1: 164, x2: 284 },
+          { y: 192, x1: 304, x2: 374 },
+          { y: 240, x1: 16, x2: 104 },
+          { y: 240, x1: 124, x2: 244 },
+          { y: 240, x1: 264, x2: 374 },
+          { y: 288, x1: 12, x2: 378 }
         ],
         ladders: [
-          { x: 112, y1: 32, y2: 96 },
-          { x: 80, y1: 64, y2: 196 },
-          { x: 144, y1: 64, y2: 196 },
-          { x: 24, y1: 64, y2: 244 },
-          { x: 46, y1: 144, y2: 288 },
-          { x: 98, y1: 96, y2: 244 },
-          { x: 82, y1: 196, y2: 288 },
-          { x: 112, y1: 96, y2: 288 },
-          { x: 142, y1: 96, y2: 244 },
-          { x: 158, y1: 196, y2: 288 },
-          { x: 194, y1: 144, y2: 288 },
-          { x: 216, y1: 64, y2: 244 }
+          { x: 18, y1: 48, y2: 288 },
+          { x: 370, y1: 48, y2: 288 },
+          { x: 64, y1: 48, y2: 144 },
+          { x: 88, y1: 96, y2: 240 },
+          { x: 138, y1: 48, y2: 192 },
+          { x: 180, y1: 96, y2: 288 },
+          { x: 234, y1: 48, y2: 144 },
+          { x: 270, y1: 96, y2: 240 },
+          { x: 308, y1: 48, y2: 192 },
+          { x: 340, y1: 96, y2: 288 }
         ],
         burgers: [
-          { col: 0, x: 26, y: 64, type: 'bun_top' },
-          { col: 0, x: 26, y: 96, type: 'lettuce' },
-          { col: 0, x: 26, y: 144, type: 'cheese' },
-          { col: 0, x: 26, y: 196, type: 'patty' },
-          { col: 0, x: 26, y: 244, type: 'bun_bottom' },
-
-          { col: 1, x: 80, y: 64, type: 'bun_top' },
-          { col: 1, x: 80, y: 96, type: 'tomato' },
-          { col: 1, x: 80, y: 144, type: 'cheese' },
-          { col: 1, x: 80, y: 196, type: 'patty' },
-          { col: 1, x: 80, y: 244, type: 'bun_bottom' },
-
-          { col: 2, x: 134, y: 64, type: 'bun_top' },
-          { col: 2, x: 134, y: 96, type: 'cheese' },
-          { col: 2, x: 134, y: 144, type: 'lettuce' },
-          { col: 2, x: 134, y: 196, type: 'patty' },
-          { col: 2, x: 134, y: 244, type: 'bun_bottom' },
-
-          { col: 3, x: 186, y: 64, type: 'bun_top' },
-          { col: 3, x: 186, y: 96, type: 'tomato' },
-          { col: 3, x: 186, y: 144, type: 'cheese' },
-          { col: 3, x: 186, y: 196, type: 'patty' },
-          { col: 3, x: 186, y: 244, type: 'bun_bottom' }
+          { col: 0, x: 34, y: 48, type: 'bun_top' },
+          { col: 0, x: 34, y: 96, type: 'lettuce' },
+          { col: 0, x: 34, y: 144, type: 'cheese' },
+          { col: 0, x: 34, y: 192, type: 'patty' },
+          { col: 0, x: 34, y: 240, type: 'bun_bottom' },
+          { col: 1, x: 136, y: 48, type: 'bun_top' },
+          { col: 1, x: 136, y: 96, type: 'tomato' },
+          { col: 1, x: 136, y: 144, type: 'patty' },
+          { col: 1, x: 136, y: 192, type: 'bun_bottom' },
+          { col: 2, x: 238, y: 48, type: 'bun_top' },
+          { col: 2, x: 238, y: 96, type: 'lettuce' },
+          { col: 2, x: 238, y: 144, type: 'cheese' },
+          { col: 2, x: 238, y: 192, type: 'patty' },
+          { col: 2, x: 238, y: 240, type: 'bun_bottom' },
+          { col: 3, x: 338, y: 48, type: 'bun_top' },
+          { col: 3, x: 338, y: 96, type: 'tomato' },
+          { col: 3, x: 338, y: 144, type: 'patty' },
+          { col: 3, x: 338, y: 192, type: 'bun_bottom' }
         ],
         plates: [
-          { x: 24, y: 288 },
-          { x: 78, y: 288 },
-          { x: 132, y: 288 },
-          { x: 186, y: 288 }
+          { x: 32, y: 288 },
+          { x: 134, y: 288 },
+          { x: 236, y: 288 },
+          { x: 336, y: 288 }
         ],
-        playerStart: { x: 112, y: 288 },
+        playerStart: { x: 195, y: 288 },
         enemies: [
-          { type: 'hotdog', x: 112, y: 32 },
-          { type: 'pickle', x: 26, y: 96 },
-          { type: 'pickle', x: 186, y: 96 },
-          { type: 'egg', x: 36, y: 64 }
+          { type: 'hotdog', x: 34, y: 48 },
+          { type: 'hotdog', x: 338, y: 48 },
+          { type: 'pickle', x: 136, y: 48 },
+          { type: 'egg', x: 238, y: 48 }
+        ],
+        enemySpeed: 1.08
+      },
+
+      // ==========================================
+      // STAGE 10: LA HELADERÍA BAJO CERO (Wide Screen: 370px)
+      // ==========================================
+      {
+        stageNumber: 10,
+        name: 'LA HELADERÍA BAJO CERO',
+        width: 370,
+        bonusSpots: [
+          { x: 40, y: 96 },
+          { x: 140, y: 144 },
+          { x: 230, y: 96 },
+          { x: 324, y: 144 }
+        ],
+        floors: [
+          { y: 48, x1: 16, x2: 96 },
+          { y: 48, x1: 116, x2: 250 },
+          { y: 48, x1: 270, x2: 354 },
+          { y: 96, x1: 16, x2: 136 },
+          { y: 96, x1: 156, x2: 280 },
+          { y: 96, x1: 298, x2: 354 },
+          { y: 144, x1: 16, x2: 88 },
+          { y: 144, x1: 108, x2: 208 },
+          { y: 144, x1: 228, x2: 324 },
+          { y: 144, x1: 338, x2: 354 },
+          { y: 192, x1: 16, x2: 130 },
+          { y: 192, x1: 150, x2: 260 },
+          { y: 192, x1: 280, x2: 354 },
+          { y: 240, x1: 16, x2: 100 },
+          { y: 240, x1: 120, x2: 236 },
+          { y: 240, x1: 256, x2: 354 },
+          { y: 288, x1: 12, x2: 358 }
+        ],
+        ladders: [
+          { x: 18, y1: 48, y2: 288 },
+          { x: 350, y1: 48, y2: 288 },
+          { x: 56, y1: 48, y2: 144 },
+          { x: 80, y1: 96, y2: 240 },
+          { x: 124, y1: 48, y2: 192 },
+          { x: 168, y1: 96, y2: 288 },
+          { x: 214, y1: 48, y2: 144 },
+          { x: 246, y1: 96, y2: 240 },
+          { x: 282, y1: 48, y2: 192 },
+          { x: 316, y1: 96, y2: 288 }
+        ],
+        burgers: [
+          { col: 0, x: 30, y: 48, type: 'bun_top' },
+          { col: 0, x: 30, y: 96, type: 'lettuce' },
+          { col: 0, x: 30, y: 144, type: 'patty' },
+          { col: 0, x: 30, y: 192, type: 'bun_bottom' },
+          { col: 1, x: 124, y: 48, type: 'bun_top' },
+          { col: 1, x: 124, y: 96, type: 'cheese' },
+          { col: 1, x: 124, y: 144, type: 'tomato' },
+          { col: 1, x: 124, y: 192, type: 'patty' },
+          { col: 1, x: 124, y: 240, type: 'bun_bottom' },
+          { col: 2, x: 220, y: 48, type: 'bun_top' },
+          { col: 2, x: 220, y: 96, type: 'lettuce' },
+          { col: 2, x: 220, y: 144, type: 'patty' },
+          { col: 2, x: 220, y: 192, type: 'bun_bottom' },
+          { col: 3, x: 312, y: 48, type: 'bun_top' },
+          { col: 3, x: 312, y: 96, type: 'cheese' },
+          { col: 3, x: 312, y: 144, type: 'tomato' },
+          { col: 3, x: 312, y: 192, type: 'patty' },
+          { col: 3, x: 312, y: 240, type: 'bun_bottom' }
+        ],
+        plates: [
+          { x: 28, y: 288 },
+          { x: 122, y: 288 },
+          { x: 218, y: 288 },
+          { x: 310, y: 288 }
+        ],
+        playerStart: { x: 185, y: 288 },
+        enemies: [
+          { type: 'hotdog', x: 30, y: 48 },
+          { type: 'hotdog', x: 312, y: 48 },
+          { type: 'pickle', x: 124, y: 48 },
+          { type: 'egg', x: 220, y: 48 }
         ],
         enemySpeed: 1.12
       },
 
       // ==========================================
-      // STAGE 10: El Pingüino Glacial (Silueta de Pingüino Polar)
+      // STAGE 11: LA PANADERÍA CRUJIENTE (Wide Screen: 380px)
       // ==========================================
       {
-        stageNumber: 10,
-        name: 'LA HELADERÍA BAJO CERO',
-        background: 'bg_stage_10',
+        stageNumber: 11,
+        name: 'LA PANADERÍA CRUJIENTE',
+        width: 380,
         bonusSpots: [
-          { x: 26, y: 144 },  // Alita izquierda
-          { x: 186, y: 144 }, // Alita derecha
-          { x: 112, y: 32 },  // Pompón polar
-          { x: 112, y: 144 }  // Bufanda roja (Vida Extra ⭐⭐⭐)
+          { x: 38, y: 96 },
+          { x: 142, y: 144 },
+          { x: 238, y: 96 },
+          { x: 334, y: 144 }
         ],
         floors: [
-          // Y = 32: Pompón del gorro polar
-          { y: 32, x1: 106, x2: 134 },
-          // Y = 64: Gorro de lana
-          { y: 64, x1: 18, x2: 62 },
-          { y: 64, x1: 80, x2: 160 },
-          { y: 64, x1: 178, x2: 222 },
-          // Y = 96: Rostro y crestas
-          { y: 96, x1: 18, x2: 62 },
-          { y: 96, x1: 72, x2: 168 },
-          { y: 96, x1: 178, x2: 222 },
-          // Y = 144: Bufanda roja y alitas
-          { y: 144, x1: 14, x2: 56 },
-          { y: 144, x1: 74, x2: 166 },
-          { y: 144, x1: 184, x2: 226 },
-          // Y = 196: Pancita blanca esponjosa
-          { y: 196, x1: 18, x2: 62 },
-          { y: 196, x1: 68, x2: 172 },
-          { y: 196, x1: 178, x2: 222 },
-          // Y = 244: Patitas palmeadas naranjas
-          { y: 244, x1: 20, x2: 64 },
-          { y: 244, x1: 72, x2: 114 },
-          { y: 244, x1: 126, x2: 168 },
-          { y: 244, x1: 176, x2: 220 },
-          // Y = 288: Témpano glacial
-          { y: 288, x1: 12, x2: 228 }
+          { y: 48, x1: 16, x2: 108 },
+          { y: 48, x1: 128, x2: 252 },
+          { y: 48, x1: 272, x2: 364 },
+          { y: 96, x1: 16, x2: 140 },
+          { y: 96, x1: 160, x2: 284 },
+          { y: 96, x1: 304, x2: 364 },
+          { y: 144, x1: 16, x2: 92 },
+          { y: 144, x1: 112, x2: 214 },
+          { y: 144, x1: 234, x2: 330 },
+          { y: 144, x1: 344, x2: 364 },
+          { y: 192, x1: 16, x2: 136 },
+          { y: 192, x1: 156, x2: 268 },
+          { y: 192, x1: 288, x2: 364 },
+          { y: 240, x1: 16, x2: 98 },
+          { y: 240, x1: 118, x2: 230 },
+          { y: 240, x1: 250, x2: 364 },
+          { y: 288, x1: 12, x2: 368 }
         ],
         ladders: [
-          { x: 112, y1: 32, y2: 96 },
-          { x: 78, y1: 64, y2: 196 },
-          { x: 146, y1: 64, y2: 196 },
-          { x: 24, y1: 64, y2: 244 },
-          { x: 46, y1: 144, y2: 288 },
-          { x: 96, y1: 96, y2: 244 },
-          { x: 82, y1: 196, y2: 288 },
-          { x: 112, y1: 96, y2: 288 },
-          { x: 144, y1: 96, y2: 244 },
-          { x: 158, y1: 196, y2: 288 },
-          { x: 194, y1: 144, y2: 288 },
-          { x: 216, y1: 64, y2: 244 }
+          { x: 18, y1: 48, y2: 288 },
+          { x: 360, y1: 48, y2: 288 },
+          { x: 60, y1: 48, y2: 144 },
+          { x: 86, y1: 96, y2: 240 },
+          { x: 130, y1: 48, y2: 192 },
+          { x: 172, y1: 96, y2: 288 },
+          { x: 224, y1: 48, y2: 144 },
+          { x: 256, y1: 96, y2: 240 },
+          { x: 288, y1: 48, y2: 192 },
+          { x: 324, y1: 96, y2: 288 }
         ],
         burgers: [
-          { col: 0, x: 26, y: 64, type: 'bun_top' },
-          { col: 0, x: 26, y: 96, type: 'lettuce' },
-          { col: 0, x: 26, y: 144, type: 'cheese' },
-          { col: 0, x: 26, y: 196, type: 'patty' },
-          { col: 0, x: 26, y: 244, type: 'bun_bottom' },
-
-          { col: 1, x: 80, y: 64, type: 'bun_top' },
-          { col: 1, x: 80, y: 96, type: 'tomato' },
-          { col: 1, x: 80, y: 144, type: 'cheese' },
-          { col: 1, x: 80, y: 196, type: 'patty' },
-          { col: 1, x: 80, y: 244, type: 'bun_bottom' },
-
-          { col: 2, x: 134, y: 64, type: 'bun_top' },
-          { col: 2, x: 134, y: 96, type: 'cheese' },
-          { col: 2, x: 134, y: 144, type: 'lettuce' },
-          { col: 2, x: 134, y: 196, type: 'patty' },
-          { col: 2, x: 134, y: 244, type: 'bun_bottom' },
-
-          { col: 3, x: 186, y: 64, type: 'bun_top' },
-          { col: 3, x: 186, y: 96, type: 'tomato' },
-          { col: 3, x: 186, y: 144, type: 'cheese' },
-          { col: 3, x: 186, y: 196, type: 'patty' },
-          { col: 3, x: 186, y: 244, type: 'bun_bottom' }
+          { col: 0, x: 32, y: 48, type: 'bun_top' },
+          { col: 0, x: 32, y: 96, type: 'lettuce' },
+          { col: 0, x: 32, y: 144, type: 'cheese' },
+          { col: 0, x: 32, y: 192, type: 'patty' },
+          { col: 0, x: 32, y: 240, type: 'bun_bottom' },
+          { col: 1, x: 130, y: 48, type: 'bun_top' },
+          { col: 1, x: 130, y: 96, type: 'tomato' },
+          { col: 1, x: 130, y: 144, type: 'patty' },
+          { col: 1, x: 130, y: 192, type: 'bun_bottom' },
+          { col: 2, x: 228, y: 48, type: 'bun_top' },
+          { col: 2, x: 228, y: 96, type: 'lettuce' },
+          { col: 2, x: 228, y: 144, type: 'cheese' },
+          { col: 2, x: 228, y: 192, type: 'patty' },
+          { col: 2, x: 228, y: 240, type: 'bun_bottom' },
+          { col: 3, x: 326, y: 48, type: 'bun_top' },
+          { col: 3, x: 326, y: 96, type: 'tomato' },
+          { col: 3, x: 326, y: 144, type: 'patty' },
+          { col: 3, x: 326, y: 192, type: 'bun_bottom' }
         ],
         plates: [
-          { x: 24, y: 288 },
-          { x: 78, y: 288 },
-          { x: 132, y: 288 },
-          { x: 186, y: 288 }
+          { x: 30, y: 288 },
+          { x: 128, y: 288 },
+          { x: 226, y: 288 },
+          { x: 324, y: 288 }
         ],
-        playerStart: { x: 112, y: 288 },
+        playerStart: { x: 190, y: 288 },
         enemies: [
-          { type: 'hotdog', x: 112, y: 32 },
-          { type: 'pickle', x: 36, y: 64 },
-          { type: 'pickle', x: 198, y: 64 },
-          { type: 'egg', x: 112, y: 96 }
+          { type: 'hotdog', x: 32, y: 48 },
+          { type: 'hotdog', x: 326, y: 48 },
+          { type: 'pickle', x: 130, y: 48 },
+          { type: 'egg', x: 228, y: 48 }
         ],
         enemySpeed: 1.15
       },
 
       // ==========================================
-      // STAGE 11: La Tostadora Mecánica (Silueta de Tostadora Kawaii)
+      // STAGE 12: EL WOK DEL PANDA GOURMET (Wide Screen: 400px)
       // ==========================================
       {
-        stageNumber: 11,
-        name: 'LA PANADERÍA CRUJIENTE',
-        background: 'bg_stage_11',
+        stageNumber: 12,
+        name: 'EL WOK DEL PANDA GOURMET',
+        width: 400,
         bonusSpots: [
-          { x: 78, y: 32 },   // Tostada izquierda con mantequilla
-          { x: 160, y: 32 },  // Tostada derecha con mantequilla
-          { x: 218, y: 96 },  // Palanca lateral
-          { x: 112, y: 196 }  // Dial de temperatura (Vida Extra ⭐⭐⭐)
+          { x: 44, y: 96 },
+          { x: 130, y: 144 },
+          { x: 218, y: 96 },
+          { x: 306, y: 144 }
         ],
         floors: [
-          // Y = 32: Doble tostada emergente
-          { y: 32, x1: 52, x2: 104 },
-          { y: 32, x1: 136, x2: 188 },
-          // Y = 64: Mantequilla & ranuras
-          { y: 64, x1: 20, x2: 64 },
-          { y: 64, x1: 56, x2: 100 },
-          { y: 64, x1: 140, x2: 184 },
-          { y: 64, x1: 176, x2: 234 },
-          // Y = 96: Tapa cromada y palanca
-          { y: 96, x1: 20, x2: 64 },
-          { y: 96, x1: 74, x2: 166 },
-          { y: 96, x1: 176, x2: 234 },
-          // Y = 144: Cara kawaii y laterales
-          { y: 144, x1: 18, x2: 60 },
-          { y: 144, x1: 70, x2: 114 },
-          { y: 144, x1: 126, x2: 170 },
-          { y: 144, x1: 180, x2: 222 },
-          // Y = 196: Dial giratorio y resistencia
-          { y: 196, x1: 18, x2: 62 },
-          { y: 196, x1: 68, x2: 172 },
-          { y: 196, x1: 178, x2: 222 },
-          // Y = 244: Patas de goma antideslizantes
-          { y: 244, x1: 20, x2: 64 },
-          { y: 244, x1: 74, x2: 114 },
-          { y: 244, x1: 126, x2: 166 },
-          { y: 244, x1: 176, x2: 220 },
-          // Y = 288: Encimera de cocina
-          { y: 288, x1: 12, x2: 228 }
+          { y: 48, x1: 16, x2: 90 },
+          { y: 48, x1: 108, x2: 180 },
+          { y: 48, x1: 198, x2: 290 },
+          { y: 48, x1: 308, x2: 384 },
+          { y: 96, x1: 16, x2: 124 },
+          { y: 96, x1: 144, x2: 244 },
+          { y: 96, x1: 264, x2: 384 },
+          { y: 144, x1: 16, x2: 96 },
+          { y: 144, x1: 116, x2: 214 },
+          { y: 144, x1: 234, x2: 330 },
+          { y: 144, x1: 348, x2: 384 },
+          { y: 192, x1: 16, x2: 140 },
+          { y: 192, x1: 160, x2: 270 },
+          { y: 192, x1: 290, x2: 384 },
+          { y: 240, x1: 16, x2: 100 },
+          { y: 240, x1: 120, x2: 234 },
+          { y: 240, x1: 254, x2: 384 },
+          { y: 288, x1: 12, x2: 388 }
         ],
         ladders: [
-          { x: 78, y1: 32, y2: 96 },
-          { x: 162, y1: 32, y2: 96 },
-          { x: 24, y1: 64, y2: 244 },
-          { x: 46, y1: 144, y2: 288 },
-          { x: 96, y1: 96, y2: 244 },
-          { x: 82, y1: 196, y2: 288 },
-          { x: 112, y1: 96, y2: 288 },
-          { x: 144, y1: 96, y2: 244 },
-          { x: 158, y1: 196, y2: 288 },
-          { x: 194, y1: 144, y2: 288 },
-          { x: 218, y1: 64, y2: 244 }
+          { x: 18, y1: 48, y2: 288 },
+          { x: 380, y1: 48, y2: 288 },
+          { x: 54, y1: 48, y2: 144 },
+          { x: 78, y1: 96, y2: 240 },
+          { x: 118, y1: 48, y2: 192 },
+          { x: 164, y1: 96, y2: 288 },
+          { x: 208, y1: 48, y2: 144 },
+          { x: 240, y1: 96, y2: 240 },
+          { x: 276, y1: 48, y2: 192 },
+          { x: 314, y1: 96, y2: 288 },
+          { x: 348, y1: 48, y2: 192 }
         ],
         burgers: [
-          { col: 0, x: 26, y: 64, type: 'bun_top' },
-          { col: 0, x: 26, y: 96, type: 'lettuce' },
-          { col: 0, x: 26, y: 144, type: 'cheese' },
-          { col: 0, x: 26, y: 196, type: 'patty' },
-          { col: 0, x: 26, y: 244, type: 'bun_bottom' },
-
-          { col: 1, x: 80, y: 32, type: 'bun_top' },
-          { col: 1, x: 80, y: 96, type: 'tomato' },
-          { col: 1, x: 80, y: 144, type: 'cheese' },
-          { col: 1, x: 80, y: 196, type: 'patty' },
-          { col: 1, x: 80, y: 244, type: 'bun_bottom' },
-
-          { col: 2, x: 134, y: 32, type: 'bun_top' },
-          { col: 2, x: 134, y: 96, type: 'cheese' },
-          { col: 2, x: 134, y: 144, type: 'lettuce' },
-          { col: 2, x: 134, y: 196, type: 'patty' },
-          { col: 2, x: 134, y: 244, type: 'bun_bottom' },
-
-          { col: 3, x: 186, y: 64, type: 'bun_top' },
-          { col: 3, x: 186, y: 96, type: 'tomato' },
-          { col: 3, x: 186, y: 144, type: 'cheese' },
-          { col: 3, x: 186, y: 196, type: 'patty' },
-          { col: 3, x: 186, y: 244, type: 'bun_bottom' }
+          { col: 0, x: 28, y: 48, type: 'bun_top' },
+          { col: 0, x: 28, y: 96, type: 'lettuce' },
+          { col: 0, x: 28, y: 144, type: 'patty' },
+          { col: 0, x: 28, y: 192, type: 'bun_bottom' },
+          { col: 1, x: 114, y: 48, type: 'bun_top' },
+          { col: 1, x: 114, y: 96, type: 'cheese' },
+          { col: 1, x: 114, y: 144, type: 'tomato' },
+          { col: 1, x: 114, y: 192, type: 'patty' },
+          { col: 1, x: 114, y: 240, type: 'bun_bottom' },
+          { col: 2, x: 204, y: 48, type: 'bun_top' },
+          { col: 2, x: 204, y: 96, type: 'lettuce' },
+          { col: 2, x: 204, y: 144, type: 'cheese' },
+          { col: 2, x: 204, y: 192, type: 'patty' },
+          { col: 2, x: 204, y: 240, type: 'bun_bottom' },
+          { col: 3, x: 288, y: 48, type: 'bun_top' },
+          { col: 3, x: 288, y: 96, type: 'tomato' },
+          { col: 3, x: 288, y: 144, type: 'patty' },
+          { col: 3, x: 288, y: 192, type: 'bun_bottom' },
+          { col: 4, x: 356, y: 48, type: 'bun_top' },
+          { col: 4, x: 356, y: 96, type: 'lettuce' },
+          { col: 4, x: 356, y: 144, type: 'cheese' },
+          { col: 4, x: 356, y: 192, type: 'patty' },
+          { col: 4, x: 356, y: 240, type: 'bun_bottom' }
         ],
         plates: [
-          { x: 24, y: 288 },
-          { x: 78, y: 288 },
-          { x: 132, y: 288 },
-          { x: 186, y: 288 }
+          { x: 26, y: 288 },
+          { x: 112, y: 288 },
+          { x: 202, y: 288 },
+          { x: 286, y: 288 },
+          { x: 354, y: 288 }
         ],
-        playerStart: { x: 112, y: 288 },
+        playerStart: { x: 200, y: 288 },
         enemies: [
-          { type: 'hotdog', x: 72, y: 32 },
-          { type: 'pickle', x: 160, y: 32 },
-          { type: 'pickle', x: 36, y: 64 },
-          { type: 'egg', x: 200, y: 64 }
+          { type: 'hotdog', x: 28, y: 48 },
+          { type: 'hotdog', x: 356, y: 48 },
+          { type: 'pickle', x: 114, y: 48 },
+          { type: 'egg', x: 288, y: 48 }
         ],
         enemySpeed: 1.18
       },
 
-            // ==========================================
-      // STAGE 12: EL OSO PANDA GOLOSO
+      // ==========================================
+      // STAGE 13: EL COMEDOR CÓSMICO (Wide Screen: 390px)
       // ==========================================
       {
-            stageNumber: 12,
-            name: "EL WOK DEL PANDA GOURMET",
-            background: "bg_stage_12",
-            bonusSpots: [
-                  {
-                        x: 40,
-                        y: 28
-                  },
-                  {
-                        x: 196,
-                        y: 36
-                  },
-                  {
-                        x: 196,
-                        y: 192
-                  },
-                  {
-                        x: 100,
-                        y: 120
-                  }
-            ],
-            floors: [
-                  {
-                        y: 28,
-                        x1: 16,
-                        x2: 66,
-                        label: "Oreja Izq Cúspide"
-                  },
-                  {
-                        y: 36,
-                        x1: 174,
-                        x2: 222,
-                        label: "Oreja Der Cúspide"
-                  },
-                  {
-                        y: 68,
-                        x1: 70,
-                        x2: 164,
-                        label: "Frente Panda"
-                  },
-                  {
-                        y: 80,
-                        x1: 174,
-                        x2: 224,
-                        label: "Caña Bambú Alta"
-                  },
-                  {
-                        y: 108,
-                        x1: 16,
-                        x2: 66,
-                        label: "Terraza Bambú Izq"
-                  },
-                  {
-                        y: 120,
-                        x1: 68,
-                        x2: 162,
-                        label: "Pecho y Brote Bambú Especial"
-                  },
-                  {
-                        y: 132,
-                        x1: 172,
-                        x2: 222,
-                        label: "Brazo Panda Bambú"
-                  },
-                  {
-                        y: 164,
-                        x1: 18,
-                        x2: 66,
-                        label: "Repisa Flanco Izq"
-                  },
-                  {
-                        y: 178,
-                        x1: 70,
-                        x2: 160,
-                        label: "Barriguita Panda"
-                  },
-                  {
-                        y: 192,
-                        x1: 172,
-                        x2: 224,
-                        label: "Caña Bambú Media"
-                  },
-                  {
-                        y: 224,
-                        x1: 16,
-                        x2: 66,
-                        label: "Pata Negra Izq"
-                  },
-                  {
-                        y: 236,
-                        x1: 68,
-                        x2: 114,
-                        label: "Almohadilla Baja"
-                  },
-                  {
-                        y: 248,
-                        x1: 124,
-                        x2: 224,
-                        label: "Pata Negra Der"
-                  },
-                  {
-                        y: 256,
-                        x1: 16,
-                        x2: 66,
-                        label: "Escalón Pata Izq"
-                  },
-                  {
-                        y: 264,
-                        x1: 68,
-                        x2: 114,
-                        label: "Escalón Almohadilla"
-                  },
-                  {
-                        y: 268,
-                        x1: 124,
-                        x2: 160,
-                        label: "Escalón Pata Der"
-                  },
-                  {
-                        y: 288,
-                        x1: 12,
-                        x2: 228,
-                        label: "Suelo Bosque"
-                  }
-            ],
-            ladders: [
-                  {
-                        x: 40,
-                        y1: 28,
-                        y2: 108
-                  },
-                  {
-                        x: 196,
-                        y1: 36,
-                        y2: 132
-                  },
-                  {
-                        x: 96,
-                        y1: 68,
-                        y2: 178
-                  },
-                  {
-                        x: 138,
-                        y1: 68,
-                        y2: 178
-                  },
-                  {
-                        x: 24,
-                        y1: 108,
-                        y2: 256
-                  },
-                  {
-                        x: 46,
-                        y1: 164,
-                        y2: 288
-                  },
-                  {
-                        x: 96,
-                        y1: 178,
-                        y2: 264
-                  },
-                  {
-                        x: 80,
-                        y1: 236,
-                        y2: 288
-                  },
-                  {
-                        x: 140,
-                        y1: 178,
-                        y2: 288
-                  },
-                  {
-                        x: 198,
-                        y1: 132,
-                        y2: 248
-                  },
-                  {
-                        x: 216,
-                        y1: 80,
-                        y2: 288
-                  }
-            ],
-            burgers: [
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 28,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 108,
-                        type: "lettuce"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 164,
-                        type: "cheese"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 224,
-                        type: "patty"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 256,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 68,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 120,
-                        type: "tomato"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 178,
-                        type: "cheese"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 236,
-                        type: "patty"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 264,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 68,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 120,
-                        type: "cheese"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 178,
-                        type: "lettuce"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 248,
-                        type: "patty"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 268,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 36,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 80,
-                        type: "tomato"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 132,
-                        type: "cheese"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 192,
-                        type: "patty"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 248,
-                        type: "bun_bottom"
-                  }
-            ],
-            plates: [
-                  {
-                        x: 24,
-                        y: 288
-                  },
-                  {
-                        x: 78,
-                        y: 288
-                  },
-                  {
-                        x: 132,
-                        y: 288
-                  },
-                  {
-                        x: 186,
-                        y: 288
-                  }
-            ],
-            playerStart: { x: 112, y: 288 },
-            enemies: [
-                  {
-                        type: "hotdog",
-                        x: 96,
-                        y: 68
-                  },
-                  {
-                        type: "pickle",
-                        x: 26,
-                        y: 108
-                  },
-                  {
-                        type: "pickle",
-                        x: 190,
-                        y: 36
-                  },
-                  {
-                        type: "egg",
-                        x: 36,
-                        y: 28
-                  }
-            ],
-            enemySpeed: 1.2
+        stageNumber: 13,
+        name: 'EL COMEDOR CÓSMICO',
+        width: 390,
+        bonusSpots: [
+          { x: 42, y: 96 },
+          { x: 144, y: 144 },
+          { x: 244, y: 96 },
+          { x: 342, y: 144 }
+        ],
+        floors: [
+          { y: 48, x1: 16, x2: 110 },
+          { y: 48, x1: 130, x2: 260 },
+          { y: 48, x1: 280, x2: 374 },
+          { y: 96, x1: 16, x2: 144 },
+          { y: 96, x1: 164, x2: 290 },
+          { y: 96, x1: 310, x2: 374 },
+          { y: 144, x1: 16, x2: 94 },
+          { y: 144, x1: 114, x2: 220 },
+          { y: 144, x1: 240, x2: 340 },
+          { y: 144, x1: 354, x2: 374 },
+          { y: 192, x1: 16, x2: 140 },
+          { y: 192, x1: 160, x2: 274 },
+          { y: 192, x1: 294, x2: 374 },
+          { y: 240, x1: 16, x2: 102 },
+          { y: 240, x1: 122, x2: 240 },
+          { y: 240, x1: 260, x2: 374 },
+          { y: 288, x1: 12, x2: 378 }
+        ],
+        ladders: [
+          { x: 18, y1: 48, y2: 288 },
+          { x: 370, y1: 48, y2: 288 },
+          { x: 62, y1: 48, y2: 144 },
+          { x: 86, y1: 96, y2: 240 },
+          { x: 136, y1: 48, y2: 192 },
+          { x: 176, y1: 96, y2: 288 },
+          { x: 230, y1: 48, y2: 144 },
+          { x: 264, y1: 96, y2: 240 },
+          { x: 300, y1: 48, y2: 192 },
+          { x: 336, y1: 96, y2: 288 }
+        ],
+        burgers: [
+          { col: 0, x: 32, y: 48, type: 'bun_top' },
+          { col: 0, x: 32, y: 96, type: 'lettuce' },
+          { col: 0, x: 32, y: 144, type: 'cheese' },
+          { col: 0, x: 32, y: 192, type: 'patty' },
+          { col: 0, x: 32, y: 240, type: 'bun_bottom' },
+          { col: 1, x: 134, y: 48, type: 'bun_top' },
+          { col: 1, x: 134, y: 96, type: 'tomato' },
+          { col: 1, x: 134, y: 144, type: 'patty' },
+          { col: 1, x: 134, y: 192, type: 'bun_bottom' },
+          { col: 2, x: 234, y: 48, type: 'bun_top' },
+          { col: 2, x: 234, y: 96, type: 'lettuce' },
+          { col: 2, x: 234, y: 144, type: 'cheese' },
+          { col: 2, x: 234, y: 192, type: 'patty' },
+          { col: 2, x: 234, y: 240, type: 'bun_bottom' },
+          { col: 3, x: 336, y: 48, type: 'bun_top' },
+          { col: 3, x: 336, y: 96, type: 'tomato' },
+          { col: 3, x: 336, y: 144, type: 'patty' },
+          { col: 3, x: 336, y: 192, type: 'bun_bottom' }
+        ],
+        plates: [
+          { x: 30, y: 288 },
+          { x: 132, y: 288 },
+          { x: 232, y: 288 },
+          { x: 334, y: 288 }
+        ],
+        playerStart: { x: 195, y: 288 },
+        enemies: [
+          { type: 'hotdog', x: 32, y: 48 },
+          { type: 'hotdog', x: 336, y: 48 },
+          { type: 'pickle', x: 134, y: 48 },
+          { type: 'egg', x: 234, y: 48 },
+          { type: 'egg', x: 176, y: 96 }
+        ],
+        enemySpeed: 1.2
       },
 
       // ==========================================
-      // STAGE 13: EL PLATILLO VOLADOR
+      // STAGE 14: EL MESÓN JURÁSICO DE CARNES (Wide Screen: 400px)
       // ==========================================
       {
-            stageNumber: 13,
-            name: "EL COMEDOR CÓSMICO",
-            background: "bg_stage_13",
-            bonusSpots: [
-                  {
-                        x: 26,
-                        y: 124
-                  },
-                  {
-                        x: 186,
-                        y: 124
-                  },
-                  {
-                        x: 112,
-                        y: 28
-                  },
-                  {
-                        x: 112,
-                        y: 150
-                  }
-            ],
-            floors: [
-                  {
-                        y: 28,
-                        x1: 104,
-                        x2: 136,
-                        label: "Antena Transmisora"
-                  },
-                  {
-                        y: 56,
-                        x1: 70,
-                        x2: 170,
-                        label: "Cúpula Marciana"
-                  },
-                  {
-                        y: 88,
-                        x1: 16,
-                        x2: 66,
-                        label: "Ala Izq Alta"
-                  },
-                  {
-                        y: 88,
-                        x1: 174,
-                        x2: 224,
-                        label: "Ala Der Alta"
-                  },
-                  {
-                        y: 124,
-                        x1: 12,
-                        x2: 72,
-                        label: "Borde Neón Izq"
-                  },
-                  {
-                        y: 124,
-                        x1: 168,
-                        x2: 228,
-                        label: "Borde Neón Der"
-                  },
-                  {
-                        y: 150,
-                        x1: 68,
-                        x2: 172,
-                        label: "Núcleo Gravitatorio Especial"
-                  },
-                  {
-                        y: 182,
-                        x1: 16,
-                        x2: 68,
-                        label: "Propulsor Izq"
-                  },
-                  {
-                        y: 182,
-                        x1: 68,
-                        x2: 172,
-                        label: "Anillo Reactor Central"
-                  },
-                  {
-                        y: 182,
-                        x1: 172,
-                        x2: 224,
-                        label: "Propulsor Der"
-                  },
-                  {
-                        y: 222,
-                        x1: 16,
-                        x2: 62,
-                        label: "Pata Lunar Izq"
-                  },
-                  {
-                        y: 222,
-                        x1: 70,
-                        x2: 170,
-                        label: "Anillo de Abducción"
-                  },
-                  {
-                        y: 222,
-                        x1: 178,
-                        x2: 224,
-                        label: "Pata Lunar Der"
-                  },
-                  {
-                        y: 255,
-                        x1: 16,
-                        x2: 62,
-                        label: "Base Trípode Izq"
-                  },
-                  {
-                        y: 255,
-                        x1: 70,
-                        x2: 170,
-                        label: "Haz Conexión"
-                  },
-                  {
-                        y: 255,
-                        x1: 178,
-                        x2: 224,
-                        label: "Base Trípode Der"
-                  },
-                  {
-                        y: 288,
-                        x1: 12,
-                        x2: 228,
-                        label: "Superficie Lunar"
-                  }
-            ],
-            ladders: [
-                  {
-                        x: 112,
-                        y1: 28,
-                        y2: 56
-                  },
-                  {
-                        x: 96,
-                        y1: 56,
-                        y2: 150
-                  },
-                  {
-                        x: 144,
-                        y1: 56,
-                        y2: 150
-                  },
-                  {
-                        x: 24,
-                        y1: 88,
-                        y2: 222
-                  },
-                  {
-                        x: 46,
-                        y1: 124,
-                        y2: 288
-                  },
-                  {
-                        x: 112,
-                        y1: 150,
-                        y2: 288
-                  },
-                  {
-                        x: 194,
-                        y1: 124,
-                        y2: 288
-                  },
-                  {
-                        x: 216,
-                        y1: 88,
-                        y2: 222
-                  }
-            ],
-            burgers: [
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 88,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 124,
-                        type: "lettuce"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 182,
-                        type: "cheese"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 222,
-                        type: "patty"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 255,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 56,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 150,
-                        type: "tomato"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 182,
-                        type: "cheese"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 222,
-                        type: "patty"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 255,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 56,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 150,
-                        type: "cheese"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 182,
-                        type: "lettuce"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 222,
-                        type: "patty"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 255,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 88,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 124,
-                        type: "tomato"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 182,
-                        type: "cheese"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 222,
-                        type: "patty"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 255,
-                        type: "bun_bottom"
-                  }
-            ],
-            plates: [
-                  {
-                        x: 24,
-                        y: 288
-                  },
-                  {
-                        x: 78,
-                        y: 288
-                  },
-                  {
-                        x: 132,
-                        y: 288
-                  },
-                  {
-                        x: 186,
-                        y: 288
-                  }
-            ],
-            playerStart: { x: 112, y: 288 },
-            enemies: [
-                  {
-                        type: "hotdog",
-                        x: 112,
-                        y: 28
-                  },
-                  {
-                        type: "pickle",
-                        x: 36,
-                        y: 88
-                  },
-                  {
-                        type: "pickle",
-                        x: 198,
-                        y: 88
-                  },
-                  {
-                        type: "egg",
-                        x: 112,
-                        y: 56
-                  }
-            ],
-            enemySpeed: 1.22
+        stageNumber: 14,
+        name: 'EL MESÓN JURÁSICO DE CARNES',
+        width: 400,
+        bonusSpots: [
+          { x: 42, y: 96 },
+          { x: 128, y: 144 },
+          { x: 214, y: 96 },
+          { x: 302, y: 144 }
+        ],
+        floors: [
+          { y: 48, x1: 16, x2: 94 },
+          { y: 48, x1: 114, x2: 184 },
+          { y: 48, x1: 202, x2: 294 },
+          { y: 48, x1: 312, x2: 384 },
+          { y: 96, x1: 16, x2: 128 },
+          { y: 96, x1: 148, x2: 248 },
+          { y: 96, x1: 268, x2: 384 },
+          { y: 144, x1: 16, x2: 98 },
+          { y: 144, x1: 118, x2: 218 },
+          { y: 144, x1: 238, x2: 334 },
+          { y: 144, x1: 350, x2: 384 },
+          { y: 192, x1: 16, x2: 144 },
+          { y: 192, x1: 164, x2: 274 },
+          { y: 192, x1: 294, x2: 384 },
+          { y: 240, x1: 16, x2: 104 },
+          { y: 240, x1: 124, x2: 238 },
+          { y: 240, x1: 258, x2: 384 },
+          { y: 288, x1: 12, x2: 388 }
+        ],
+        ladders: [
+          { x: 18, y1: 48, y2: 288 },
+          { x: 380, y1: 48, y2: 288 },
+          { x: 58, y1: 48, y2: 144 },
+          { x: 82, y1: 96, y2: 240 },
+          { x: 122, y1: 48, y2: 192 },
+          { x: 168, y1: 96, y2: 288 },
+          { x: 212, y1: 48, y2: 144 },
+          { x: 244, y1: 96, y2: 240 },
+          { x: 280, y1: 48, y2: 192 },
+          { x: 318, y1: 96, y2: 288 },
+          { x: 352, y1: 48, y2: 192 }
+        ],
+        burgers: [
+          { col: 0, x: 28, y: 48, type: 'bun_top' },
+          { col: 0, x: 28, y: 96, type: 'lettuce' },
+          { col: 0, x: 28, y: 144, type: 'patty' },
+          { col: 0, x: 28, y: 192, type: 'bun_bottom' },
+          { col: 1, x: 118, y: 48, type: 'bun_top' },
+          { col: 1, x: 118, y: 96, type: 'cheese' },
+          { col: 1, x: 118, y: 144, type: 'tomato' },
+          { col: 1, x: 118, y: 192, type: 'patty' },
+          { col: 1, x: 118, y: 240, type: 'bun_bottom' },
+          { col: 2, x: 208, y: 48, type: 'bun_top' },
+          { col: 2, x: 208, y: 96, type: 'lettuce' },
+          { col: 2, x: 208, y: 144, type: 'cheese' },
+          { col: 2, x: 208, y: 192, type: 'patty' },
+          { col: 2, x: 208, y: 240, type: 'bun_bottom' },
+          { col: 3, x: 292, y: 48, type: 'bun_top' },
+          { col: 3, x: 292, y: 96, type: 'tomato' },
+          { col: 3, x: 292, y: 144, type: 'patty' },
+          { col: 3, x: 292, y: 192, type: 'bun_bottom' },
+          { col: 4, x: 358, y: 48, type: 'bun_top' },
+          { col: 4, x: 358, y: 96, type: 'lettuce' },
+          { col: 4, x: 358, y: 144, type: 'cheese' },
+          { col: 4, x: 358, y: 192, type: 'patty' },
+          { col: 4, x: 358, y: 240, type: 'bun_bottom' }
+        ],
+        plates: [
+          { x: 26, y: 288 },
+          { x: 116, y: 288 },
+          { x: 206, y: 288 },
+          { x: 290, y: 288 },
+          { x: 356, y: 288 }
+        ],
+        playerStart: { x: 200, y: 288 },
+        enemies: [
+          { type: 'hotdog', x: 28, y: 48 },
+          { type: 'hotdog', x: 358, y: 48 },
+          { type: 'pickle', x: 118, y: 48 },
+          { type: 'egg', x: 292, y: 48 },
+          { type: 'pickle', x: 208, y: 48 }
+        ],
+        enemySpeed: 1.22
       },
 
       // ==========================================
-      // STAGE 14: EL DINOSAURIO REX
+      // STAGE 15: EL BANQUETE IMPERIAL DEL CHEF (Wide Screen: 420px)
       // ==========================================
       {
-            stageNumber: 14,
-            name: "EL MESÓN JURÁSICO DE CARNES",
-            background: "bg_stage_14",
-            bonusSpots: [
-                  {
-                        x: 26,
-                        y: 96
-                  },
-                  {
-                        x: 186,
-                        y: 80
-                  },
-                  {
-                        x: 112,
-                        y: 28
-                  },
-                  {
-                        x: 100,
-                        y: 165
-                  }
-            ],
-            floors: [
-                  {
-                        y: 28,
-                        x1: 70,
-                        x2: 150,
-                        label: "Cresta Dorada"
-                  },
-                  {
-                        y: 52,
-                        x1: 70,
-                        x2: 195,
-                        label: "Cráneo y Ceja Rex"
-                  },
-                  {
-                        y: 80,
-                        x1: 125,
-                        x2: 218,
-                        label: "Mandíbula con Diente"
-                  },
-                  {
-                        y: 96,
-                        x1: 14,
-                        x2: 66,
-                        label: "Punta Cola Alta"
-                  },
-                  {
-                        y: 125,
-                        x1: 16,
-                        x2: 72,
-                        label: "Cola Media"
-                  },
-                  {
-                        y: 125,
-                        x1: 120,
-                        x2: 190,
-                        label: "Mandíbula Inferior"
-                  },
-                  {
-                        y: 154,
-                        x1: 145,
-                        x2: 215,
-                        label: "Bracitos Rex"
-                  },
-                  {
-                        y: 165,
-                        x1: 65,
-                        x2: 135,
-                        label: "Corazón de Rex Especial"
-                  },
-                  {
-                        y: 180,
-                        x1: 14,
-                        x2: 66,
-                        label: "Base Cola"
-                  },
-                  {
-                        y: 205,
-                        x1: 68,
-                        x2: 176,
-                        label: "Pancita Amarilla"
-                  },
-                  {
-                        y: 215,
-                        x1: 170,
-                        x2: 225,
-                        label: "Lomo"
-                  },
-                  {
-                        y: 248,
-                        x1: 16,
-                        x2: 66,
-                        label: "Pata Trasera Garra Izq"
-                  },
-                  {
-                        y: 248,
-                        x1: 115,
-                        x2: 225,
-                        label: "Pata Garra Delantera"
-                  },
-                  {
-                        y: 255,
-                        x1: 68,
-                        x2: 115,
-                        label: "Peana Central Rex"
-                  },
-                  {
-                        y: 268,
-                        x1: 16,
-                        x2: 66,
-                        label: "Escalón Pata Izq"
-                  },
-                  {
-                        y: 268,
-                        x1: 115,
-                        x2: 225,
-                        label: "Escalón Pata Der"
-                  },
-                  {
-                        y: 288,
-                        x1: 12,
-                        x2: 228,
-                        label: "Jungla Prehistórica"
-                  }
-            ],
-            ladders: [
-                  {
-                        x: 112,
-                        y1: 28,
-                        y2: 52
-                  },
-                  {
-                        x: 155,
-                        y1: 52,
-                        y2: 125
-                  },
-                  {
-                        x: 38,
-                        y1: 96,
-                        y2: 180
-                  },
-                  {
-                        x: 96,
-                        y1: 52,
-                        y2: 165
-                  },
-                  {
-                        x: 24,
-                        y1: 180,
-                        y2: 268
-                  },
-                  {
-                        x: 46,
-                        y1: 125,
-                        y2: 288
-                  },
-                  {
-                        x: 80,
-                        y1: 165,
-                        y2: 288
-                  },
-                  {
-                        x: 140,
-                        y1: 125,
-                        y2: 205
-                  },
-                  {
-                        x: 158,
-                        y1: 205,
-                        y2: 288
-                  },
-                  {
-                        x: 185,
-                        y1: 125,
-                        y2: 268
-                  }
-            ],
-            burgers: [
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 96,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 125,
-                        type: "lettuce"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 180,
-                        type: "cheese"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 248,
-                        type: "patty"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 268,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 28,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 52,
-                        type: "tomato"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 165,
-                        type: "cheese"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 205,
-                        type: "patty"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 255,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 52,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 80,
-                        type: "cheese"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 125,
-                        type: "lettuce"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 248,
-                        type: "patty"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 268,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 80,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 154,
-                        type: "tomato"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 215,
-                        type: "cheese"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 248,
-                        type: "patty"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 268,
-                        type: "bun_bottom"
-                  }
-            ],
-            plates: [
-                  {
-                        x: 24,
-                        y: 288
-                  },
-                  {
-                        x: 78,
-                        y: 288
-                  },
-                  {
-                        x: 132,
-                        y: 288
-                  },
-                  {
-                        x: 186,
-                        y: 288
-                  }
-            ],
-            playerStart: { x: 112, y: 288 },
-            enemies: [
-                  {
-                        type: "hotdog",
-                        x: 112,
-                        y: 28
-                  },
-                  {
-                        type: "pickle",
-                        x: 26,
-                        y: 96
-                  },
-                  {
-                        type: "pickle",
-                        x: 186,
-                        y: 80
-                  },
-                  {
-                        type: "egg",
-                        x: 134,
-                        y: 52
-                  }
-            ],
-            enemySpeed: 1.25
-      },
-
-      // ==========================================
-      // STAGE 15: LA CORONA REAL
-      // ==========================================
-      {
-            stageNumber: 15,
-            name: "EL BANQUETE IMPERIAL DEL CHEF",
-            background: "bg_stage_15",
-            bonusSpots: [
-                  {
-                        x: 32,
-                        y: 58
-                  },
-                  {
-                        x: 204,
-                        y: 58
-                  },
-                  {
-                        x: 112,
-                        y: 18
-                  },
-                  {
-                        x: 112,
-                        y: 168
-                  }
-            ],
-            floors: [
-                  {
-                        y: 18,
-                        x1: 104,
-                        x2: 136,
-                        label: "Gorro Chef Supremo"
-                  },
-                  {
-                        y: 38,
-                        x1: 70,
-                        x2: 104,
-                        label: "Aguja Real 2 (Zafiro)"
-                  },
-                  {
-                        y: 38,
-                        x1: 136,
-                        x2: 170,
-                        label: "Aguja Real 4 (Zafiro)"
-                  },
-                  {
-                        y: 58,
-                        x1: 16,
-                        x2: 56,
-                        label: "Aguja Real 1 (Rubí)"
-                  },
-                  {
-                        y: 58,
-                        x1: 184,
-                        x2: 224,
-                        label: "Aguja Real 5 (Rubí)"
-                  },
-                  {
-                        y: 92,
-                        x1: 24,
-                        x2: 216,
-                        label: "Diadema Enjoyada de la Corona"
-                  },
-                  {
-                        y: 134,
-                        x1: 16,
-                        x2: 66,
-                        label: "Terciopelo Púrpura Izq"
-                  },
-                  {
-                        y: 134,
-                        x1: 174,
-                        x2: 224,
-                        label: "Terciopelo Púrpura Der"
-                  },
-                  {
-                        y: 168,
-                        x1: 68,
-                        x2: 172,
-                        label: "Gran Diamante Imperial Especial"
-                  },
-                  {
-                        y: 175,
-                        x1: 16,
-                        x2: 66,
-                        label: "Balcón Lateral Izq"
-                  },
-                  {
-                        y: 175,
-                        x1: 174,
-                        x2: 224,
-                        label: "Balcón Lateral Der"
-                  },
-                  {
-                        y: 210,
-                        x1: 16,
-                        x2: 224,
-                        label: "Banda Imperial de Gemas"
-                  },
-                  {
-                        y: 250,
-                        x1: 20,
-                        x2: 220,
-                        label: "Pedestal de Oro Macizo"
-                  },
-                  {
-                        y: 288,
-                        x1: 12,
-                        x2: 228,
-                        label: "Gran Salón de Banquete"
-                  }
-            ],
-            ladders: [
-                  {
-                        x: 112,
-                        y1: 18,
-                        y2: 92
-                  },
-                  {
-                        x: 32,
-                        y1: 58,
-                        y2: 134
-                  },
-                  {
-                        x: 88,
-                        y1: 38,
-                        y2: 92
-                  },
-                  {
-                        x: 148,
-                        y1: 38,
-                        y2: 92
-                  },
-                  {
-                        x: 204,
-                        y1: 58,
-                        y2: 134
-                  },
-                  {
-                        x: 64,
-                        y1: 92,
-                        y2: 210
-                  },
-                  {
-                        x: 176,
-                        y1: 92,
-                        y2: 210
-                  },
-                  {
-                        x: 112,
-                        y1: 168,
-                        y2: 288
-                  },
-                  {
-                        x: 24,
-                        y1: 134,
-                        y2: 250
-                  },
-                  {
-                        x: 46,
-                        y1: 210,
-                        y2: 288
-                  },
-                  {
-                        x: 194,
-                        y1: 210,
-                        y2: 288
-                  },
-                  {
-                        x: 216,
-                        y1: 134,
-                        y2: 250
-                  }
-            ],
-            burgers: [
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 58,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 134,
-                        type: "lettuce"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 175,
-                        type: "cheese"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 210,
-                        type: "patty"
-                  },
-                  {
-                        col: 0,
-                        x: 26,
-                        y: 250,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 38,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 92,
-                        type: "tomato"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 168,
-                        type: "cheese"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 210,
-                        type: "patty"
-                  },
-                  {
-                        col: 1,
-                        x: 80,
-                        y: 250,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 38,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 92,
-                        type: "cheese"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 168,
-                        type: "lettuce"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 210,
-                        type: "patty"
-                  },
-                  {
-                        col: 2,
-                        x: 134,
-                        y: 250,
-                        type: "bun_bottom"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 58,
-                        type: "bun_top"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 134,
-                        type: "tomato"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 175,
-                        type: "cheese"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 210,
-                        type: "patty"
-                  },
-                  {
-                        col: 3,
-                        x: 186,
-                        y: 250,
-                        type: "bun_bottom"
-                  }
-            ],
-            plates: [
-                  {
-                        x: 24,
-                        y: 288
-                  },
-                  {
-                        x: 78,
-                        y: 288
-                  },
-                  {
-                        x: 132,
-                        y: 288
-                  },
-                  {
-                        x: 186,
-                        y: 288
-                  }
-            ],
-            playerStart: { x: 112, y: 288 },
-            enemies: [
-                  {
-                        type: "hotdog",
-                        x: 112,
-                        y: 18
-                  },
-                  {
-                        type: "pickle",
-                        x: 36,
-                        y: 58
-                  },
-                  {
-                        type: "pickle",
-                        x: 200,
-                        y: 58
-                  },
-                  {
-                        type: "egg",
-                        x: 88,
-                        y: 38
-                  }
-            ],
-            enemySpeed: 1.3
+        stageNumber: 15,
+        name: 'EL BANQUETE IMPERIAL DEL CHEF',
+        width: 420,
+        bonusSpots: [
+          { x: 44, y: 96 },
+          { x: 136, y: 144 },
+          { x: 228, y: 96 },
+          { x: 320, y: 144 }
+        ],
+        floors: [
+          { y: 48, x1: 16, x2: 98 },
+          { y: 48, x1: 118, x2: 196 },
+          { y: 48, x1: 214, x2: 306 },
+          { y: 48, x1: 324, x2: 404 },
+          { y: 96, x1: 16, x2: 136 },
+          { y: 96, x1: 156, x2: 264 },
+          { y: 96, x1: 284, x2: 404 },
+          { y: 144, x1: 16, x2: 104 },
+          { y: 144, x1: 124, x2: 230 },
+          { y: 144, x1: 250, x2: 350 },
+          { y: 144, x1: 368, x2: 404 },
+          { y: 192, x1: 16, x2: 152 },
+          { y: 192, x1: 172, x2: 290 },
+          { y: 192, x1: 310, x2: 404 },
+          { y: 240, x1: 16, x2: 110 },
+          { y: 240, x1: 130, x2: 252 },
+          { y: 240, x1: 272, x2: 404 },
+          { y: 288, x1: 12, x2: 408 }
+        ],
+        ladders: [
+          { x: 18, y1: 48, y2: 288 },
+          { x: 400, y1: 48, y2: 288 },
+          { x: 62, y1: 48, y2: 144 },
+          { x: 88, y1: 96, y2: 240 },
+          { x: 128, y1: 48, y2: 192 },
+          { x: 178, y1: 96, y2: 288 },
+          { x: 224, y1: 48, y2: 144 },
+          { x: 258, y1: 96, y2: 240 },
+          { x: 296, y1: 48, y2: 192 },
+          { x: 336, y1: 96, y2: 288 },
+          { x: 372, y1: 48, y2: 192 }
+        ],
+        burgers: [
+          { col: 0, x: 30, y: 48, type: 'bun_top' },
+          { col: 0, x: 30, y: 96, type: 'lettuce' },
+          { col: 0, x: 30, y: 144, type: 'cheese' },
+          { col: 0, x: 30, y: 192, type: 'patty' },
+          { col: 0, x: 30, y: 240, type: 'bun_bottom' },
+          { col: 1, x: 126, y: 48, type: 'bun_top' },
+          { col: 1, x: 126, y: 96, type: 'tomato' },
+          { col: 1, x: 126, y: 144, type: 'patty' },
+          { col: 1, x: 126, y: 192, type: 'bun_bottom' },
+          { col: 2, x: 220, y: 48, type: 'bun_top' },
+          { col: 2, x: 220, y: 96, type: 'lettuce' },
+          { col: 2, x: 220, y: 144, type: 'cheese' },
+          { col: 2, x: 220, y: 192, type: 'patty' },
+          { col: 2, x: 220, y: 240, type: 'bun_bottom' },
+          { col: 3, x: 310, y: 48, type: 'bun_top' },
+          { col: 3, x: 310, y: 96, type: 'tomato' },
+          { col: 3, x: 310, y: 144, type: 'patty' },
+          { col: 3, x: 310, y: 192, type: 'bun_bottom' },
+          { col: 4, x: 376, y: 48, type: 'bun_top' },
+          { col: 4, x: 376, y: 96, type: 'lettuce' },
+          { col: 4, x: 376, y: 144, type: 'cheese' },
+          { col: 4, x: 376, y: 192, type: 'patty' },
+          { col: 4, x: 376, y: 240, type: 'bun_bottom' }
+        ],
+        plates: [
+          { x: 28, y: 288 },
+          { x: 124, y: 288 },
+          { x: 218, y: 288 },
+          { x: 308, y: 288 },
+          { x: 374, y: 288 }
+        ],
+        playerStart: { x: 210, y: 288 },
+        enemies: [
+          { type: 'hotdog', x: 30, y: 48 },
+          { type: 'hotdog', x: 376, y: 48 },
+          { type: 'pickle', x: 126, y: 48 },
+          { type: 'egg', x: 310, y: 48 },
+          { type: 'pickle', x: 220, y: 48 }
+        ],
+        enemySpeed: 1.25
       }
-    ];
+        ];
   }
 
   getLevel(index) {

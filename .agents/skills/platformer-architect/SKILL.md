@@ -47,3 +47,4 @@ Para evitar caídas infinitas o bloqueos de movimiento:
 - `validate_stage_architecture(stage_number)`: Ejecuta el análisis geométrico y de balance de cualquier nivel en `js/map.js`.
 - `generate_dynamic_stage(stage_number, theme, difficulty, num_burgers, num_floors)`: Genera el código JavaScript listo para copiar con pisos, escaleras, hamburguesas y enemigos balanceados.
 - `diagnose_character_physics_rules()`: Consulta los algoritmos matemáticos anti-tunneling y desacoplamiento de hitboxes.
+
