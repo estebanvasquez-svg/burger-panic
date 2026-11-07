@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Cuphead Level 1",
+    "floors": [{"x":0,"y":300,"width":800}],
+    "ladders": [{"x":200,"yTop":150,"yBottom":300}],
+    "enemies": [{"type":"basic","x":400,"y":260}],
+    "boss": null
+  },
+  {
+    "name": "Cuphead Level 2",
+    "floors": [{"x":0,"y":320,"width":800}],
+    "ladders": [{"x":250,"yTop":170,"yBottom":320}],
+    "enemies": [{"type":"basic","x":450,"y":280}],
+    "boss": null
+  },
+  {
+    "name": "Cuphead Level 3",
+    "floors": [{"x":0,"y":340,"width":800}],
+    "ladders": [{"x":300,"yTop":190,"yBottom":340}],
+    "enemies": [{"type":"basic","x":500,"y":300}],
+    "boss": null
+  },
+  {
+    "name": "Cuphead Level 4",
+    "floors": [{"x":0,"y":360,"width":800}],
+    "ladders": [{"x":350,"yTop":210,"yBottom":360}],
+    "enemies": [{"type":"basic","x":550,"y":320}],
+    "boss": null
+  },
+  {
+    "name": "Cuphead Boss Level",
+    "floors": [{"x":0,"y":380,"width":800}],
+    "ladders": [{"x":400,"yTop":230,"yBottom":380}],
+    "enemies": [],
+    "boss": {"type":"boss","name":"King Dice","x":600,"y":350,"health":1000}
+  }
+]
