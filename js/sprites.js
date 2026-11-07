@@ -821,74 +821,203 @@ class SpriteManager {
   }
 
   // ==========================================
-  // BONUS ITEMS & EXTRAS
+  // BONUS ITEMS & EXTRAS (16-BIT RETRO ARCADE MATRICES)
   // ==========================================
   createBonusSprites() {
-    // Ice Cream Cone
-    const iceCream = this.createCanvas(16, 16);
-    const ctxIC = iceCream.ctx;
-    ctxIC.fillStyle = '#fce4a0'; // Vanilla scoops
-    ctxIC.fillRect(5, 2, 6, 5);
-    ctxIC.fillRect(4, 4, 8, 3);
-    ctxIC.fillStyle = '#e40058'; // Cherry
-    ctxIC.fillRect(7, 0, 2, 2);
-    ctxIC.fillStyle = '#d86800'; // Waffle cone
-    ctxIC.fillRect(5, 7, 6, 2);
-    ctxIC.fillRect(6, 9, 4, 3);
-    ctxIC.fillRect(7, 12, 2, 3);
-    this.sprites['bonus_icecream'] = iceCream.canvas;
+    // 1. Ice Cream Sundae (Swirled Strawberry/Vanilla with Cherry & Waffle Cone)
+    const cmIceCream = {
+      '.': '#1c0a00', // Dark outline
+      'R': '#8a0018', // Deep cherry shadow
+      'C': '#eb1838', // Glossy cherry red
+      'W': '#ffffff', // Specular glint
+      'P': '#ff6097', // Strawberry syrup swirl
+      'Q': '#ffa0c4', // Soft pink cream
+      'V': '#fff2ba', // Creamy rich vanilla
+      'Y': '#ffe382', // Vanilla shadow
+      'G': '#fca410', // Baked golden waffle
+      'O': '#c86800', // Toasted waffle grid shadow
+      'H': '#843e00'  // Deep cone crease
+    };
+    const mIceCream = [
+      '       ..       ',
+      '      .RC.      ',
+      '      .WC.      ',
+      '     ..PP..     ',
+      '    .VQPPQV.    ',
+      '   .VVWPPQVV.   ',
+      '  .VVPWPPQYYV.  ',
+      '  .QQPPQYYVVV.  ',
+      '  .YYVVVVYYYV.  ',
+      '   .GGGGGGGG.   ',
+      '   .GOGGGOGG.   ',
+      '    .GGHGGH.    ',
+      '    .GOGGOG.    ',
+      '     .GGHG.     ',
+      '      .GG.      ',
+      '       ..       '
+    ];
+    this.sprites['bonus_icecream'] = this.renderMatrix(mIceCream, cmIceCream, 16, 16);
 
-    // Coffee Mug
-    const coffee = this.createCanvas(16, 16);
-    const ctxC = coffee.ctx;
-    ctxC.fillStyle = '#fcfcfc'; // White mug
-    ctxC.fillRect(3, 4, 8, 10);
-    ctxC.fillRect(11, 6, 3, 6); // Handle
-    ctxC.fillStyle = '#181818';
-    ctxC.fillRect(12, 8, 1, 2); // Hole
-    ctxC.fillStyle = '#603000'; // Coffee liquid
-    ctxC.fillRect(4, 4, 6, 2);
-    // Steam
-    ctxC.fillStyle = '#a0a0a0';
-    ctxC.fillRect(5, 1, 1, 2);
-    ctxC.fillRect(8, 0, 1, 2);
-    this.sprites['bonus_coffee'] = coffee.canvas;
+    // 2. Steaming Diner Coffee Mug with Latte Art Heart
+    const cmCoffee = {
+      '.': '#101018', // Outline
+      'S': '#a8c0d8', // Translucent rising steam
+      's': '#d8ecf8', // Bright steam highlight
+      'W': '#ffffff', // Glossy ceramic highlight
+      'C': '#e0eaf2', // Retro ceramic mug white/cyan
+      'c': '#96b0c4', // Ceramic shadow
+      'B': '#1878b8', // Retro teal/blue diner stripe
+      'M': '#3e1a06', // Dark rich roasted espresso
+      'L': '#caa278', // Golden crema / latte foam heart
+      'l': '#e8d4b8', // Latte foam highlight
+      'H': '#240e02'  // Mug rim interior shadow
+    };
+    const mCoffee = [
+      '    s    S      ',
+      '     S  s       ',
+      '    ..   ..     ',
+      '   .CCCCCC.     ',
+      '  .CHMMMMLCc.   ',
+      ' .CMMLLLLMMC....',
+      '.CMMLLlLlMMC.WW.',
+      '.CWWMMLLMMCC.CC.',
+      '.CBBBBBBBBCC.CC.',
+      '.CWWCCCCCCcc.cc.',
+      '.CWWCCCCCCcc....',
+      '.CWWCCCCCCcc.   ',
+      '.CWWCCCCCCcc.   ',
+      ' .cWCCCCCCcc.   ',
+      '  .cccccccc.    ',
+      '   ........     '
+    ];
+    this.sprites['bonus_coffee'] = this.renderMatrix(mCoffee, cmCoffee, 16, 16);
 
-    // Pepper Shaker UI Icon (16x16)
-    const pepper = this.createCanvas(16, 16);
-    const ctxPep = pepper.ctx;
-    ctxPep.fillStyle = '#fcb400'; // Yellow cap
-    ctxPep.fillRect(6, 2, 4, 3);
-    ctxPep.fillStyle = '#fcfcfc'; // Glass body
-    ctxPep.fillRect(4, 5, 8, 9);
-    ctxPep.fillStyle = '#181818'; // Pepper specs inside
-    ctxPep.fillRect(6, 7, 2, 2);
-    ctxPep.fillRect(8, 9, 2, 2);
-    ctxPep.fillRect(5, 10, 2, 2);
-    ctxPep.fillRect(7, 12, 2, 1);
-    this.sprites['pepper_icon'] = pepper.canvas;
+    // 3. Crispy Golden French Fries Carton
+    const cmFries = {
+      '.': '#1c0800', // Outline
+      'R': '#c81020', // Crimson diner carton red
+      'r': '#88040e', // Deep carton shadow
+      'Y': '#fcd018', // Golden crispy hot fry
+      'y': '#d09400', // Toasted fry shadow
+      'W': '#ffffff', // Salt crystal sparkle / carton shine
+      'w': '#fff4aa', // Fry light highlight
+      'B': '#fcac00'  // Yellow retro carton emblem
+    };
+    const mFries = [
+      '    .     .     ',
+      '   .Y. . .Y.    ',
+      '   .w. .Y.w.    ',
+      '  .Y.Y.Yw.Y.Y.  ',
+      '  .w.y.y.Y.w.   ',
+      '  .Y.Y.w.y.y.   ',
+      ' ............   ',
+      ' .RRRRRRRRRRR.  ',
+      ' .WWRRRRRRRRR.  ',
+      ' .WWRRRBBRRRR.  ',
+      ' .WWRRBBBBRRR.  ',
+      ' .WWRRRBBRRRR.  ',
+      ' .WWRRRRRRRRr.  ',
+      '  .WWRRRRRRRr.  ',
+      '  .WWrrrrrrrr.  ',
+      '   ..........   '
+    ];
+    this.sprites['bonus_fries'] = this.renderMatrix(mFries, cmFries, 16, 16);
 
-    // Extra Life Chef Hat (Bonus 4 Item)
-    const lifeItem = this.createCanvas(16, 16);
-    const ctxL = lifeItem.ctx;
-    // Glowing golden aura
-    ctxL.fillStyle = 'rgba(252, 180, 0, 0.45)';
-    ctxL.fillRect(3, 2, 10, 12);
-    // Golden Chef Hat
-    ctxL.fillStyle = '#fcb400';
-    ctxL.fillRect(4, 3, 8, 6);
-    ctxL.fillRect(3, 5, 10, 4);
-    ctxL.fillRect(5, 9, 6, 4);
-    // White puff top
-    ctxL.fillStyle = '#fcfcfc';
-    ctxL.fillRect(6, 4, 4, 4);
-    ctxL.fillRect(5, 5, 6, 2);
-    // Sparkle pixels
-    ctxL.fillStyle = '#ffffff';
-    ctxL.fillRect(2, 2, 1, 1);
-    ctxL.fillRect(13, 2, 1, 1);
-    ctxL.fillRect(7, 5, 1, 1);
-    this.sprites['bonus_life'] = lifeItem.canvas;
+    // 4. Strawberry Glazed Donut with Rainbow Sprinkles
+    const cmDonut = {
+      '.': '#1c0804', // Outline
+      'D': '#b86410', // Baked golden brioche dough
+      'd': '#dc8824', // Dough body
+      'P': '#e8286a', // Glossy strawberry frosting
+      'p': '#ff629c', // Bright pink frosting highlight
+      'W': '#ffffff', // Frosting specular shine
+      'G': '#44e040', // Lime sprinkle
+      'B': '#00d4fc', // Cyan sprinkle
+      'Y': '#ffe428', // Golden sprinkle
+      'H': '#602008'  // Hole interior shadow
+    };
+    const mDonut = [
+      '     ......     ',
+      '   ..PPPPPP..   ',
+      '  .PPPPpWWPPP.  ',
+      ' .PPGYPPpPPBPP. ',
+      '.PPPPPPPPPGPPPP.',
+      '.PpPPPP....PPpP.',
+      '.PPPP..HHHH..PP.',
+      '.PYP.HH....HH.BP.',
+      '.PpP.HH....HH.PP.',
+      '.PPPP..HHHH..PP.',
+      '.PdPpPP....PGdP.',
+      '.ddddPPPPPPdddd.',
+      '.dddDDddddDDddd.',
+      ' .ddDDDDDDDDdd. ',
+      '  ..DDDDDDDD..  ',
+      '    ........    '
+    ];
+    this.sprites['bonus_donut'] = this.renderMatrix(mDonut, cmDonut, 16, 16);
+
+    // 5. Golden Royale Chef Hat (Extra Life 1UP Bonus)
+    const cmLife = {
+      '.': '#180e00', // Outline
+      'G': '#9e6c00', // Dark rich gold shading
+      'Y': '#fcb800', // Radiant golden silk
+      'y': '#ffd840', // Bright golden highlight
+      'W': '#ffffff', // Diamond sparkle glint
+      'R': '#940020', // Royal crimson velvet headband
+      'r': '#d81438', // Bright crimson ribbon
+      'B': '#ffe878'  // Golden ribbon buckle
+    };
+    const mLife = [
+      '   W            ',
+      '    ..    ..    ',
+      '  .Yyy..Yyy.  W ',
+      ' .YyyyyyyyYY.   ',
+      '.YyWyyyyyyyYY.  ',
+      '.YyyyyyyyyyyY.. ',
+      '.YYYYYyyyyyYYYY.',
+      '.GYYYYYYYYYYYyG.',
+      '.GGYYYYYYYYYYGG.',
+      ' .GGGGGGGGGGGG. ',
+      ' .rRRRRRRRRRRr. ',
+      ' .rrRRRBBRRRrr. ',
+      ' .rrRRRBBRRRrr. ',
+      ' .rRRRRRRRRRRr. ',
+      '  .rrrrrrrrrr.  ',
+      '   ..........   '
+    ];
+    this.sprites['bonus_life'] = this.renderMatrix(mLife, cmLife, 16, 16);
+
+    // 6. Vintage Glass Pepper Shaker UI Icon (16x16)
+    const cmPepper = {
+      '.': '#101018', // Outline
+      'M': '#687888', // Metallic chrome dome cap shadow
+      'C': '#b4c4d4', // Chrome cap body
+      'W': '#ffffff', // Specular chrome / glass highlight
+      'G': '#dce8f4', // Translucent glass body reflection
+      'g': '#8ca4b8', // Glass shaded edge
+      'P': '#18181c', // Peppercorn grain
+      'p': '#383844', // Peppercorn medium grain
+      'Y': '#fcb400'  // Golden retro pepper label
+    };
+    const mPepper = [
+      '      ....      ',
+      '     .CMMC.     ',
+      '     .WWCC.     ',
+      '    ..CCCC..    ',
+      '   .CCCCCCCC.   ',
+      '   .gGGGGGGg.   ',
+      '  .gWGgGGgGgg.  ',
+      '  .gWPPpPgPGg.  ',
+      '  .gWpPggPPGg.  ',
+      '  .gWYYYYYYGg.  ',
+      '  .gWYPPPYYGg.  ',
+      '  .gWYYYYYYGg.  ',
+      '  .gWPPpPgPGg.  ',
+      '  .gWpPGpPpGg.  ',
+      '   .gGGGGGGg.   ',
+      '    ........    '
+    ];
+    this.sprites['pepper_icon'] = this.renderMatrix(mPepper, cmPepper, 16, 16);
   }
 
   // ==========================================

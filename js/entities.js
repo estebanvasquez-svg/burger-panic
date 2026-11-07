@@ -1252,7 +1252,7 @@ class BonusItem {
     this.x = x;
     this.y = y;
     this.type = type;
-    this.timer = 500; // Time before disappearing
+    this.timer = 550; // Time before disappearing
     this.sparklePhase = Math.random() * Math.PI * 2;
   }
 
@@ -1263,17 +1263,77 @@ class BonusItem {
   draw(ctx) {
     const spr = window.spriteManager.get(this.type);
     if (!spr) return;
-    // Slight flash when expiring
-    if (this.timer < 100 && Math.floor(this.timer / 8) % 2 === 0) return;
-    ctx.drawImage(spr, this.x, this.y, 16, 16);
 
-    // Subtle 4-point sparkle star shimmering above collectible items
-    const phase = (Date.now() / 140) + this.sparklePhase;
-    const sx = this.x + 8 + Math.cos(phase) * 7;
-    const sy = this.y + 2 + Math.sin(phase * 1.5) * 3;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(Math.round(sx) - 1, Math.round(sy), 3, 1);
-    ctx.fillRect(Math.round(sx), Math.round(sy) - 1, 1, 3);
+    // Urgency blinking when expiring
+    if (this.timer < 120) {
+      const blinkSpeed = this.timer < 45 ? 4 : 8;
+      if (Math.floor(this.timer / blinkSpeed) % 2 === 0) return;
+    }
+
+    const now = Date.now();
+    // Gentle arcade floating/bobbing oscillation (±2px)
+    const bobY = Math.sin((now / 190) + this.sparklePhase) * 2;
+    const drawY = Math.round(this.y + bobY);
+
+    ctx.save();
+
+    // 1. Oval platform ambient shadow beneath hovering item
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.beginPath();
+    const shadowWidth = Math.max(3, 6 - Math.abs(bobY) * 0.5);
+    ctx.ellipse(this.x + 8, this.y + 15, shadowWidth, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Soft pulsating ambient glow halo tailored to item palette
+    let haloColor = 'rgba(255, 204, 0, 0.25)';
+    let sparkleColor = '#ffffff';
+
+    if (this.type === 'bonus_life') {
+      haloColor = 'rgba(252, 184, 0, 0.4)';
+      sparkleColor = '#ffe360';
+    } else if (this.type === 'bonus_icecream') {
+      haloColor = 'rgba(255, 96, 151, 0.3)';
+      sparkleColor = '#ffcce0';
+    } else if (this.type === 'bonus_coffee') {
+      haloColor = 'rgba(0, 240, 255, 0.25)';
+      sparkleColor = '#d8f4ff';
+    } else if (this.type === 'bonus_fries') {
+      haloColor = 'rgba(252, 208, 24, 0.3)';
+      sparkleColor = '#fff6b8';
+    } else if (this.type === 'bonus_donut') {
+      haloColor = 'rgba(232, 40, 106, 0.3)';
+      sparkleColor = '#ffd0e4';
+    }
+
+    const pulse = 7 + Math.sin(now / 160) * 1.5;
+    ctx.fillStyle = haloColor;
+    ctx.beginPath();
+    ctx.arc(this.x + 8, drawY + 8, pulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. Render 16-Bit HD Arcade Sprite
+    ctx.drawImage(spr, this.x, drawY, 16, 16);
+
+    // 4. Sparkling 4-point twinkle stars orbiting the item
+    const phase1 = (now / 140) + this.sparklePhase;
+    const sx1 = this.x + 8 + Math.cos(phase1) * 8;
+    const sy1 = drawY + 3 + Math.sin(phase1 * 1.6) * 4;
+
+    ctx.fillStyle = sparkleColor;
+    ctx.fillRect(Math.round(sx1) - 1, Math.round(sy1), 3, 1);
+    ctx.fillRect(Math.round(sx1), Math.round(sy1) - 1, 1, 3);
+
+    // Secondary sparkle for extra life
+    if (this.type === 'bonus_life') {
+      const phase2 = phase1 + Math.PI;
+      const sx2 = this.x + 8 + Math.cos(phase2) * 7;
+      const sy2 = drawY + 6 + Math.sin(phase2 * 1.4) * 4;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(Math.round(sx2) - 1, Math.round(sy2), 3, 1);
+      ctx.fillRect(Math.round(sx2), Math.round(sy2) - 1, 1, 3);
+    }
+
+    ctx.restore();
   }
 }
 

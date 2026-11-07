@@ -822,8 +822,9 @@ class BurgerPanicGame {
         : [{ x: 112, y: 148 }];
 
       if (this.stageBonusItemsSpawned < 3) {
-        // Items 1, 2, 3: regular bonus item (ice cream or coffee)
-        const type = Math.random() < 0.5 ? 'bonus_icecream' : 'bonus_coffee';
+        // Items 1, 2, 3: rich variety of retro arcade snacks (Ice Cream, Coffee, Fries, Donut)
+        const regularPool = ['bonus_icecream', 'bonus_coffee', 'bonus_fries', 'bonus_donut'];
+        const type = regularPool[Math.floor(Math.random() * regularPool.length)];
         const spot = spots[this.stageTotalItemsSpawned % spots.length];
         this.bonusItems.push(new window.BonusItem(spot.x, spot.y, type));
         this.stageBonusItemsSpawned++;
@@ -834,7 +835,7 @@ class BurgerPanicGame {
         this.stageBonusItemsCollected === 3 &&
         !this.stageLifeItemSpawned
       ) {
-        // 4th Item: Extra Life item ONLY after collecting all 3 initial items!
+        // 4th Item: Golden Royale Chef Hat (Extra Life item ONLY after collecting all 3 initial items!)
         const spot = spots[this.stageTotalItemsSpawned % spots.length];
         this.bonusItems.push(new window.BonusItem(spot.x, spot.y, 'bonus_life'));
         this.stageLifeItemSpawned = true;
@@ -852,6 +853,22 @@ class BurgerPanicGame {
       // Player pickup check
       const dist = Math.hypot((item.x + 8) - (this.player.x + 8), (item.y + 8) - (this.player.y + 8));
       if (dist < 14) {
+        // Spawn vibrant 16-bit arcade pickup sparkle particles
+        const particleColor = item.type === 'bonus_life' ? '#fcb400' :
+                              item.type === 'bonus_icecream' ? '#ff6097' :
+                              item.type === 'bonus_coffee' ? '#00f0ff' :
+                              item.type === 'bonus_fries' ? '#fcd018' : '#e8286a';
+
+        for (let p = 0; p < 8; p++) {
+          const angle = (p / 8) * Math.PI * 2 + (Math.random() * 0.4);
+          const speed = 1.0 + Math.random() * 0.9;
+          this.particles.push(new window.ArcadeParticle(
+            item.x + 8, item.y + 8,
+            Math.cos(angle) * speed, Math.sin(angle) * speed,
+            particleColor, 2.5, 24, 'star'
+          ));
+        }
+
         if (item.type === 'bonus_life') {
           // Extra Life Item reward (awards 3rd star condition!)
           this.stageLifeItemCollected = true;
@@ -860,13 +877,21 @@ class BurgerPanicGame {
           this.popups.push(new window.ScorePopup('+1 VIDA (★3)!', item.x, item.y - 12));
           window.soundManager.playLifeUp();
         } else {
-          // Regular bonus item (helado o café)
+          // Regular bonus item (helado, café, papas, dona)
           this.stageBonusItemsCollected++;
           window.soundManager.playBonus();
           this.addScore(500, item.x, item.y);
           this.player.peppers = Math.min(this.player.peppers + 1, 9);
           this.updatePepperUI();
-          this.popups.push(new window.ScorePopup(`+1 PIMIENTA (${this.stageBonusItemsCollected}/3)`, item.x, item.y - 12));
+
+          const itemLabels = {
+            'bonus_icecream': 'HELADO',
+            'bonus_coffee': 'CAFÉ',
+            'bonus_fries': 'PAPAS',
+            'bonus_donut': 'DONA'
+          };
+          const name = itemLabels[item.type] || 'SNACK';
+          this.popups.push(new window.ScorePopup(`+1 PIMIENTA • ${name} (${this.stageBonusItemsCollected}/3)`, item.x, item.y - 12));
         }
 
         this.bonusItems.splice(i, 1);
