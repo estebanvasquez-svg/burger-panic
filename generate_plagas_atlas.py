@@ -16,6 +16,9 @@ def create_plagas_atlas():
     C_M_WHITE = (255, 255, 255, 255)
     C_M_BLACK = (20, 16, 28, 255)
     C_M_TAIL = (255, 160, 184, 255)
+    C_M_RED_SHD = (168, 24, 40, 255)
+    C_M_RED_MID = (236, 44, 60, 255)
+    C_M_RED_LGT = (255, 112, 128, 255)
     C_STAR = (255, 216, 32, 255)
 
     # 2. ROACH (Cucaracha de Cocina)
@@ -54,7 +57,8 @@ def create_plagas_atlas():
     cm_mouse = {
         'O': C_M_OUTLINE, 'G': C_M_BODY, 'H': C_M_LIGHT, 'D': C_M_DARK,
         'P': C_M_PINK, 'p': C_M_PINK_D, 'W': C_M_WHITE, 'K': C_M_BLACK,
-        'T': C_M_TAIL, '*': C_STAR, ' ': None
+        'T': C_M_TAIL, 'r': C_M_RED_SHD, 'R': C_M_RED_MID, 'b': C_M_RED_LGT,
+        '*': C_STAR, ' ': None
     }
 
     # Mouse Walk Frames 1-6
@@ -134,62 +138,62 @@ def create_plagas_atlas():
         "                 "
     ]
 
-    # Mouse Climb Frames 1-3 (Back view climbing ladder)
+    # Mouse Climb Frames 1-3 (Back view - 100% Isolated, NO LADDER, clean transparent background)
     m_climb1 = [
-        "  PPP      PPP   ",
-        " PHHPP    PPHP   ",
-        "  OGHHDOODHHGO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO T ",
+        " OPP       PqP   ",
+        " OppPqP   PPqqP  ",
+        "  PqqPP   OPppO  ",
+        "  OppPO  OGLLGO  ",
+        "   OGLLDOOrRRO   ",
+        "   OrRbbRGGGGDO  ",
+        "  OGGGGGGGGGGDO  ",
+        "  OGGGGGGGGGGDO  ",
+        "  OGGGGGGGGGGDO T",
         "  OGGGGGDDGGDO TT",
         "  OGGGGGDDGGDO  T",
-        "   OPP    OPP   T",
-        "   OpP    OpP   T",
-        "   OGG    OGG   T",
-        "  OPP      OPP   ",
-        "  OpP      OpP   ",
-        "                 "
+        "   OGG   OPP    T",
+        "   OPP   Opp     ",
+        "   Opp   OGG     ",
+        "          OPP    ",
+        "          Opp    "
     ]
 
     m_climb2 = [
-        "  PPP      PPP   ",
-        " PHHPP    PPHP   ",
-        "  OGHHDOODHHGO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO  T",
-        "  OGGGGGDDGGDO TT",
-        "  OGGGGGDDGGDO T ",
-        "    OPP  OPP   T ",
-        "    OpP  OpP   T ",
-        "    OGG  OGG     ",
-        "   OPP    OPP    ",
-        "   OpP    OpP    ",
-        "                 "
+        "   PqP     PqP   ",
+        "  PqqPP   PPqqP  ",
+        "  OppPO   OPppO  ",
+        " OPPLLDOODLLPPO  ",
+        " OppRbbRRrRROpp  ",
+        "  OGGGGGGGGGGDO  ",
+        "  OGGGGGGGGGGDO  ",
+        "  OGGGGGGGGGGDO  ",
+        "  OGGGGGGGGGGDO  ",
+        "  OGGGGGDDGGGGDO ",
+        "  OGGGGGDDGGGGDO ",
+        "    OPP    OPP T ",
+        "    Opp    Opp T ",
+        "    OGG    OGG TT",
+        "    OPP    OPP T ",
+        "    Opp    Opp   "
     ]
 
     m_climb3 = [
-        "  PPP      PPP   ",
-        " PHHPP    PPHP   ",
-        "  OGHHDOODHHGO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO   ",
-        "  OGGGGGGGGGDO T ",
-        "  OGGGGGDDGGDO TT",
-        "  OGGGGGDDGGDO  T",
-        "   OPP    OPP   T",
-        "   OpP    OpP    ",
-        "  OPP      OPP   ",
-        "  OpP      OpP   ",
-        "                 ",
-        "                 "
+        "   PqP       OPP ",
+        "  PqqPP   PqPOpp ",
+        "  OppPO   PPqqP  ",
+        "  OGLLGO  OPppO  ",
+        "   OrRROODLLGO   ",
+        "  OGGGGDrRbbR    ",
+        "  OGGGGGGGGGGDO  ",
+        "  OGGGGGGGGGGDO  ",
+        "T OGGGGGGGGGGDO  ",
+        "TTOGGGGGDDGGDO   ",
+        "T OGGGGGDDGGDO   ",
+        "T   OPP   OGG    ",
+        "    Opp   OPP    ",
+        "    OGG   Opp    ",
+        "   OPP           ",
+        "   Opp           "
     ]
 
     # Mouse Stunned 1-2
@@ -756,3 +760,4 @@ def create_plagas_atlas():
 
 if __name__ == '__main__':
     create_plagas_atlas()
+

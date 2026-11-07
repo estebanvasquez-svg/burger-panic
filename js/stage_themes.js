@@ -654,3 +654,4 @@ class StageThemesManager {
 }
 
 window.stageThemesManager = new StageThemesManager();
+
