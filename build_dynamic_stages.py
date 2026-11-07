@@ -1,0 +1,675 @@
+import json
+import re
+
+def get_floor_elevation(f, x):
+    if f.get('type') == 'diagonal':
+        ratio = max(0.0, min(1.0, (x - f['x1']) / max(1, f['x2'] - f['x1'])))
+        return f['y1'] + (f['y2'] - f['y1']) * ratio
+    return f.get('y', 0)
+
+def validate_stage(s):
+    floors = s['floors']
+    ladders = s['ladders']
+    player = s['playerStart']
+    enemies = s['enemies']
+    burgers = s['burgers']
+    plates = s['plates']
+    w = s['width']
+
+    errors = []
+    # 1. Ladder alignment
+    for i, l in enumerate(ladders):
+        top_c = False
+        bot_c = False
+        lx = l['x']
+        for f in floors:
+            if lx + 14 >= f['x1'] and lx + 2 <= f['x2']:
+                fy = get_floor_elevation(f, lx + 8)
+                if abs(fy - l['y1']) <= 8:
+                    top_c = True
+                if abs(fy - l['y2']) <= 8:
+                    bot_c = True
+        if not top_c:
+            errors.append(f"Ladder {i} (x={l['x']}, y1={l['y1']}) has no floor at top")
+        if not bot_c:
+            errors.append(f"Ladder {i} (x={l['x']}, y2={l['y2']}) has no floor at bottom")
+
+    # 2. Plate alignment under burgers
+    burger_cols = set(b['col'] for b in burgers)
+    for col in burger_cols:
+        col_burgers = [b for b in burgers if b['col'] == col]
+        bx = col_burgers[0]['x']
+        has_plate = any(abs(p['x'] - (bx - 2)) <= 4 and p['y'] == 288 for p in plates)
+        if not has_plate:
+            errors.append(f"Col {col} (x={bx}) missing plate at y=288")
+
+    # 3. Enemy distance
+    for e in enemies:
+        dist = ((e['x'] - player['x'])**2 + (e['y'] - player['y'])**2)**0.5
+        if dist < 80:
+            errors.append(f"Enemy {e['type']} at ({e['x']}, {e['y']}) too close to player ({dist:.1f}px)")
+
+    return errors
+
+
+def build_stages():
+    stages = []
+
+    # ----------------------------------------------------
+    # STAGE 4: LA MARISQUERÍA DEL PULPO (Width: 360)
+    # Dynamic: 1 Diagonal Ramp
+    # ----------------------------------------------------
+    s4 = {
+        'stageNumber': 4,
+        'name': 'LA MARISQUERÍA DEL PULPO',
+        'width': 360,
+        'bonusSpots': [{'x': 54, 'y': 144}, {'x': 160, 'y': 96}, {'x': 260, 'y': 144}, {'x': 180, 'y': 240}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 94}, {'y': 48, 'x1': 114, 'x2': 246}, {'y': 48, 'x1': 266, 'x2': 344},
+            {'y': 96, 'x1': 16, 'x2': 140}, {'y': 96, 'x1': 164, 'x2': 280}, {'y': 96, 'x1': 298, 'x2': 344},
+            {'y': 144, 'x1': 16, 'x2': 94}, {'y': 144, 'x1': 100, 'x2': 190}, {'y': 144, 'x1': 210, 'x2': 300}, {'y': 144, 'x1': 316, 'x2': 344},
+            # Dynamic Diagonal Ramp bridging tier y=144 to y=192
+            {'type': 'diagonal', 'x1': 94, 'y1': 144, 'x2': 140, 'y2': 192},
+            {'y': 192, 'x1': 16, 'x2': 120}, {'y': 192, 'x1': 140, 'x2': 220}, {'y': 192, 'x1': 240, 'x2': 344},
+            {'y': 240, 'x1': 16, 'x2': 100}, {'y': 240, 'x1': 120, 'x2': 240}, {'y': 240, 'x1': 260, 'x2': 344},
+            {'y': 288, 'x1': 12, 'x2': 348}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 340, 'y1': 48, 'y2': 288},
+            {'x': 70, 'y1': 48, 'y2': 144}, {'x': 120, 'y1': 96, 'y2': 240},
+            {'x': 150, 'y1': 48, 'y2': 192}, {'x': 175, 'y1': 144, 'y2': 288},
+            {'x': 210, 'y1': 48, 'y2': 144}, {'x': 250, 'y1': 96, 'y2': 240},
+            {'x': 280, 'y1': 144, 'y2': 288}, {'x': 310, 'y1': 48, 'y2': 192}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 36, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 36, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 36, 'y': 144, 'type': 'tomato'}, {'col': 0, 'x': 36, 'y': 192, 'type': 'patty'}, {'col': 0, 'x': 36, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 126, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 126, 'y': 96, 'type': 'cheese'}, {'col': 1, 'x': 126, 'y': 144, 'type': 'patty'}, {'col': 1, 'x': 126, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 222, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 222, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 222, 'y': 144, 'type': 'cheese'}, {'col': 2, 'x': 222, 'y': 192, 'type': 'patty'}, {'col': 2, 'x': 222, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 304, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 304, 'y': 96, 'type': 'tomato'}, {'col': 3, 'x': 304, 'y': 144, 'type': 'patty'}, {'col': 3, 'x': 304, 'y': 192, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 34, 'y': 288}, {'x': 124, 'y': 288}, {'x': 220, 'y': 288}, {'x': 302, 'y': 288}],
+        'playerStart': {'x': 176, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 36, 'y': 48}, {'type': 'hotdog', 'x': 304, 'y': 48}, {'type': 'pickle', 'x': 126, 'y': 48}, {'type': 'egg', 'x': 222, 'y': 48}],
+        'enemySpeed': 0.88
+    }
+    stages.append(s4)
+
+    # ----------------------------------------------------
+    # STAGE 5: LA ESTACIÓN DE CAFÉ & BARISTA (Width: 370)
+    # Dynamic: 2 Diagonal Ramps
+    # ----------------------------------------------------
+    s5 = {
+        'stageNumber': 5,
+        'name': 'LA ESTACIÓN DE CAFÉ & BARISTA',
+        'width': 370,
+        'bonusSpots': [{'x': 44, 'y': 96}, {'x': 140, 'y': 144}, {'x': 230, 'y': 96}, {'x': 320, 'y': 144}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 100}, {'y': 48, 'x1': 120, 'x2': 250}, {'y': 48, 'x1': 270, 'x2': 354},
+            {'y': 96, 'x1': 16, 'x2': 80}, {'y': 96, 'x1': 98, 'x2': 188}, {'y': 96, 'x1': 208, 'x2': 298}, {'y': 96, 'x1': 316, 'x2': 354},
+            # Diagonal Ramp 1: y=96 to y=144
+            {'type': 'diagonal', 'x1': 80, 'y1': 96, 'x2': 124, 'y2': 144},
+            {'y': 144, 'x1': 16, 'x2': 124}, {'y': 144, 'x1': 144, 'x2': 246}, {'y': 144, 'x1': 256, 'x2': 354},
+            # Diagonal Ramp 2: y=144 to y=192
+            {'type': 'diagonal', 'x1': 246, 'y1': 144, 'x2': 288, 'y2': 192},
+            {'y': 192, 'x1': 16, 'x2': 90}, {'y': 192, 'x1': 110, 'x2': 200}, {'y': 192, 'x1': 220, 'x2': 310}, {'y': 192, 'x1': 328, 'x2': 354},
+            {'y': 240, 'x1': 16, 'x2': 130}, {'y': 240, 'x1': 150, 'x2': 246}, {'y': 240, 'x1': 260, 'x2': 354},
+            {'y': 288, 'x1': 12, 'x2': 358}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 350, 'y1': 48, 'y2': 288},
+            {'x': 60, 'y1': 48, 'y2': 144}, {'x': 78, 'y1': 144, 'y2': 240},
+            {'x': 124, 'y1': 48, 'y2': 192}, {'x': 156, 'y1': 96, 'y2': 288},
+            {'x': 210, 'y1': 48, 'y2': 144}, {'x': 226, 'y1': 144, 'y2': 240},
+            {'x': 274, 'y1': 48, 'y2': 192}, {'x': 306, 'y1': 96, 'y2': 288}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 32, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 32, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 32, 'y': 144, 'type': 'patty'}, {'col': 0, 'x': 32, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 124, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 124, 'y': 96, 'type': 'cheese'}, {'col': 1, 'x': 124, 'y': 144, 'type': 'tomato'}, {'col': 1, 'x': 124, 'y': 192, 'type': 'patty'}, {'col': 1, 'x': 124, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 218, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 218, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 218, 'y': 144, 'type': 'patty'}, {'col': 2, 'x': 218, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 312, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 312, 'y': 96, 'type': 'cheese'}, {'col': 3, 'x': 312, 'y': 144, 'type': 'tomato'}, {'col': 3, 'x': 312, 'y': 192, 'type': 'patty'}, {'col': 3, 'x': 312, 'y': 240, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 30, 'y': 288}, {'x': 122, 'y': 288}, {'x': 216, 'y': 288}, {'x': 310, 'y': 288}],
+        'playerStart': {'x': 184, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 32, 'y': 48}, {'type': 'hotdog', 'x': 312, 'y': 48}, {'type': 'pickle', 'x': 124, 'y': 48}, {'type': 'egg', 'x': 218, 'y': 48}],
+        'enemySpeed': 0.92
+    }
+    stages.append(s5)
+
+    # ----------------------------------------------------
+    # STAGE 6: LA PASTELERÍA FELINA (Width: 380)
+    # Dynamic: 2 Diagonal Catwalk Ramps
+    # ----------------------------------------------------
+    s6 = {
+        'stageNumber': 6,
+        'name': 'LA PASTELERÍA FELINA',
+        'width': 380,
+        'bonusSpots': [{'x': 38, 'y': 144}, {'x': 144, 'y': 96}, {'x': 240, 'y': 144}, {'x': 336, 'y': 96}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 110}, {'y': 48, 'x1': 130, 'x2': 250}, {'y': 48, 'x1': 270, 'x2': 364},
+            {'y': 96, 'x1': 16, 'x2': 144}, {'y': 96, 'x1': 164, 'x2': 288}, {'y': 96, 'x1': 306, 'x2': 364},
+            # Catwalk Diagonal Ramp 1
+            {'type': 'diagonal', 'x1': 110, 'y1': 96, 'x2': 154, 'y2': 144},
+            {'y': 144, 'x1': 16, 'x2': 88}, {'y': 144, 'x1': 108, 'x2': 204}, {'y': 144, 'x1': 224, 'x2': 320}, {'y': 144, 'x1': 338, 'x2': 364},
+            # Catwalk Diagonal Ramp 2
+            {'type': 'diagonal', 'x1': 224, 'y1': 144, 'x2': 264, 'y2': 192},
+            {'y': 192, 'x1': 16, 'x2': 134}, {'y': 192, 'x1': 154, 'x2': 264}, {'y': 192, 'x1': 284, 'x2': 364},
+            {'y': 240, 'x1': 16, 'x2': 96}, {'y': 240, 'x1': 116, 'x2': 224}, {'y': 240, 'x1': 244, 'x2': 364},
+            {'y': 288, 'x1': 12, 'x2': 368}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 360, 'y1': 48, 'y2': 288},
+            {'x': 64, 'y1': 48, 'y2': 144}, {'x': 86, 'y1': 96, 'y2': 240},
+            {'x': 132, 'y1': 48, 'y2': 192}, {'x': 170, 'y1': 96, 'y2': 288},
+            {'x': 226, 'y1': 48, 'y2': 144}, {'x': 254, 'y1': 96, 'y2': 240},
+            {'x': 290, 'y1': 48, 'y2': 192}, {'x': 328, 'y1': 96, 'y2': 288}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 30, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 30, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 30, 'y': 144, 'type': 'cheese'}, {'col': 0, 'x': 30, 'y': 192, 'type': 'patty'}, {'col': 0, 'x': 30, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 128, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 128, 'y': 96, 'type': 'tomato'}, {'col': 1, 'x': 128, 'y': 144, 'type': 'patty'}, {'col': 1, 'x': 128, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 228, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 228, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 228, 'y': 144, 'type': 'cheese'}, {'col': 2, 'x': 228, 'y': 192, 'type': 'patty'}, {'col': 2, 'x': 228, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 326, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 326, 'y': 96, 'type': 'tomato'}, {'col': 3, 'x': 326, 'y': 144, 'type': 'patty'}, {'col': 3, 'x': 326, 'y': 192, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 28, 'y': 288}, {'x': 126, 'y': 288}, {'x': 226, 'y': 288}, {'x': 324, 'y': 288}],
+        'playerStart': {'x': 190, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 30, 'y': 48}, {'type': 'hotdog', 'x': 326, 'y': 48}, {'type': 'pickle', 'x': 128, 'y': 48}, {'type': 'egg', 'x': 228, 'y': 48}],
+        'enemySpeed': 0.96
+    }
+    stages.append(s6)
+
+    # ----------------------------------------------------
+    # STAGE 7: EL ASADOR DEL CASTILLO (Width: 360)
+    # Dynamic: Vertical Elevator Platform
+    # ----------------------------------------------------
+    s7 = {
+        'stageNumber': 7,
+        'name': 'EL ASADOR DEL CASTILLO',
+        'width': 360,
+        'bonusSpots': [{'x': 36, 'y': 96}, {'x': 132, 'y': 144}, {'x': 224, 'y': 96}, {'x': 314, 'y': 144}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 88}, {'y': 48, 'x1': 108, 'x2': 244}, {'y': 48, 'x1': 264, 'x2': 344},
+            {'y': 96, 'x1': 16, 'x2': 130}, {'y': 96, 'x1': 150, 'x2': 234}, {'y': 96, 'x1': 288, 'x2': 344},
+            {'y': 144, 'x1': 16, 'x2': 94}, {'y': 144, 'x1': 114, 'x2': 234}, {'y': 144, 'x1': 288, 'x2': 344},
+            # Vertical Castle Elevator: moves between y=96 and y=240
+            {'type': 'elevator', 'x1': 240, 'x2': 276, 'y': 192, 'minY': 96, 'maxY': 240, 'speed': 0.028, 'phase': 0},
+            {'y': 192, 'x1': 16, 'x2': 140}, {'y': 192, 'x1': 160, 'x2': 234}, {'y': 192, 'x1': 288, 'x2': 344},
+            {'y': 240, 'x1': 16, 'x2': 100}, {'y': 240, 'x1': 120, 'x2': 234}, {'y': 240, 'x1': 288, 'x2': 344},
+            {'y': 288, 'x1': 12, 'x2': 348}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 340, 'y1': 48, 'y2': 288},
+            {'x': 54, 'y1': 48, 'y2': 144}, {'x': 80, 'y1': 96, 'y2': 240},
+            {'x': 118, 'y1': 48, 'y2': 192}, {'x': 170, 'y1': 96, 'y2': 288},
+            {'x': 218, 'y1': 48, 'y2': 144},
+            {'x': 310, 'y1': 96, 'y2': 288}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 30, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 30, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 30, 'y': 144, 'type': 'patty'}, {'col': 0, 'x': 30, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 122, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 122, 'y': 96, 'type': 'cheese'}, {'col': 1, 'x': 122, 'y': 144, 'type': 'tomato'}, {'col': 1, 'x': 122, 'y': 192, 'type': 'patty'}, {'col': 1, 'x': 122, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 214, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 214, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 214, 'y': 144, 'type': 'patty'}, {'col': 2, 'x': 214, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 306, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 306, 'y': 96, 'type': 'cheese'}, {'col': 3, 'x': 306, 'y': 144, 'type': 'tomato'}, {'col': 3, 'x': 306, 'y': 192, 'type': 'patty'}, {'col': 3, 'x': 306, 'y': 240, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 28, 'y': 288}, {'x': 120, 'y': 288}, {'x': 212, 'y': 288}, {'x': 304, 'y': 288}],
+        'playerStart': {'x': 180, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 30, 'y': 48}, {'type': 'hotdog', 'x': 306, 'y': 48}, {'type': 'pickle', 'x': 122, 'y': 48}, {'type': 'egg', 'x': 214, 'y': 48}],
+        'enemySpeed': 1.00
+    }
+    stages.append(s7)
+
+    # ----------------------------------------------------
+    # STAGE 8: LA FORJA DEL DRAGÓN (Width: 380)
+    # Dynamic: Vertical Elevator Hoist + 1 Flame Diagonal Ramp
+    # ----------------------------------------------------
+    s8 = {
+        'stageNumber': 8,
+        'name': 'LA FORJA DEL DRAGÓN',
+        'width': 380,
+        'bonusSpots': [{'x': 42, 'y': 144}, {'x': 146, 'y': 96}, {'x': 240, 'y': 144}, {'x': 338, 'y': 96}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 100}, {'y': 48, 'x1': 120, 'x2': 166}, {'y': 48, 'x1': 220, 'x2': 260}, {'y': 48, 'x1': 280, 'x2': 364},
+            {'y': 96, 'x1': 16, 'x2': 144}, {'y': 96, 'x1': 220, 'x2': 294}, {'y': 96, 'x1': 312, 'x2': 364},
+            # Center Elevator Hoist moving between y=72 and y=216
+            {'type': 'elevator', 'x1': 170, 'x2': 212, 'y': 144, 'minY': 72, 'maxY': 216, 'speed': 0.032, 'phase': 1.5},
+            # Diagonal Flame Ramp
+            {'type': 'diagonal', 'x1': 270, 'y1': 144, 'x2': 312, 'y2': 192},
+            {'y': 144, 'x1': 16, 'x2': 90}, {'y': 144, 'x1': 110, 'x2': 166}, {'y': 144, 'x1': 220, 'x2': 270}, {'y': 144, 'x1': 346, 'x2': 364},
+            {'y': 192, 'x1': 16, 'x2': 140}, {'y': 192, 'x1': 220, 'x2': 270}, {'y': 192, 'x1': 312, 'x2': 364},
+            {'y': 240, 'x1': 16, 'x2': 100}, {'y': 240, 'x1': 120, 'x2': 234}, {'y': 240, 'x1': 254, 'x2': 364},
+            {'y': 288, 'x1': 12, 'x2': 368}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 360, 'y1': 48, 'y2': 288},
+            {'x': 60, 'y1': 48, 'y2': 144}, {'x': 84, 'y1': 96, 'y2': 240},
+            {'x': 130, 'y1': 48, 'y2': 192},
+            {'x': 230, 'y1': 48, 'y2': 144}, {'x': 258, 'y1': 96, 'y2': 240},
+            {'x': 324, 'y1': 96, 'y2': 288}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 32, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 32, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 32, 'y': 144, 'type': 'cheese'}, {'col': 0, 'x': 32, 'y': 192, 'type': 'patty'}, {'col': 0, 'x': 32, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 130, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 130, 'y': 96, 'type': 'tomato'}, {'col': 1, 'x': 130, 'y': 144, 'type': 'patty'}, {'col': 1, 'x': 130, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 230, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 230, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 230, 'y': 144, 'type': 'cheese'}, {'col': 2, 'x': 230, 'y': 192, 'type': 'patty'}, {'col': 2, 'x': 230, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 328, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 328, 'y': 96, 'type': 'tomato'}, {'col': 3, 'x': 328, 'y': 144, 'type': 'patty'}, {'col': 3, 'x': 328, 'y': 192, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 30, 'y': 288}, {'x': 128, 'y': 288}, {'x': 228, 'y': 288}, {'x': 326, 'y': 288}],
+        'playerStart': {'x': 188, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 32, 'y': 48}, {'type': 'hotdog', 'x': 328, 'y': 48}, {'type': 'pickle', 'x': 130, 'y': 48}, {'type': 'egg', 'x': 230, 'y': 48}],
+        'enemySpeed': 1.04
+    }
+    stages.append(s8)
+
+    # ----------------------------------------------------
+    # STAGE 9: LA COCINA DE ALTA MAR (Width: 390)
+    # Dynamic: Submarine Cargo Lift + Diagonal Access Gangway
+    # ----------------------------------------------------
+    s9 = {
+        'stageNumber': 9,
+        'name': 'LA COCINA DE ALTA MAR',
+        'width': 390,
+        'bonusSpots': [{'x': 44, 'y': 96}, {'x': 148, 'y': 144}, {'x': 248, 'y': 96}, {'x': 348, 'y': 144}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 114}, {'y': 48, 'x1': 134, 'x2': 264}, {'y': 48, 'x1': 284, 'x2': 374},
+            {'y': 96, 'x1': 16, 'x2': 140}, {'y': 96, 'x1': 192, 'x2': 264}, {'y': 96, 'x1': 318, 'x2': 374},
+            # Submarine Cargo Lift
+            {'type': 'elevator', 'x1': 146, 'x2': 186, 'y': 192, 'minY': 96, 'maxY': 240, 'speed': 0.03, 'phase': 0},
+            # Diagonal Gangway
+            {'type': 'diagonal', 'x1': 264, 'y1': 96, 'x2': 308, 'y2': 144},
+            {'y': 144, 'x1': 16, 'x2': 96}, {'y': 144, 'x1': 116, 'x2': 140}, {'y': 144, 'x1': 192, 'x2': 286}, {'y': 144, 'x1': 308, 'x2': 374},
+            {'y': 192, 'x1': 16, 'x2': 140}, {'y': 192, 'x1': 192, 'x2': 284}, {'y': 192, 'x1': 304, 'x2': 374},
+            {'y': 240, 'x1': 16, 'x2': 104}, {'y': 240, 'x1': 124, 'x2': 140}, {'y': 240, 'x1': 192, 'x2': 244}, {'y': 240, 'x1': 264, 'x2': 374},
+            {'y': 288, 'x1': 12, 'x2': 378}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 370, 'y1': 48, 'y2': 288},
+            {'x': 64, 'y1': 48, 'y2': 144}, {'x': 88, 'y1': 96, 'y2': 240},
+            {'x': 138, 'y1': 48, 'y2': 144},
+            {'x': 234, 'y1': 48, 'y2': 144}, {'x': 270, 'y1': 144, 'y2': 240},
+            {'x': 308, 'y1': 48, 'y2': 96}, {'x': 340, 'y1': 96, 'y2': 288}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 34, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 34, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 34, 'y': 144, 'type': 'cheese'}, {'col': 0, 'x': 34, 'y': 192, 'type': 'patty'}, {'col': 0, 'x': 34, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 136, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 136, 'y': 96, 'type': 'tomato'}, {'col': 1, 'x': 136, 'y': 144, 'type': 'patty'}, {'col': 1, 'x': 136, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 238, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 238, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 238, 'y': 144, 'type': 'cheese'}, {'col': 2, 'x': 238, 'y': 192, 'type': 'patty'}, {'col': 2, 'x': 238, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 338, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 338, 'y': 96, 'type': 'tomato'}, {'col': 3, 'x': 338, 'y': 144, 'type': 'patty'}, {'col': 3, 'x': 338, 'y': 192, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 32, 'y': 288}, {'x': 134, 'y': 288}, {'x': 236, 'y': 288}, {'x': 336, 'y': 288}],
+        'playerStart': {'x': 195, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 34, 'y': 48}, {'type': 'hotdog', 'x': 338, 'y': 48}, {'type': 'pickle', 'x': 136, 'y': 48}, {'type': 'egg', 'x': 238, 'y': 48}],
+        'enemySpeed': 1.08
+    }
+    stages.append(s9)
+
+    # ----------------------------------------------------
+    # STAGE 10: LA HELADERÍA BAJO CERO (Width: 370)
+    # Dynamic: Horizontal Swaying Ice Floe Platform + Diagonal Chute
+    # ----------------------------------------------------
+    s10 = {
+        'stageNumber': 10,
+        'name': 'LA HELADERÍA BAJO CERO',
+        'width': 370,
+        'bonusSpots': [{'x': 40, 'y': 96}, {'x': 140, 'y': 144}, {'x': 230, 'y': 96}, {'x': 324, 'y': 144}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 96}, {'y': 48, 'x1': 116, 'x2': 250}, {'y': 48, 'x1': 270, 'x2': 354},
+            {'y': 96, 'x1': 16, 'x2': 136}, {'y': 96, 'x1': 156, 'x2': 280}, {'y': 96, 'x1': 298, 'x2': 354},
+            # Swaying Ice Platform
+            {'type': 'swaying', 'y': 144, 'baseX1': 136, 'baseX2': 192, 'range': 35, 'speed': 0.03, 'phase': 0, 'x1': 136, 'x2': 192},
+            {'y': 144, 'x1': 16, 'x2': 88}, {'y': 144, 'x1': 238, 'x2': 324}, {'y': 144, 'x1': 338, 'x2': 354},
+            # Diagonal Ice Chute
+            {'type': 'diagonal', 'x1': 246, 'y1': 192, 'x2': 288, 'y2': 240},
+            {'y': 192, 'x1': 16, 'x2': 130}, {'y': 192, 'x1': 150, 'x2': 246}, {'y': 192, 'x1': 296, 'x2': 354},
+            {'y': 240, 'x1': 16, 'x2': 100}, {'y': 240, 'x1': 120, 'x2': 236}, {'y': 240, 'x1': 288, 'x2': 354},
+            {'y': 288, 'x1': 12, 'x2': 358}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 350, 'y1': 48, 'y2': 288},
+            {'x': 56, 'y1': 48, 'y2': 144}, {'x': 80, 'y1': 96, 'y2': 240},
+            {'x': 124, 'y1': 48, 'y2': 192}, {'x': 168, 'y1': 96, 'y2': 192}, {'x': 168, 'y1': 192, 'y2': 288},
+            {'x': 214, 'y1': 48, 'y2': 96},
+            {'x': 282, 'y1': 48, 'y2': 144}, {'x': 316, 'y1': 96, 'y2': 288}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 30, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 30, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 30, 'y': 144, 'type': 'patty'}, {'col': 0, 'x': 30, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 124, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 124, 'y': 96, 'type': 'cheese'}, {'col': 1, 'x': 124, 'y': 144, 'type': 'tomato'}, {'col': 1, 'x': 124, 'y': 192, 'type': 'patty'}, {'col': 1, 'x': 124, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 220, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 220, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 220, 'y': 144, 'type': 'patty'}, {'col': 2, 'x': 220, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 312, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 312, 'y': 96, 'type': 'cheese'}, {'col': 3, 'x': 312, 'y': 144, 'type': 'tomato'}, {'col': 3, 'x': 312, 'y': 192, 'type': 'patty'}, {'col': 3, 'x': 312, 'y': 240, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 28, 'y': 288}, {'x': 122, 'y': 288}, {'x': 218, 'y': 288}, {'x': 310, 'y': 288}],
+        'playerStart': {'x': 185, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 30, 'y': 48}, {'type': 'hotdog', 'x': 312, 'y': 48}, {'type': 'pickle', 'x': 124, 'y': 48}, {'type': 'egg', 'x': 220, 'y': 48}],
+        'enemySpeed': 1.12
+    }
+    stages.append(s10)
+
+    # ----------------------------------------------------
+    # STAGE 11: LA PANADERÍA CRUJIENTE (Width: 380)
+    # Dynamic: Swaying Conveyor Platform + Bakery Lift Elevator
+    # ----------------------------------------------------
+    s11 = {
+        'stageNumber': 11,
+        'name': 'LA PANADERÍA CRUJIENTE',
+        'width': 380,
+        'bonusSpots': [{'x': 36, 'y': 144}, {'x': 148, 'y': 96}, {'x': 244, 'y': 144}, {'x': 342, 'y': 96}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 104}, {'y': 48, 'x1': 124, 'x2': 250}, {'y': 48, 'x1': 270, 'x2': 364},
+            # Swaying Conveyor Platform at y=96
+            {'type': 'swaying', 'y': 96, 'baseX1': 150, 'baseX2': 208, 'range': 38, 'speed': 0.035, 'phase': 0, 'x1': 150, 'x2': 208},
+            {'y': 96, 'x1': 16, 'x2': 140}, {'y': 96, 'x1': 218, 'x2': 264}, {'y': 96, 'x1': 312, 'x2': 364},
+            # Bakery Lift Elevator
+            {'type': 'elevator', 'x1': 270, 'x2': 308, 'y': 192, 'minY': 96, 'maxY': 240, 'speed': 0.028, 'phase': 3.14},
+            {'y': 144, 'x1': 16, 'x2': 92}, {'y': 144, 'x1': 112, 'x2': 214}, {'y': 144, 'x1': 234, 'x2': 264}, {'y': 144, 'x1': 312, 'x2': 364},
+            {'y': 192, 'x1': 16, 'x2': 140}, {'y': 192, 'x1': 160, 'x2': 264}, {'y': 192, 'x1': 312, 'x2': 364},
+            {'y': 240, 'x1': 16, 'x2': 100}, {'y': 240, 'x1': 120, 'x2': 234}, {'y': 240, 'x1': 250, 'x2': 264}, {'y': 240, 'x1': 312, 'x2': 364},
+            {'y': 288, 'x1': 12, 'x2': 368}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 360, 'y1': 48, 'y2': 288},
+            {'x': 60, 'y1': 48, 'y2': 144}, {'x': 84, 'y1': 96, 'y2': 240},
+            {'x': 130, 'y1': 48, 'y2': 192}, {'x': 172, 'y1': 96, 'y2': 288},
+            {'x': 226, 'y1': 48, 'y2': 144}, {'x': 254, 'y1': 96, 'y2': 240},
+            {'x': 324, 'y1': 96, 'y2': 288}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 30, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 30, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 30, 'y': 144, 'type': 'patty'}, {'col': 0, 'x': 30, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 128, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 128, 'y': 96, 'type': 'cheese'}, {'col': 1, 'x': 128, 'y': 144, 'type': 'tomato'}, {'col': 1, 'x': 128, 'y': 192, 'type': 'patty'}, {'col': 1, 'x': 128, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 226, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 226, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 226, 'y': 144, 'type': 'cheese'}, {'col': 2, 'x': 226, 'y': 192, 'type': 'patty'}, {'col': 2, 'x': 226, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 324, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 324, 'y': 96, 'type': 'tomato'}, {'col': 3, 'x': 324, 'y': 144, 'type': 'patty'}, {'col': 3, 'x': 324, 'y': 192, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 28, 'y': 288}, {'x': 126, 'y': 288}, {'x': 224, 'y': 288}, {'x': 322, 'y': 288}],
+        'playerStart': {'x': 188, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 30, 'y': 48}, {'type': 'hotdog', 'x': 324, 'y': 48}, {'type': 'pickle', 'x': 128, 'y': 48}, {'type': 'egg', 'x': 226, 'y': 48}],
+        'enemySpeed': 1.15
+    }
+    stages.append(s11)
+
+    # ----------------------------------------------------
+    # STAGE 12: EL WOK DEL PANDA DORADO (Width: 390)
+    # Dynamic: Swaying Bamboo Raft + Diagonal Bamboo Ramp + Elevator
+    # ----------------------------------------------------
+    s12 = {
+        'stageNumber': 12,
+        'name': 'EL WOK DEL PANDA DORADO',
+        'width': 390,
+        'bonusSpots': [{'x': 44, 'y': 96}, {'x': 150, 'y': 144}, {'x': 250, 'y': 96}, {'x': 350, 'y': 144}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 114}, {'y': 48, 'x1': 134, 'x2': 264}, {'y': 48, 'x1': 284, 'x2': 374},
+            # Diagonal Bamboo Ramp: y=96 to y=144
+            {'type': 'diagonal', 'x1': 96, 'y1': 96, 'x2': 144, 'y2': 144},
+            {'y': 96, 'x1': 16, 'x2': 96}, {'y': 96, 'x1': 150, 'x2': 270}, {'y': 96, 'x1': 324, 'x2': 374},
+            {'y': 144, 'x1': 16, 'x2': 90}, {'y': 144, 'x1': 144, 'x2': 252}, {'y': 144, 'x1': 250, 'x2': 274}, {'y': 144, 'x1': 324, 'x2': 374},
+            # Swaying Bamboo Raft at y=192
+            {'type': 'swaying', 'y': 192, 'baseX1': 164, 'baseX2': 224, 'range': 40, 'speed': 0.032, 'phase': 0, 'x1': 164, 'x2': 224},
+            # Golden Panda Elevator
+            {'type': 'elevator', 'x1': 280, 'x2': 320, 'y': 144, 'minY': 72, 'maxY': 216, 'speed': 0.03, 'phase': 1.0},
+            {'y': 192, 'x1': 16, 'x2': 140}, {'y': 192, 'x1': 240, 'x2': 274}, {'y': 192, 'x1': 324, 'x2': 374},
+            {'y': 240, 'x1': 16, 'x2': 104}, {'y': 240, 'x1': 124, 'x2': 240}, {'y': 240, 'x1': 260, 'x2': 374},
+            {'y': 288, 'x1': 12, 'x2': 378}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 370, 'y1': 48, 'y2': 288},
+            {'x': 64, 'y1': 48, 'y2': 144}, {'x': 88, 'y1': 96, 'y2': 240},
+            {'x': 136, 'y1': 48, 'y2': 96},
+            {'x': 234, 'y1': 48, 'y2': 144}, {'x': 264, 'y1': 96, 'y2': 240},
+            {'x': 338, 'y1': 96, 'y2': 288}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 34, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 34, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 34, 'y': 144, 'type': 'cheese'}, {'col': 0, 'x': 34, 'y': 192, 'type': 'patty'}, {'col': 0, 'x': 34, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 136, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 136, 'y': 96, 'type': 'tomato'}, {'col': 1, 'x': 136, 'y': 144, 'type': 'patty'}, {'col': 1, 'x': 136, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 238, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 238, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 238, 'y': 144, 'type': 'cheese'}, {'col': 2, 'x': 238, 'y': 192, 'type': 'patty'}, {'col': 2, 'x': 238, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 338, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 338, 'y': 96, 'type': 'tomato'}, {'col': 3, 'x': 338, 'y': 144, 'type': 'patty'}, {'col': 3, 'x': 338, 'y': 192, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 32, 'y': 288}, {'x': 134, 'y': 288}, {'x': 236, 'y': 288}, {'x': 336, 'y': 288}],
+        'playerStart': {'x': 195, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 34, 'y': 48}, {'type': 'hotdog', 'x': 338, 'y': 48}, {'type': 'pickle', 'x': 136, 'y': 48}, {'type': 'egg', 'x': 238, 'y': 48}],
+        'enemySpeed': 1.18
+    }
+    stages.append(s12)
+
+    # ----------------------------------------------------
+    # STAGE 13: COSMIC DINER 3000 (Width: 400)
+    # Dynamic: Zero-G Swing Platform + Space Elevator + Swaying Solar Panel
+    # ----------------------------------------------------
+    s13 = {
+        'stageNumber': 13,
+        'name': 'COSMIC DINER 3000',
+        'width': 400,
+        'bonusSpots': [{'x': 42, 'y': 144}, {'x': 148, 'y': 96}, {'x': 252, 'y': 144}, {'x': 356, 'y': 96}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 78}, {'y': 48, 'x1': 128, 'x2': 250}, {'y': 48, 'x1': 270, 'x2': 384},
+            # Swaying Solar Panel Platform at y=96
+            {'type': 'swaying', 'y': 96, 'baseX1': 254, 'baseX2': 306, 'range': 34, 'speed': 0.028, 'phase': 1.5, 'x1': 254, 'x2': 306},
+            {'y': 96, 'x1': 16, 'x2': 78}, {'y': 96, 'x1': 128, 'x2': 190}, {'y': 96, 'x1': 316, 'x2': 384},
+            # Space Elevator: y=96 to y=240
+            {'type': 'elevator', 'x1': 82, 'x2': 122, 'y': 192, 'minY': 96, 'maxY': 240, 'speed': 0.032, 'phase': 2.0},
+            # Zero-G Swinging Pendulum Platform at center
+            {'type': 'swing', 'pivotX': 200, 'pivotY': 30, 'length': 110, 'width': 48, 'maxAngle': 0.32, 'speed': 0.025, 'phase': 0, 'x1': 176, 'x2': 224, 'y': 140},
+            {'y': 144, 'x1': 16, 'x2': 78}, {'y': 144, 'x1': 128, 'x2': 168}, {'y': 144, 'x1': 234, 'x2': 330}, {'y': 144, 'x1': 348, 'x2': 384},
+            {'y': 192, 'x1': 16, 'x2': 78}, {'y': 192, 'x1': 128, 'x2': 270}, {'y': 192, 'x1': 290, 'x2': 384},
+            {'y': 240, 'x1': 16, 'x2': 78}, {'y': 240, 'x1': 128, 'x2': 244}, {'y': 240, 'x1': 264, 'x2': 384},
+            {'y': 288, 'x1': 12, 'x2': 388}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 380, 'y1': 48, 'y2': 288},
+            {'x': 54, 'y1': 48, 'y2': 288},
+            {'x': 136, 'y1': 48, 'y2': 192}, {'x': 172, 'y1': 96, 'y2': 288},
+            {'x': 240, 'y1': 48, 'y2': 144},
+            {'x': 344, 'y1': 96, 'y2': 288}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 32, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 32, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 32, 'y': 144, 'type': 'cheese'}, {'col': 0, 'x': 32, 'y': 192, 'type': 'patty'}, {'col': 0, 'x': 32, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 140, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 140, 'y': 96, 'type': 'tomato'}, {'col': 1, 'x': 140, 'y': 144, 'type': 'patty'}, {'col': 1, 'x': 140, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 246, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 246, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 246, 'y': 144, 'type': 'cheese'}, {'col': 2, 'x': 246, 'y': 192, 'type': 'patty'}, {'col': 2, 'x': 246, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 350, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 350, 'y': 96, 'type': 'tomato'}, {'col': 3, 'x': 350, 'y': 144, 'type': 'patty'}, {'col': 3, 'x': 350, 'y': 192, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 30, 'y': 288}, {'x': 138, 'y': 288}, {'x': 244, 'y': 288}, {'x': 348, 'y': 288}],
+        'playerStart': {'x': 200, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 32, 'y': 48}, {'type': 'hotdog', 'x': 350, 'y': 48}, {'type': 'pickle', 'x': 140, 'y': 48}, {'type': 'egg', 'x': 246, 'y': 48}],
+        'enemySpeed': 1.20
+    }
+    stages.append(s13)
+
+    # ----------------------------------------------------
+    # STAGE 14: COSTILLAS JURÁSICAS & VOLCÁN (Width: 410)
+    # Dynamic: Prehistoric Pendulum Swing + Magma Elevator + Dino Rib Diagonal Ramp
+    # ----------------------------------------------------
+    s14 = {
+        'stageNumber': 14,
+        'name': 'COSTILLAS JURÁSICAS & VOLCÁN',
+        'width': 410,
+        'bonusSpots': [{'x': 44, 'y': 96}, {'x': 156, 'y': 144}, {'x': 260, 'y': 96}, {'x': 366, 'y': 144}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 118}, {'y': 48, 'x1': 138, 'x2': 270}, {'y': 48, 'x1': 290, 'x2': 394},
+            {'y': 96, 'x1': 16, 'x2': 118}, {'y': 96, 'x1': 196, 'x2': 284}, {'y': 96, 'x1': 342, 'x2': 394},
+            # Prehistoric Pendulum Swing Bridge
+            {'type': 'swing', 'pivotX': 158, 'pivotY': 34, 'length': 112, 'width': 50, 'maxAngle': 0.30, 'speed': 0.024, 'phase': 0, 'x1': 133, 'x2': 183, 'y': 146},
+            # Dino Rib Diagonal Ramp
+            {'type': 'diagonal', 'x1': 224, 'y1': 144, 'x2': 274, 'y2': 192},
+            {'y': 144, 'x1': 16, 'x2': 98}, {'y': 144, 'x1': 196, 'x2': 224}, {'y': 144, 'x1': 342, 'x2': 394},
+            # Magma Elevator: y=96 to y=240
+            {'type': 'elevator', 'x1': 294, 'x2': 334, 'y': 192, 'minY': 96, 'maxY': 240, 'speed': 0.034, 'phase': 0},
+            {'y': 192, 'x1': 16, 'x2': 146}, {'y': 192, 'x1': 274, 'x2': 290}, {'y': 192, 'x1': 342, 'x2': 394},
+            {'y': 240, 'x1': 16, 'x2': 108}, {'y': 240, 'x1': 128, 'x2': 250}, {'y': 240, 'x1': 342, 'x2': 394},
+            {'y': 288, 'x1': 12, 'x2': 398}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 390, 'y1': 48, 'y2': 288},
+            {'x': 66, 'y1': 48, 'y2': 144}, {'x': 92, 'y1': 96, 'y2': 240},
+            {'x': 90, 'y1': 48, 'y2': 96},
+            {'x': 214, 'y1': 48, 'y2': 144},
+            {'x': 358, 'y1': 96, 'y2': 288}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 34, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 34, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 34, 'y': 144, 'type': 'cheese'}, {'col': 0, 'x': 34, 'y': 192, 'type': 'patty'}, {'col': 0, 'x': 34, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 144, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 144, 'y': 96, 'type': 'tomato'}, {'col': 1, 'x': 144, 'y': 144, 'type': 'patty'}, {'col': 1, 'x': 144, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 250, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 250, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 250, 'y': 144, 'type': 'cheese'}, {'col': 2, 'x': 250, 'y': 192, 'type': 'patty'}, {'col': 2, 'x': 250, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 356, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 356, 'y': 96, 'type': 'tomato'}, {'col': 3, 'x': 356, 'y': 144, 'type': 'patty'}, {'col': 3, 'x': 356, 'y': 192, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 32, 'y': 288}, {'x': 142, 'y': 288}, {'x': 248, 'y': 288}, {'x': 354, 'y': 288}],
+        'playerStart': {'x': 205, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 34, 'y': 48}, {'type': 'hotdog', 'x': 356, 'y': 48}, {'type': 'pickle', 'x': 144, 'y': 48}, {'type': 'egg', 'x': 250, 'y': 48}],
+        'enemySpeed': 1.22
+    }
+    stages.append(s14)
+
+    # ----------------------------------------------------
+    # STAGE 15: EL BANQUETE IMPERIAL (Width: 420)
+    # Master Grand Finale: Chandelier Swing + Palace Elevator + Swaying Palanquin + 2 Marble Diagonals
+    # ----------------------------------------------------
+    s15 = {
+        'stageNumber': 15,
+        'name': 'EL BANQUETE IMPERIAL',
+        'width': 420,
+        'bonusSpots': [{'x': 46, 'y': 144}, {'x': 160, 'y': 96}, {'x': 266, 'y': 144}, {'x': 374, 'y': 96}],
+        'floors': [
+            {'y': 48, 'x1': 16, 'x2': 100}, {'y': 48, 'x1': 156, 'x2': 260}, {'y': 48, 'x1': 330, 'x2': 404},
+            # Swaying Royal Palanquin at y=96
+            {'type': 'swaying', 'y': 96, 'baseX1': 270, 'baseX2': 324, 'range': 36, 'speed': 0.03, 'phase': 1.5, 'x1': 270, 'x2': 324},
+            {'y': 96, 'x1': 16, 'x2': 100}, {'y': 96, 'x1': 156, 'x2': 180}, {'y': 96, 'x1': 330, 'x2': 404},
+            # Imperial Palace Elevator
+            {'type': 'elevator', 'x1': 108, 'x2': 148, 'y': 192, 'minY': 96, 'maxY': 240, 'speed': 0.028, 'phase': 0},
+            # Grand Chandelier Pendulum Swing Platform
+            {'type': 'swing', 'pivotX': 210, 'pivotY': 28, 'length': 115, 'width': 54, 'maxAngle': 0.28, 'speed': 0.022, 'phase': 0, 'x1': 183, 'x2': 237, 'y': 143},
+            # Royal Diagonal Staircases
+            {'type': 'diagonal', 'x1': 44, 'y1': 192, 'x2': 90, 'y2': 144},
+            {'type': 'diagonal', 'x1': 330, 'y1': 144, 'x2': 376, 'y2': 192},
+            {'y': 144, 'x1': 16, 'x2': 44}, {'y': 144, 'x1': 90, 'x2': 108}, {'y': 144, 'x1': 156, 'x2': 180}, {'y': 144, 'x1': 240, 'x2': 330}, {'y': 144, 'x1': 376, 'x2': 404},
+            {'y': 192, 'x1': 16, 'x2': 44}, {'y': 192, 'x1': 156, 'x2': 270}, {'y': 192, 'x1': 376, 'x2': 404},
+            {'y': 240, 'x1': 16, 'x2': 100}, {'y': 240, 'x1': 156, 'x2': 256}, {'y': 240, 'x1': 276, 'x2': 404},
+            {'y': 288, 'x1': 12, 'x2': 408}
+        ],
+        'ladders': [
+            {'x': 18, 'y1': 48, 'y2': 288}, {'x': 400, 'y1': 48, 'y2': 288},
+            {'x': 70, 'y1': 48, 'y2': 96},
+            {'x': 164, 'y1': 48, 'y2': 192}, {'x': 200, 'y1': 192, 'y2': 288},
+            {'x': 250, 'y1': 48, 'y2': 144},
+            {'x': 388, 'y1': 96, 'y2': 288}
+        ],
+        'burgers': [
+            {'col': 0, 'x': 34, 'y': 48, 'type': 'bun_top'}, {'col': 0, 'x': 34, 'y': 96, 'type': 'lettuce'}, {'col': 0, 'x': 34, 'y': 144, 'type': 'cheese'}, {'col': 0, 'x': 34, 'y': 192, 'type': 'patty'}, {'col': 0, 'x': 34, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 1, 'x': 160, 'y': 48, 'type': 'bun_top'}, {'col': 1, 'x': 160, 'y': 96, 'type': 'tomato'}, {'col': 1, 'x': 160, 'y': 144, 'type': 'patty'}, {'col': 1, 'x': 160, 'y': 192, 'type': 'bun_bottom'},
+            {'col': 2, 'x': 254, 'y': 48, 'type': 'bun_top'}, {'col': 2, 'x': 254, 'y': 96, 'type': 'lettuce'}, {'col': 2, 'x': 254, 'y': 144, 'type': 'cheese'}, {'col': 2, 'x': 254, 'y': 192, 'type': 'patty'}, {'col': 2, 'x': 254, 'y': 240, 'type': 'bun_bottom'},
+            {'col': 3, 'x': 370, 'y': 48, 'type': 'bun_top'}, {'col': 3, 'x': 370, 'y': 96, 'type': 'tomato'}, {'col': 3, 'x': 370, 'y': 144, 'type': 'patty'}, {'col': 3, 'x': 370, 'y': 192, 'type': 'bun_bottom'}
+        ],
+        'plates': [{'x': 32, 'y': 288}, {'x': 158, 'y': 288}, {'x': 252, 'y': 288}, {'x': 368, 'y': 288}],
+        'playerStart': {'x': 210, 'y': 288},
+        'enemies': [{'type': 'hotdog', 'x': 34, 'y': 48}, {'type': 'hotdog', 'x': 370, 'y': 48}, {'type': 'pickle', 'x': 160, 'y': 48}, {'type': 'egg', 'x': 254, 'y': 48}],
+        'enemySpeed': 1.25
+    }
+    stages.append(s15)
+
+    return stages
+
+def format_floor(f):
+    if f.get('type') == 'diagonal':
+        return f"{{ type: 'diagonal', x1: {f['x1']}, y1: {f['y1']}, x2: {f['x2']}, y2: {f['y2']} }}"
+    elif f.get('type') == 'elevator':
+        return f"{{ type: 'elevator', x1: {f['x1']}, x2: {f['x2']}, y: {f['y']}, minY: {f['minY']}, maxY: {f['maxY']}, speed: {f['speed']}, phase: {f['phase']} }}"
+    elif f.get('type') == 'swaying':
+        return f"{{ type: 'swaying', y: {f['y']}, baseX1: {f['baseX1']}, baseX2: {f['baseX2']}, range: {f['range']}, speed: {f['speed']}, phase: {f['phase']}, x1: {f['x1']}, x2: {f['x2']} }}"
+    elif f.get('type') == 'swing':
+        return f"{{ type: 'swing', pivotX: {f['pivotX']}, pivotY: {f['pivotY']}, length: {f['length']}, width: {f['width']}, maxAngle: {f['maxAngle']}, speed: {f['speed']}, phase: {f['phase']}, x1: {f['x1']}, x2: {f['x2']}, y: {f['y']} }}"
+    else:
+        return f"{{ y: {f['y']}, x1: {f['x1']}, x2: {f['x2']} }}"
+
+def format_stage(s):
+    lines = []
+    lines.append("      // ==========================================")
+    lines.append(f"      // STAGE {s['stageNumber']}: {s['name']} (Wide Screen: {s['width']}px)")
+    lines.append("      // ==========================================")
+    lines.append("      {")
+    lines.append(f"        stageNumber: {s['stageNumber']},")
+    lines.append(f"        name: '{s['name']}',")
+    lines.append(f"        width: {s['width']},")
+    
+    # bonusSpots
+    lines.append("        bonusSpots: [")
+    for spot in s['bonusSpots']:
+        lines.append(f"          {{ x: {spot['x']}, y: {spot['y']} }},")
+    lines[-1] = lines[-1].rstrip(',')
+    lines.append("        ],")
+
+    # floors
+    lines.append("        floors: [")
+    for f in s['floors']:
+        lines.append(f"          {format_floor(f)},")
+    lines[-1] = lines[-1].rstrip(',')
+    lines.append("        ],")
+
+    # ladders
+    lines.append("        ladders: [")
+    for l in s['ladders']:
+        lines.append(f"          {{ x: {l['x']}, y1: {l['y1']}, y2: {l['y2']} }},")
+    lines[-1] = lines[-1].rstrip(',')
+    lines.append("        ],")
+
+    # burgers
+    lines.append("        burgers: [")
+    for b in s['burgers']:
+        lines.append(f"          {{ col: {b['col']}, x: {b['x']}, y: {b['y']}, type: '{b['type']}' }},")
+    lines[-1] = lines[-1].rstrip(',')
+    lines.append("        ],")
+
+    # plates
+    lines.append("        plates: [")
+    for p in s['plates']:
+        lines.append(f"          {{ x: {p['x']}, y: {p['y']} }},")
+    lines[-1] = lines[-1].rstrip(',')
+    lines.append("        ],")
+
+    # playerStart
+    p = s['playerStart']
+    lines.append(f"        playerStart: {{ x: {p['x']}, y: {p['y']} }},")
+
+    # enemies
+    lines.append("        enemies: [")
+    for e in s['enemies']:
+        lines.append(f"          {{ type: '{e['type']}', x: {e['x']}, y: {e['y']} }},")
+    lines[-1] = lines[-1].rstrip(',')
+    lines.append("        ],")
+
+    lines.append(f"        enemySpeed: {s['enemySpeed']}")
+    lines.append("      },")
+    return "\n".join(lines)
+
+def apply_to_map(stages):
+    all_stages_js = []
+    for s in stages:
+        all_stages_js.append(format_stage(s))
+
+    all_stages_js[-1] = all_stages_js[-1][:-1] # remove trailing comma
+    joined_stages_js = "\n\n".join(all_stages_js)
+
+    with open('js/map.js', 'r', encoding='utf-8') as f:
+        map_text = f.read()
+
+    marker_start = "      // ==========================================\n      // STAGE 4:"
+    idx_start = map_text.find(marker_start)
+    if idx_start == -1:
+        marker_start = "// STAGE 4"
+        idx_start = map_text.find(marker_start)
+
+    idx_end = map_text.find("    ];\n  }\n\n  getLevel")
+    if idx_end == -1:
+        idx_end = map_text.find("    ];\n  }\n  getLevel")
+
+    new_map_text = map_text[:idx_start] + joined_stages_js + "\n    " + map_text[idx_end:]
+
+    with open('js/map.js', 'w', encoding='utf-8') as f:
+        f.write(new_map_text)
+
+    print("Successfully injected all validated dynamic stages into js/map.js!")
+
+if __name__ == '__main__':
+    stages = build_stages()
+    all_ok = True
+    for s in stages:
+        errs = validate_stage(s)
+        if errs:
+            all_ok = False
+            print(f"❌ Stage {s['stageNumber']} ({s['name']}) Errors:")
+            for e in errs:
+                print(f"  - {e}")
+        else:
+            dyn = [f.get('type') for f in s['floors'] if f.get('type')]
+            print(f"✅ Stage {s['stageNumber']} ({s['name']}): Perfect! Dynamic platforms: {dyn}")
+
+    if all_ok:
+        print("\nALL STAGES 4-15 VALIDATED WITH 0 ERRORS! Now updating js/map.js...")
+        apply_to_map(stages)

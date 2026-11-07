@@ -96,3 +96,4 @@ with open('js/map.js', 'w', encoding='utf-8') as f:
     f.write(new_map_text)
 
 print("Successfully replaced stages 4 to 15 in js/map.js!")
+

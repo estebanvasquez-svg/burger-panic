@@ -2,17 +2,29 @@
  * Entities: Player (Chef Pepe), Enemies (Hot Dog, Pickle, Egg), Pepper Cloud, Bonus Items
  */
 
+// Helper to calculate exact elevation for horizontal or diagonal/sloped floors
+function getFloorElevation(f, x) {
+  if (f.type === 'diagonal') {
+    const ratio = Math.max(0, Math.min(1, (x - f.x1) / Math.max(1, f.x2 - f.x1)));
+    return f.y1 + (f.y2 - f.y1) * ratio;
+  }
+  return f.y;
+}
+
 // Helper to check platform collision (checks vertical proximity and horizontal platform span)
 function getNearestFloor(x, y, floors, tolerance = 6) {
   if (typeof y === 'undefined') return null;
   for (const f of floors) {
-    if (Math.abs(y - f.y) <= tolerance) {
-      if (typeof x === 'number') {
-        const footCenter = x + 8;
-        if (footCenter >= f.x1 && footCenter <= f.x2) {
+    if (typeof x === 'number') {
+      const footCenter = x + 8;
+      if (footCenter >= f.x1 - 2 && footCenter <= f.x2 + 2) {
+        const floorY = getFloorElevation(f, footCenter);
+        if (Math.abs(y - floorY) <= tolerance) {
           return f;
         }
-      } else {
+      }
+    } else {
+      if (Math.abs(y - f.y) <= tolerance) {
         return f;
       }
     }
@@ -294,9 +306,10 @@ class Player {
       if (this.vy > 0) {
         const footCenter = this.x + 8;
         for (const f of floors) {
-          if (oldY <= f.y + 1 && this.y >= f.y - 3 && this.y <= f.y + 16) {
-            if (footCenter >= f.x1 && footCenter <= f.x2) {
-              this.y = f.y;
+          const floorY = getFloorElevation(f, footCenter);
+          if (oldY <= floorY + 1 && this.y >= floorY - 3 && this.y <= floorY + 16) {
+            if (footCenter >= f.x1 - 1 && footCenter <= f.x2 + 1) {
+              this.y = floorY;
               this.vy = 0;
               this.vx = 0;
               this.isJumping = false;
@@ -363,11 +376,11 @@ class Player {
           } else if (wantY < 0 && newY < touchingLadder.y1) {
             // Reached the top of the ladder! Ascend smoothly onto floor at top
             const topFloor = floors.find(
-              (f) => Math.abs(f.y - touchingLadder.y1) <= 8 &&
+              (f) => Math.abs(getFloorElevation(f, touchingLadder.x + 8) - touchingLadder.y1) <= 8 &&
                      (touchingLadder.x + 14 >= f.x1 && touchingLadder.x + 2 <= f.x2)
             );
             if (topFloor) {
-              this.y = topFloor.y;
+              this.y = getFloorElevation(topFloor, this.x + 8);
               this.isClimbing = false;
               this.facingDir = 'up';
               window.soundManager.playStep();
@@ -378,11 +391,11 @@ class Player {
           } else if (wantY > 0 && newY > touchingLadder.y2) {
             // Reached the bottom of the ladder!
             const botFloor = floors.find(
-              (f) => Math.abs(f.y - touchingLadder.y2) <= 8 &&
+              (f) => Math.abs(getFloorElevation(f, touchingLadder.x + 8) - touchingLadder.y2) <= 8 &&
                      (touchingLadder.x + 14 >= f.x1 && touchingLadder.x + 2 <= f.x2)
             );
             if (botFloor) {
-              this.y = botFloor.y;
+              this.y = getFloorElevation(botFloor, this.x + 8);
               this.isClimbing = false;
               this.facingDir = 'down';
               window.soundManager.playStep();
@@ -401,14 +414,18 @@ class Player {
     if (wantY === 0 && wantX !== 0) {
       // Can only walk horizontally if at or very near a floor
       if (currentFloor) {
-        this.y = currentFloor.y; // Snap vertically to platform line
+        const footCenter = this.x + 8;
+        this.y = getFloorElevation(currentFloor, footCenter);
         this.isClimbing = false;
         this.dir = wantX > 0 ? 1 : -1;
         this.facingDir = this.dir === 1 ? 'right' : 'left';
         this.vx = wantX * this.speed;
 
-        // Check horizontal floor bounds
-        const newX = this.x + this.vx;
+        // Carry dynamic floor velocity
+        let newX = this.x + this.vx;
+        if (currentFloor.vx) newX += currentFloor.vx;
+        if (currentFloor.vy) this.y += currentFloor.vy;
+
         const mapW = (this.levelData && this.levelData.width) ? this.levelData.width : 240;
 
         if (newX >= currentFloor.x1 && newX <= currentFloor.x2 - this.width) {
@@ -437,6 +454,13 @@ class Player {
       }
     } else if (wantY === 0) {
       this.vx = 0;
+      // If standing still on a dynamic moving floor (elevator, swaying, swing), ride along!
+      if (currentFloor && !this.isJumping && !this.isClimbing) {
+        if (currentFloor.vx) this.x += currentFloor.vx;
+        if (currentFloor.vy) this.y += currentFloor.vy;
+        const footCenter = this.x + 8;
+        this.y = getFloorElevation(currentFloor, footCenter);
+      }
     }
   }
 
@@ -693,6 +717,12 @@ class Enemy {
       if (this.stunTimer <= 0) {
         this.state = 'normal';
       }
+      const curFloor = getNearestFloor(this.x, this.y, floors);
+      if (curFloor) {
+        if (curFloor.vx) this.x += curFloor.vx;
+        if (curFloor.vy) this.y += curFloor.vy;
+        this.y = getFloorElevation(curFloor, this.x + 8);
+      }
       // If stunned while falling, let gravity finish landing onto floor before freezing
       if (!this.isFalling) {
         return;
@@ -743,10 +773,12 @@ class Enemy {
       // Check landing on platforms below when falling downwards
       if (this.vy > 0) {
         const prevY = this.y - this.vy;
+        const footX = this.x + 8;
         for (const f of floors) {
-          if (prevY <= f.y + 2 && this.y >= f.y - 3) {
+          const floorY = getFloorElevation(f, footX);
+          if (prevY <= floorY + 2 && this.y >= floorY - 3) {
             if (this.x + 12 >= f.x1 && this.x + 4 <= f.x2) {
-              this.y = f.y;
+              this.y = floorY;
               this.isFalling = false;
               this.vy = 0;
               this.vx = 0;
@@ -819,7 +851,7 @@ class Enemy {
 
         if (onPlayerFloor || cannotContinueClimb) {
           this.isClimbing = false;
-          this.y = currentFloor.y;
+          this.y = getFloorElevation(currentFloor, this.x + 8);
           this.dir = dx >= 0 ? 1 : -1;
           this.changeDirCooldown = 25;
         }
@@ -839,7 +871,7 @@ class Enemy {
     if (this.isClimbing) {
       if (!currentLadder) {
         this.isClimbing = false;
-        if (currentFloor) this.y = currentFloor.y;
+        if (currentFloor) this.y = getFloorElevation(currentFloor, this.x + 8);
         return;
       }
 
@@ -854,6 +886,13 @@ class Enemy {
       }
     } else if (currentFloor) {
       if (!this.dir) this.dir = dx >= 0 ? 1 : -1;
+
+      const footX = this.x + 8;
+      this.y = getFloorElevation(currentFloor, footX);
+
+      // Carry moving floor velocity
+      if (currentFloor.vx) this.x += currentFloor.vx;
+      if (currentFloor.vy) this.y += currentFloor.vy;
 
       const nextX = this.x + this.dir * this.speed;
 

@@ -496,7 +496,52 @@ class BurgerPanicGame {
     }
   }
 
+  updateDynamicPlatforms() {
+    if (!this.levelData || !this.levelData.floors) return;
+
+    for (const f of this.levelData.floors) {
+      if (f.type === 'elevator') {
+        if (typeof f.phase === 'undefined') f.phase = f.initialPhase || 0;
+        f.phase += f.speed || 0.025;
+        const oldY = f.y;
+        const midY = (f.minY + f.maxY) / 2;
+        const ampY = (f.maxY - f.minY) / 2;
+        f.y = Math.round(midY + Math.sin(f.phase) * ampY);
+        f.vy = f.y - oldY;
+        f.vx = 0;
+      } else if (f.type === 'swaying') {
+        if (typeof f.phase === 'undefined') f.phase = f.initialPhase || 0;
+        f.phase += f.speed || 0.025;
+        const oldX1 = f.x1;
+        const offset = Math.round(Math.sin(f.phase) * (f.range || 35));
+        f.x1 = f.baseX1 + offset;
+        f.x2 = f.baseX2 + offset;
+        f.vx = f.x1 - oldX1;
+        f.vy = 0;
+      } else if (f.type === 'swing') {
+        if (typeof f.phase === 'undefined') f.phase = f.initialPhase || 0;
+        f.phase += f.speed || 0.022;
+        const maxAngle = f.maxAngle || 0.32;
+        const angle = Math.sin(f.phase) * maxAngle;
+        const oldX1 = f.x1;
+        const oldY = f.y;
+        const cx = f.pivotX + Math.sin(angle) * f.length;
+        const cy = f.pivotY + Math.cos(angle) * f.length;
+        const halfW = (f.width || 44) / 2;
+        f.x1 = Math.round(cx - halfW);
+        f.x2 = Math.round(cx + halfW);
+        f.y = Math.round(cy);
+        f.angle = angle;
+        f.vx = f.x1 - oldX1;
+        f.vy = f.y - oldY;
+      }
+    }
+  }
+
   updatePlaying() {
+    // 0. Update Dynamic Platforms (Elevators, Swaying, Swing platforms)
+    this.updateDynamicPlatforms();
+
     // 1. Update Player
     this.player.update(this.controls.input, this.levelData.ladders, this.levelData.floors);
 
@@ -804,15 +849,176 @@ class BurgerPanicGame {
 
   drawPlatforms() {
     const platSpr = window.spriteManager.get('platform');
-    if (!platSpr) return;
 
     for (const f of this.levelData.floors) {
-      const length = f.x2 - f.x1;
+      if (f.type === 'diagonal') {
+        this.drawDiagonalPlatform(f, platSpr);
+      } else if (f.type === 'elevator') {
+        this.drawElevatorPlatform(f, platSpr);
+      } else if (f.type === 'swaying') {
+        this.drawSwayingPlatform(f, platSpr);
+      } else if (f.type === 'swing') {
+        this.drawSwingPlatform(f, platSpr);
+      } else {
+        if (!platSpr) continue;
+        for (let x = f.x1; x < f.x2; x += 16) {
+          const w = Math.min(16, f.x2 - x);
+          this.ctx.drawImage(platSpr, 0, 0, w, 8, x, f.y + 14, w, 8);
+        }
+      }
+    }
+  }
+
+  drawDiagonalPlatform(f, platSpr) {
+    const steps = Math.max(3, Math.floor((f.x2 - f.x1) / 12));
+    const dx = (f.x2 - f.x1) / steps;
+    const dy = (f.y2 - f.y1) / steps;
+
+    // Metallic truss girder rail under the ramp
+    this.ctx.strokeStyle = '#b87820';
+    this.ctx.lineWidth = 3;
+    this.ctx.beginPath();
+    this.ctx.moveTo(f.x1, f.y1 + 18);
+    this.ctx.lineTo(f.x2, f.y2 + 18);
+    this.ctx.stroke();
+
+    this.ctx.strokeStyle = '#f8b800';
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+    this.ctx.moveTo(f.x1, f.y1 + 16);
+    this.ctx.lineTo(f.x2, f.y2 + 16);
+    this.ctx.stroke();
+
+    // Stepped platform segments
+    for (let i = 0; i < steps; i++) {
+      const sx = Math.round(f.x1 + i * dx);
+      const sy = Math.round(f.y1 + i * dy);
+      const sw = Math.round(dx + 2);
+      if (platSpr) {
+        this.ctx.drawImage(platSpr, 0, 0, Math.min(16, sw), 8, sx, sy + 14, sw, 8);
+      } else {
+        this.ctx.fillStyle = '#00a844';
+        this.ctx.fillRect(sx, sy + 14, sw, 8);
+      }
+    }
+
+    // Safety edge studs
+    this.ctx.fillStyle = '#fce4a0';
+    this.ctx.fillRect(f.x1 - 2, f.y1 + 13, 3, 10);
+    this.ctx.fillRect(f.x2 - 1, f.y2 + 13, 3, 10);
+  }
+
+  drawElevatorPlatform(f, platSpr) {
+    // 1. Draw vertical cables & shaft rails
+    this.ctx.strokeStyle = '#445566';
+    this.ctx.lineWidth = 2;
+    this.ctx.beginPath();
+    this.ctx.moveTo(f.x1 + 6, f.minY + 6);
+    this.ctx.lineTo(f.x1 + 6, f.maxY + 22);
+    this.ctx.moveTo(f.x2 - 6, f.minY + 6);
+    this.ctx.lineTo(f.x2 - 6, f.maxY + 22);
+    this.ctx.stroke();
+
+    // 2. Draw pulley cogs at top
+    this.ctx.fillStyle = '#f8b800';
+    this.ctx.fillRect(f.x1 + 4, f.minY + 2, 5, 5);
+    this.ctx.fillRect(f.x2 - 8, f.minY + 2, 5, 5);
+
+    // 3. Draw metallic elevator platform
+    const w = f.x2 - f.x1;
+    this.ctx.fillStyle = '#203048';
+    this.ctx.fillRect(f.x1, f.y + 14, w, 8);
+
+    if (platSpr) {
+      for (let x = f.x1; x < f.x2; x += 16) {
+        const segW = Math.min(16, f.x2 - x);
+        this.ctx.drawImage(platSpr, 0, 0, segW, 8, x, f.y + 14, segW, 8);
+      }
+    }
+
+    // Flashing safety signal lamp on elevator
+    const pulse = Math.floor(Date.now() / 250) % 2 === 0;
+    this.ctx.fillStyle = pulse ? '#00e436' : '#fc5454';
+    this.ctx.fillRect(f.x1 + Math.floor(w / 2) - 2, f.y + 16, 4, 4);
+
+    // Side metal brackets
+    this.ctx.fillStyle = '#83769c';
+    this.ctx.fillRect(f.x1, f.y + 11, 4, 11);
+    this.ctx.fillRect(f.x2 - 4, f.y + 11, 4, 11);
+  }
+
+  drawSwayingPlatform(f, platSpr) {
+    // 1. Draw sliding guide track behind platform
+    const railX1 = (f.baseX1 || f.x1) - (f.range || 35);
+    const railX2 = (f.baseX2 || f.x2) + (f.range || 35);
+    this.ctx.strokeStyle = '#556677';
+    this.ctx.lineWidth = 3;
+    this.ctx.beginPath();
+    this.ctx.moveTo(railX1, f.y + 18);
+    this.ctx.lineTo(railX2, f.y + 18);
+    this.ctx.stroke();
+
+    // Track end bumpers
+    this.ctx.fillStyle = '#d82800';
+    this.ctx.fillRect(railX1 - 2, f.y + 15, 3, 7);
+    this.ctx.fillRect(railX2 - 1, f.y + 15, 3, 7);
+
+    // 2. Platform body
+    if (platSpr) {
       for (let x = f.x1; x < f.x2; x += 16) {
         const w = Math.min(16, f.x2 - x);
         this.ctx.drawImage(platSpr, 0, 0, w, 8, x, f.y + 14, w, 8);
       }
+    } else {
+      this.ctx.fillStyle = '#00a844';
+      this.ctx.fillRect(f.x1, f.y + 14, f.x2 - f.x1, 8);
     }
+
+    // Hazard stripes on borders
+    this.ctx.fillStyle = '#fcb400';
+    this.ctx.fillRect(f.x1, f.y + 14, 4, 8);
+    this.ctx.fillRect(f.x2 - 4, f.y + 14, 4, 8);
+    this.ctx.fillStyle = '#222222';
+    this.ctx.fillRect(f.x1 + 1, f.y + 16, 2, 4);
+    this.ctx.fillRect(f.x2 - 3, f.y + 16, 2, 4);
+  }
+
+  drawSwingPlatform(f, platSpr) {
+    // 1. Pivot ring
+    this.ctx.fillStyle = '#fcb400';
+    this.ctx.beginPath();
+    this.ctx.arc(f.pivotX, f.pivotY, 3, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // 2. Tension chains / ropes to both ends of the platform
+    const leftAnchorX = f.x1 + 4;
+    const rightAnchorX = f.x2 - 4;
+    const anchorY = f.y + 15;
+
+    this.ctx.strokeStyle = '#a08050';
+    this.ctx.lineWidth = 1.5;
+    this.ctx.beginPath();
+    this.ctx.moveTo(f.pivotX - 2, f.pivotY);
+    this.ctx.lineTo(leftAnchorX, anchorY);
+    this.ctx.moveTo(f.pivotX + 2, f.pivotY);
+    this.ctx.lineTo(rightAnchorX, anchorY);
+    this.ctx.stroke();
+
+    // 3. Platform body
+    if (platSpr) {
+      for (let x = f.x1; x < f.x2; x += 16) {
+        const w = Math.min(16, f.x2 - x);
+        this.ctx.drawImage(platSpr, 0, 0, w, 8, x, f.y + 14, w, 8);
+      }
+    } else {
+      this.ctx.fillStyle = '#8b5a2b';
+      this.ctx.fillRect(f.x1, f.y + 14, f.x2 - f.x1, 8);
+    }
+
+    // Metallic ring fittings on ends
+    this.ctx.fillStyle = '#fcb400';
+    this.ctx.fillRect(leftAnchorX - 2, anchorY - 2, 4, 4);
+    this.ctx.fillRect(rightAnchorX - 2, anchorY - 2, 4, 4);
   }
 
   drawLadders() {

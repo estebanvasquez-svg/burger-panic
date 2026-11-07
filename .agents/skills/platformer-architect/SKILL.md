@@ -7,12 +7,13 @@ description: >-
 
 # 🕹️ Platformer Level & Physics Architect (Mobile Arcade)
 
-Guía y estándares técnicos para el diseño de niveles, plataformas dinámicas y prevención de bugs físicos en **Burger Panic Mobile** (lienzo vertical 240x320).
+Guía y estándares técnicos para el diseño de niveles, plataformas dinámicas y prevención de bugs físicos en **Burger Panic Mobile** (lienzo vertical 240x320 y niveles anchos panorámicos).
 
 ---
 
 ## 1. 📐 Dimensiones y Grilla Móvil Vertical
 - **Resolución base:** 240 px (ancho) × 320 px (alto).
+- **Niveles Panorámicos:** Niveles 4 en adelante con anchos entre 360 px y 420 px y cámara de seguimiento horizontal automático.
 - **Piso superior jugable:** `y = 48` a `52`.
 - **Piso inferior (platos):** `y = 288` a `292`.
 - **Espaciado vertical entre pisos:** Entre **36 px y 48 px**.
@@ -21,18 +22,38 @@ Guía y estándares técnicos para el diseño de niveles, plataformas dinámicas
 
 ---
 
-## 2. 🪜 Geometría de Escaleras y Prevención de Bugs
+## 2. 🚡 Plataformas Dinámicas y Progresión Orgánica
+Para mantener la jugabilidad fresca sin saturar al jugador, los niveles incorporan dinámicas de forma escalonada:
+
+1. **Rampas Diagonales / Pendientes (`type: 'diagonal'`):**
+   - Introducidas en **Niveles 4 a 6** (Marisquería, Café Ciber-Gato, Pastelería Felina).
+   - Conectan desniveles entre pisos: `ratio = Math.max(0, Math.min(1, (x - x1) / (x2 - x1)))`.
+   - `floorY = y1 + (y2 - y1) * ratio`. Tanto el Chef como los enemigos ajustan su altura continua en cada paso.
+
+2. **Elevadores Mecánicos Verticales (`type: 'elevator'`):**
+   - Introducidos en **Niveles 7 a 9** (Asador del Castillo, Forja del Dragón, Cocina de Alta Mar).
+   - Oscilación vertical suave entre `minY` y `maxY`: `y = midY + Math.sin(phase) * ampY`.
+   - Inercia y arrastre: `character.y += elevator.vy`. Cero caídas al saltar o estar de pie sobre el elevador.
+
+3. **Plataformas Horizontales Balanceantes (`type: 'swaying'`):**
+   - Introducidas en **Niveles 10 a 12** (Heladería Sub-Zero, Tren Bento, Wok del Panda Dorado).
+   - Deslizamiento suave sobre riel entre `baseX1 - range` y `baseX2 + range`.
+   - Arrastre inercial: `character.x += swaying.vx`. Permite surfear las brechas entre plataformas.
+
+4. **Columpios de Péndulo (`type: 'swing'`):**
+   - Introducidos en **Niveles 13 a 15** (Cosmic Diner 3000, Costillas Jurásicas, Banquete Imperial).
+   - Suspensión angular desde un pivote `(pivotX, pivotY)` con cadenas tensas:
+     `cx = pivotX + Math.sin(angle) * length; cy = pivotY + Math.cos(angle) * length;`
+   - El Chef y los enemigos son transportados en balanceo dinámico en dos ejes (`vx` y `vy`).
+
+---
+
+## 3. 🪜 Geometría de Escaleras y Prevención de Bugs
 Para evitar caídas infinitas o bloqueos de movimiento:
 1. **Conexión en ambos extremos:** Todo peldaño superior (`y1`) e inferior (`y2`) debe coincidir con la coordenada `y` de un piso válido con una tolerancia máxima de `|floor.y - ladder.y| <= 8`.
 2. **Detección de contacto en 1 pixel:** El jugador o enemigo toca la escalera en cuanto `(x + 16 > ladder.x && x < ladder.x + 16)`.
 3. **Salida sin teletransporte:** Al llegar al final de una escalera (`y <= l.y1` o `y >= l.y2`), el personaje debe anclarse exactamente a `floor.y` sin saltos bruscos.
-
----
-
-## 3. 🍔 Diseño de Plataformas Dinámicas y Divertidas
-- **Flujo en Zigzag (Staggered):** En niveles avanzados, alterna pisos completos con plataformas partidas (por ejemplo: `x: 16..108` y `x: 132..224`), obligando al jugador a planificar rutas y utilizar saltos entre plataformas.
-- **Cascadas de Hamburguesas:** Coloca los ingredientes de manera que las caídas provoquen reacciones en cadena que empujen los pisos inferiores.
-- **Riesgo vs. Recompensa:** Ubica los ítems de bonificación (helados, cafés, vidas extra) en plataformas intermedias custodiadas por enemigos.
+4. **Anclaje seguro:** Las escaleras deben anclarse a plataformas sólidas de soporte, evitando acoples a pisos en movimiento que deformen la escalera.
 
 ---
 
@@ -44,7 +65,6 @@ Para evitar caídas infinitas o bloqueos de movimiento:
 ---
 
 ## 5. 🛠️ Herramientas del MCP `platformer-architect`
-- `validate_stage_architecture(stage_number)`: Ejecuta el análisis geométrico y de balance de cualquier nivel en `js/map.js`.
-- `generate_dynamic_stage(stage_number, theme, difficulty, num_burgers, num_floors)`: Genera el código JavaScript listo para copiar con pisos, escaleras, hamburguesas y enemigos balanceados.
-- `diagnose_character_physics_rules()`: Consulta los algoritmos matemáticos anti-tunneling y desacoplamiento de hitboxes.
-
+- `validate_stage_architecture(stage_number)`: Ejecuta el análisis geométrico, de balance y validación de plataformas dinámicas en `js/map.js`.
+- `generate_dynamic_stage(stage_number, theme, difficulty, width, dynamic_platform_type, num_burgers, num_floors)`: Genera el código JavaScript listo para copiar con pisos dinámicos, escaleras, hamburguesas y enemigos balanceados.
+- `diagnose_character_physics_rules()`: Consulta los algoritmos matemáticos anti-tunneling, arrastre de velocidad y desacoplamiento de hitboxes.
