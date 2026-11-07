@@ -51,3 +51,4 @@ def find_components_auto(img_path):
 
 if __name__ == '__main__':
     print('Pest sprite processor utility ready.')
+
