@@ -1016,10 +1016,10 @@ class BurgerPanicGame {
       return;
     }
 
-    // Draw HUD (fixed overlay)
-    this.drawHUD();
+    // 1. Draw Atmospheric GBA Metroid Background (BSL / Zebes Deep Sci-Fi Layer)
+    this.drawStageBackground();
 
-    // World Rendering (translated by camera for wide maps + physical screen shake)
+    // 2. World Rendering (translated by camera for wide maps + physical screen shake)
     this.ctx.save();
     let shakeX = 0;
     let shakeY = 0;
@@ -1083,6 +1083,9 @@ class BurgerPanicGame {
 
     this.ctx.restore();
 
+    // 3. Draw Metroid GBA Navigation Visor HUD (on top of world rendering)
+    this.drawHUD();
+
     // Overlays for specific states
     if (this.state === 'READY') {
       this.drawBanner(`STAGE ${this.levelData.stageNumber}`, 'GET READY!');
@@ -1096,70 +1099,131 @@ class BurgerPanicGame {
   }
 
   drawStageBackground() {
-    // Background designs removed per user request to maintain clean classic arcade contrast
+    const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
+    const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
+    if (theme && window.stageThemesManager && window.stageThemesManager.drawBackground) {
+      const worldW = (this.levelData && this.levelData.width) ? this.levelData.width : 240;
+      window.stageThemesManager.drawBackground(this.ctx, theme, worldW, 320, this.cameraX);
+    } else {
+      this.ctx.fillStyle = '#060710';
+      this.ctx.fillRect(0, 0, 240, 320);
+    }
   }
 
   drawHUD() {
-    this.ctx.fillStyle = '#fcfcfc';
-    this.ctx.font = '7px "Press Start 2P", monospace';
+    // ----------------------------------------------------
+    // METROID FUSION / ZERO MISSION GBA NAVIGATION VISOR HUD
+    // ----------------------------------------------------
+    this.ctx.save();
 
-    // 1UP Score (Left)
-    this.ctx.fillStyle = '#e40058';
-    this.ctx.textAlign = 'left';
-    this.ctx.fillText('1UP', 14, 14);
-    this.ctx.fillStyle = '#fcfcfc';
-    this.ctx.fillText(this.score.toString().padStart(6, '0'), 14, 25);
+    // Visor Top Armor Bar Frame (High-tech angled brackets)
+    this.ctx.fillStyle = 'rgba(6, 9, 18, 0.94)';
+    this.ctx.fillRect(0, 0, 240, 36);
 
-    // Current Stage / Level (Center)
+    // High-tech Visor Bottom Laser Trim Line
+    const now = Date.now();
     const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
-    this.ctx.fillStyle = '#fcb400'; // Arcade gold
+    const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
+    const accent = (theme && theme.bgAccent) ? theme.bgAccent : '#00f0ff';
+
+    this.ctx.fillStyle = accent;
+    this.ctx.fillRect(0, 35, 240, 1);
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.fillRect(Math.floor((now / 15) % 240), 35, 12, 1); // Scanning data packet
+
+    // 1. LEFT: METROID ENERGY TANKS & DIGITAL READOUT
+    this.ctx.font = '6px "Press Start 2P", monospace';
+    this.ctx.fillStyle = '#00f0ff';
+    this.ctx.textAlign = 'left';
+    this.ctx.fillText('ENERGY', 10, 13);
+
+    // E-Tanks (Energy Cylinders)
+    const lives = this.player ? this.player.lives : 3;
+    const maxTanks = 4;
+    for (let i = 0; i < maxTanks; i++) {
+      const tx = 10 + i * 11;
+      const ty = 18;
+      // Cylinder outline
+      this.ctx.fillStyle = '#1e293b';
+      this.ctx.fillRect(tx, ty, 8, 12);
+      this.ctx.strokeStyle = '#00f0ff';
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeRect(tx, ty, 8, 12);
+
+      if (i < lives) {
+        // Glowing Pink/Red Metroid E-Tank core
+        this.ctx.fillStyle = '#ff007f';
+        this.ctx.fillRect(tx + 2, ty + 2, 4, 8);
+        this.ctx.fillStyle = '#ffb3d9';
+        this.ctx.fillRect(tx + 2, ty + 2, 2, 8);
+      } else {
+        // Depleted tank
+        this.ctx.fillStyle = '#334155';
+        this.ctx.fillRect(tx + 2, ty + 2, 4, 8);
+      }
+    }
+
+    // Numeric Energy Readout next to tanks
+    this.ctx.font = '7px "Press Start 2P", monospace';
+    this.ctx.fillStyle = '#ffffff';
+    const energyNum = Math.min(99, Math.max(0, lives * 33));
+    this.ctx.fillText(energyNum.toString().padStart(2, '0'), 56, 27);
+
+    // 2. CENTER: BSL SECTOR DATA & MISSION TELEMETRY
     this.ctx.textAlign = 'center';
-    this.ctx.fillText('STAGE', 120, 14);
-    this.ctx.fillStyle = '#00f0ff'; // Retro cyan
-    this.ctx.fillText(stageNum.toString().padStart(2, '0'), 120, 25);
+    this.ctx.font = '6.5px "Press Start 2P", monospace';
+    this.ctx.fillStyle = '#00ff66'; // Metroid phosphor green
+    this.ctx.fillText(`SEC ${stageNum.toString().padStart(2, '0')}`, 120, 13);
 
     if (this.devMode) {
       this.ctx.fillStyle = '#00e436';
-      this.ctx.font = '6px "Press Start 2P", monospace';
-      this.ctx.fillText('[DEV]', 120, 34);
-      this.ctx.font = '7px "Press Start 2P", monospace';
-    }
-
-    // High Score (Right)
-    this.ctx.fillStyle = '#e40058';
-    this.ctx.textAlign = 'left';
-    this.ctx.fillText('HIGH', 170, 14);
-    this.ctx.fillStyle = '#fcfcfc';
-    this.ctx.fillText(this.highScore.toString().padStart(6, '0'), 170, 25);
-
-    // Pepper shaker icons remaining
-    const pepperSpr = window.spriteManager.get('pepper_icon');
-    if (pepperSpr && this.player) {
-      for (let i = 0; i < this.player.peppers; i++) {
-        this.ctx.drawImage(pepperSpr, 14 + i * 11, 33, 10, 10);
-      }
-    }
-
-    // Lives icons remaining
-    const lifeSpr = window.spriteManager.get('player_walk1');
-    if (lifeSpr && this.player) {
-      if (this.player.lives <= 4) {
-        for (let i = 0; i < this.player.lives; i++) {
-          this.ctx.drawImage(lifeSpr, 180 + i * 12, 31, 11, 11);
+      this.ctx.font = '5.5px "Press Start 2P", monospace';
+      this.ctx.fillText('[DEV MODE]', 120, 24);
+    } else {
+      // Mission Objective: Remaining burger pieces to drop
+      let remainingBurgers = 0;
+      if (this.burgers) {
+        for (const b of this.burgers) {
+          if (!b.isComplete) remainingBurgers++;
         }
-      } else {
-        this.ctx.drawImage(lifeSpr, 178, 31, 12, 12);
-        this.ctx.fillStyle = '#fcfcfc';
-        this.ctx.font = '7px "Press Start 2P", monospace';
-        this.ctx.textAlign = 'left';
-        this.ctx.fillText(`x${this.player.lives}`, 194, 40);
       }
+      this.ctx.fillStyle = '#facc15';
+      this.ctx.font = '6px "Press Start 2P", monospace';
+      this.ctx.fillText(`TARGETS: ${remainingBurgers}`, 120, 24);
     }
+
+    // 3. RIGHT: SUPER MISSILES / PEPPER CANISTERS & DATA LOG
+    this.ctx.textAlign = 'right';
+    this.ctx.font = '6px "Press Start 2P", monospace';
+    this.ctx.fillStyle = '#f97316'; // Power missile orange
+    this.ctx.fillText('MISSILES', 230, 13);
+
+    // Ammo display with high-tech brackets
+    const peppers = this.player ? this.player.peppers : 5;
+    const pepperSpr = window.spriteManager.get('pepper_icon');
+    if (pepperSpr) {
+      this.ctx.drawImage(pepperSpr, 184, 18, 10, 10);
+    }
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.font = '7px "Press Start 2P", monospace';
+    this.ctx.fillText(`x${peppers.toString().padStart(2, '0')}`, 230, 27);
+
+    // 4. SUB-HUD SCORE DATA (Right Under Visor)
+    this.ctx.fillStyle = '#94a3b8';
+    this.ctx.font = '5.5px "Press Start 2P", monospace';
+    this.ctx.textAlign = 'left';
+    this.ctx.fillText(`DATA: ${this.score.toString().padStart(6, '0')}`, 10, 44);
+
+    // High Score Telemetry (Right)
+    this.ctx.textAlign = 'right';
+    this.ctx.fillText(`RECORD: ${this.highScore.toString().padStart(6, '0')}`, 230, 44);
 
     // Boss Health Bar in HUD (when on a Boss stage)
     if (this.boss && !this.boss.isDead && this.boss.drawHUDHealthBar) {
       this.boss.drawHUDHealthBar(this.ctx);
     }
+
+    this.ctx.restore();
   }
 
   drawPlatforms() {
@@ -1378,74 +1442,91 @@ class BurgerPanicGame {
   }
 
   drawBanner(line1, line2) {
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-    this.ctx.fillRect(20, 120, 200, 60);
+    this.ctx.save();
+    // Metroid Sci-Fi Alert Overlay
+    this.ctx.fillStyle = 'rgba(4, 7, 18, 0.95)';
+    this.ctx.fillRect(16, 116, 208, 68);
 
-    this.ctx.strokeStyle = '#fcb400';
+    this.ctx.strokeStyle = '#00f0ff';
     this.ctx.lineWidth = 2;
-    this.ctx.strokeRect(20, 120, 200, 60);
+    this.ctx.strokeRect(16, 116, 208, 68);
 
-    this.ctx.fillStyle = '#fcb400';
-    this.ctx.font = '10px "Press Start 2P", monospace';
+    // Hazard Corner Accents
+    this.ctx.fillStyle = '#ff0055';
+    this.ctx.fillRect(14, 114, 6, 3);
+    this.ctx.fillRect(14, 114, 3, 6);
+    this.ctx.fillRect(220, 114, 6, 3);
+    this.ctx.fillRect(223, 114, 3, 6);
+    this.ctx.fillRect(14, 181, 6, 3);
+    this.ctx.fillRect(14, 178, 3, 6);
+    this.ctx.fillRect(220, 181, 6, 3);
+    this.ctx.fillRect(223, 178, 3, 6);
+
+    // Flashing Alert Diodes
+    const blink = Math.floor(Date.now() / 250) % 2 === 0;
+    this.ctx.fillStyle = blink ? '#ff0055' : '#00f0ff';
+    this.ctx.fillRect(24, 122, 4, 4);
+    this.ctx.fillRect(212, 122, 4, 4);
+
+    this.ctx.fillStyle = '#ffcc00';
+    this.ctx.font = '9px "Press Start 2P", monospace';
     this.ctx.textAlign = 'center';
     this.ctx.fillText(line1, 120, 144);
 
-    this.ctx.fillStyle = '#fcfcfc';
-    this.ctx.font = '7px "Press Start 2P", monospace';
-    this.ctx.fillText(line2, 120, 164);
-    this.ctx.textAlign = 'left';
+    this.ctx.fillStyle = '#00f0ff';
+    this.ctx.font = '6.5px "Press Start 2P", monospace';
+    this.ctx.fillText(line2, 120, 166);
+
+    this.ctx.restore();
   }
 
   drawTitleScreen() {
     this.ctx.textAlign = 'center';
+    const now = Date.now();
 
     const coverImg = window.spriteManager.get('title_cover');
     if (coverImg && (coverImg.complete || coverImg.naturalWidth > 0)) {
       // 1. Draw Official Cover Illustration
-      // Canvas is 240x320. Cover is 387x392.
-      // Positioned cleanly from y = 14 to y = 256
       this.ctx.drawImage(coverImg, 0, 14, 240, 242);
 
-      // Subtle top vignette gradient for title contrast
-      const topGrad = this.ctx.createLinearGradient(0, 0, 0, 36);
-      topGrad.addColorStop(0, 'rgba(5, 5, 8, 0.92)');
-      topGrad.addColorStop(1, 'rgba(5, 5, 8, 0.0)');
+      // Metroid Sci-Fi Vignette gradients
+      const topGrad = this.ctx.createLinearGradient(0, 0, 0, 48);
+      topGrad.addColorStop(0, 'rgba(3, 7, 18, 0.96)');
+      topGrad.addColorStop(0.7, 'rgba(3, 7, 18, 0.7)');
+      topGrad.addColorStop(1, 'rgba(3, 7, 18, 0.0)');
       this.ctx.fillStyle = topGrad;
-      this.ctx.fillRect(0, 0, 240, 36);
+      this.ctx.fillRect(0, 0, 240, 48);
 
-      // Subtle bottom gradient for drawer contrast
-      const botGrad = this.ctx.createLinearGradient(0, 226, 0, 254);
-      botGrad.addColorStop(0, 'rgba(5, 5, 8, 0.0)');
-      botGrad.addColorStop(1, 'rgba(5, 5, 8, 0.95)');
+      const botGrad = this.ctx.createLinearGradient(0, 220, 0, 254);
+      botGrad.addColorStop(0, 'rgba(3, 7, 18, 0.0)');
+      botGrad.addColorStop(1, 'rgba(3, 7, 18, 0.96)');
       this.ctx.fillStyle = botGrad;
-      this.ctx.fillRect(0, 226, 240, 28);
+      this.ctx.fillRect(0, 220, 240, 34);
 
-      // 2. Retro Title Header
+      // GBA Metroid Title Header
       this.ctx.fillStyle = '#000000';
-      this.ctx.font = '14px "Press Start 2P", monospace';
+      this.ctx.font = '13px "Press Start 2P", monospace';
       this.ctx.fillText('BURGER PANIC', 121, 23);
-      this.ctx.fillStyle = '#fcb400';
+      this.ctx.fillStyle = '#ffcc00';
       this.ctx.fillText('BURGER PANIC', 120, 22);
 
-      if (this.devMode) {
-        this.ctx.fillStyle = '#00e436';
-        this.ctx.font = '6px "Press Start 2P", monospace';
-        this.ctx.fillText('🛠️ MODO DEV: 15 NIVELES', 120, 32);
-      }
+      this.ctx.fillStyle = '#00f0ff';
+      this.ctx.font = '6px "Press Start 2P", monospace';
+      this.ctx.fillText('METROID GBA EDITION', 120, 34);
 
-      // 3. Bottom Action Drawer
-      this.ctx.fillStyle = '#080612';
+      // 2. High-Tech Action Drawer (Bottom)
+      this.ctx.fillStyle = '#060a14';
       this.ctx.fillRect(0, 252, 240, 68);
       this.ctx.strokeStyle = '#00f0ff';
-      this.ctx.lineWidth = 1;
+      this.ctx.lineWidth = 1.5;
       this.ctx.beginPath();
       this.ctx.moveTo(0, 252);
       this.ctx.lineTo(240, 252);
       this.ctx.stroke();
 
-      // Pulsing Play Button
-      const pulse = Math.floor(Date.now() / 380) % 2 === 0;
-      this.ctx.fillStyle = pulse ? '#e40058' : '#c80045';
+      // Pulsing Start Prompt Button
+      const pulse = Math.floor(now / 350) % 2 === 0;
+      this.ctx.fillStyle = pulse ? '#ff0055' : '#c0003e';
       this.ctx.beginPath();
       if (this.ctx.roundRect) {
         this.ctx.roundRect(32, 258, 176, 22, 4);
@@ -1453,47 +1534,47 @@ class BurgerPanicGame {
         this.ctx.rect(32, 258, 176, 22);
       }
       this.ctx.fill();
-      this.ctx.strokeStyle = pulse ? '#ffe870' : '#fcb400';
+      this.ctx.strokeStyle = pulse ? '#00f0ff' : '#ffcc00';
       this.ctx.lineWidth = 1;
       this.ctx.stroke();
 
       this.ctx.fillStyle = '#ffffff';
-      this.ctx.font = '9px "Press Start 2P", monospace';
-      this.ctx.fillText('▶ TAP TO PLAY', 120, 273);
+      this.ctx.font = '8px "Press Start 2P", monospace';
+      this.ctx.fillText('▶ ENGAGE MISSION', 120, 273);
 
-      // Map Button Prompt
+      // Cartography Prompt
       this.ctx.fillStyle = '#00f0ff';
-      this.ctx.font = '7px "Press Start 2P", monospace';
-      this.ctx.fillText('🗺️ MAPA DE NIVELES', 120, 292);
+      this.ctx.font = '6.5px "Press Start 2P", monospace';
+      this.ctx.fillText('🗺️ BSL CARTOGRAPHY MAP', 120, 293);
 
-      // Top Score
-      this.ctx.fillStyle = '#747474';
+      // Record Telemetry
+      this.ctx.fillStyle = '#64748b';
       this.ctx.font = '6px "Press Start 2P", monospace';
-      this.ctx.fillText(`TOP SCORE: ${this.highScore.toString().padStart(6, '0')}`, 120, 308);
+      this.ctx.fillText(`RECORD: ${this.highScore.toString().padStart(6, '0')}`, 120, 309);
 
     } else {
-      // Fallback if image is still loading
-      this.ctx.fillStyle = '#e40058';
-      this.ctx.font = '16px "Press Start 2P", monospace';
+      // Atmospheric Fallback
+      this.ctx.fillStyle = '#030712';
+      this.ctx.fillRect(0, 0, 240, 320);
+
+      this.ctx.fillStyle = '#ff0055';
+      this.ctx.font = '15px "Press Start 2P", monospace';
       this.ctx.fillText('BURGER', 120, 60);
-      this.ctx.fillStyle = '#fcb400';
-      this.ctx.fillText('PANIC', 120, 84);
+      this.ctx.fillStyle = '#ffcc00';
+      this.ctx.fillText('PANIC', 120, 82);
 
-      this.ctx.fillStyle = '#00a8fc';
+      this.ctx.fillStyle = '#00f0ff';
       this.ctx.font = '7px "Press Start 2P", monospace';
-      this.ctx.fillText('RETRO ARCADE ADVENTURE', 120, 104);
+      this.ctx.fillText('METROID GBA EDITION', 120, 104);
 
-      if (Math.floor(Date.now() / 450) % 2 === 0) {
-        this.ctx.fillStyle = '#fce4a0';
-        this.ctx.font = '9px "Press Start 2P", monospace';
-        this.ctx.fillText('TAP TO PLAY', 120, 248);
+      if (Math.floor(now / 400) % 2 === 0) {
+        this.ctx.fillStyle = '#00ff66';
+        this.ctx.font = '8px "Press Start 2P", monospace';
+        this.ctx.fillText('PRESS START / TAP', 120, 248);
       }
       this.ctx.fillStyle = '#00f0ff';
       this.ctx.font = '7px "Press Start 2P", monospace';
-      this.ctx.fillText('🗺️ MAPA DE NIVELES', 120, 268);
-      this.ctx.fillStyle = '#747474';
-      this.ctx.font = '6px "Press Start 2P", monospace';
-      this.ctx.fillText(`TOP SCORE: ${this.highScore.toString().padStart(6, '0')}`, 120, 288);
+      this.ctx.fillText('🗺️ BSL CARTOGRAPHY MAP', 120, 270);
     }
 
     this.ctx.textAlign = 'left';
@@ -1521,33 +1602,44 @@ class BurgerPanicGame {
   drawStageClearOverlay() {
     const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
 
-    this.ctx.fillStyle = 'rgba(5, 5, 12, 0.90)';
-    this.ctx.fillRect(16, 36, 208, 248);
+    this.ctx.fillStyle = 'rgba(4, 7, 18, 0.94)';
+    this.ctx.fillRect(16, 32, 208, 256);
 
-    this.ctx.strokeStyle = '#fcb400';
+    this.ctx.strokeStyle = '#00f0ff';
     this.ctx.lineWidth = 2;
-    this.ctx.strokeRect(16, 36, 208, 248);
+    this.ctx.strokeRect(16, 32, 208, 256);
+
+    // High-Tech Corner Brackets
+    this.ctx.fillStyle = '#ff0055';
+    this.ctx.fillRect(14, 30, 8, 4);
+    this.ctx.fillRect(14, 30, 4, 8);
+    this.ctx.fillRect(218, 30, 8, 4);
+    this.ctx.fillRect(222, 30, 4, 8);
+    this.ctx.fillRect(14, 284, 8, 4);
+    this.ctx.fillRect(14, 280, 4, 8);
+    this.ctx.fillRect(218, 284, 8, 4);
+    this.ctx.fillRect(222, 280, 4, 8);
 
     this.ctx.textAlign = 'center';
 
     // Title
-    this.ctx.fillStyle = '#00f0ff';
-    this.ctx.font = '10px "Press Start 2P", monospace';
-    this.ctx.fillText(`NIVEL ${stageNum} SUPERADO!`, 120, 62);
+    this.ctx.fillStyle = '#00ff66';
+    this.ctx.font = '9.5px "Press Start 2P", monospace';
+    this.ctx.fillText(`SECTOR ${stageNum} SECURED!`, 120, 58);
 
-    this.ctx.fillStyle = '#fcb400';
-    this.ctx.font = '7px "Press Start 2P", monospace';
-    const stageName = (this.levelData && this.levelData.name) ? this.levelData.name : 'COCINA';
-    this.ctx.fillText(stageName, 120, 78);
+    this.ctx.fillStyle = '#00f0ff';
+    this.ctx.font = '6.5px "Press Start 2P", monospace';
+    const stageName = (this.levelData && this.levelData.name) ? this.levelData.name : 'BSL LAB';
+    this.ctx.fillText(stageName, 120, 74);
 
     // Big Stars Display
     const stars = this.stageEarnedStars || 1;
     const startX = 120 - (3 * 26) / 2 + 3;
-    this.drawStars(this.ctx, stars, startX, 90, 20, 26);
+    this.drawStars(this.ctx, stars, startX, 86, 20, 26);
 
     this.ctx.fillStyle = '#fcfcfc';
     this.ctx.font = '7px "Press Start 2P", monospace';
-    this.ctx.fillText(`CALIFICACIÓN: ${stars} ★`, 120, 126);
+    this.ctx.fillText(`MISSION RATING: ${stars} ★`, 120, 122);
 
     // Breakdown Table
     this.ctx.textAlign = 'left';
@@ -1555,93 +1647,92 @@ class BurgerPanicGame {
 
     // Level Clear
     this.ctx.fillStyle = '#00ff88';
-    this.ctx.fillText('• SUPERAR NIVEL: 1★ OBTENIDA', 26, 148);
+    this.ctx.fillText('• SECTOR CLEAR: 1★ SECURED', 26, 144);
 
     // Items 1-3
     if (this.stageBonusItemsCollected === 3) {
       this.ctx.fillStyle = '#00ff88';
-      this.ctx.fillText('• 3 ÍTEMS: 2★ ALCANZADAS!', 26, 164);
+      this.ctx.fillText('• 3 BIO-CORES: 2★ ACHIEVED!', 26, 160);
     } else if (this.stageBonusItemsCollected > 0) {
-      this.ctx.fillStyle = '#fcb400';
-      this.ctx.fillText(`• ${this.stageBonusItemsCollected}/3 ÍTEMS: 1.5★ OBTENIDAS`, 26, 164);
+      this.ctx.fillStyle = '#ffcc00';
+      this.ctx.fillText(`• ${this.stageBonusItemsCollected}/3 BIO-CORES: 1.5★ LOGGED`, 26, 160);
     } else {
-      this.ctx.fillStyle = '#777777';
-      this.ctx.fillText('• 0/3 ÍTEMS: (0★ ADICIONALES)', 26, 164);
+      this.ctx.fillStyle = '#64748b';
+      this.ctx.fillText('• 0/3 BIO-CORES: 0★ BONUS', 26, 160);
     }
 
     // Extra life item
     if (this.stageLifeItemCollected) {
       this.ctx.fillStyle = '#00ff88';
-      this.ctx.fillText('• VIDA EXTRA ÍTEM: 3★ TOTAL!', 26, 180);
+      this.ctx.fillText('• E-TANK RETRIEVED: 3★ MAX!', 26, 176);
     } else {
-      this.ctx.fillStyle = '#777777';
-      this.ctx.fillText('• VIDA EXTRA: NO OBTENIDA', 26, 180);
+      this.ctx.fillStyle = '#64748b';
+      this.ctx.fillText('• E-TANK: NOT LOCATED', 26, 176);
     }
 
     // Score
-    this.ctx.fillStyle = '#fcb400';
-    this.ctx.fillText(`• PUNTOS: ${this.score}`, 26, 198);
+    this.ctx.fillStyle = '#ffcc00';
+    this.ctx.fillText(`• MISSION DATA: ${this.score}`, 26, 194);
 
     // Action Buttons Prompt
     this.ctx.textAlign = 'center';
-    if (Math.floor(Date.now() / 400) % 2 === 0) {
+    if (Math.floor(Date.now() / 380) % 2 === 0) {
       this.ctx.fillStyle = '#00ff88';
       this.ctx.font = '7px "Press Start 2P", monospace';
-      this.ctx.fillText('[ JUMP / TAP ] SIGUIENTE', 120, 234);
+      this.ctx.fillText('[ JUMP / TAP ] NEXT SECTOR', 120, 230);
     }
     this.ctx.fillStyle = '#00f0ff';
     this.ctx.font = '6px "Press Start 2P", monospace';
-    this.ctx.fillText('[ PEPPER ] VER MAPA', 120, 254);
+    this.ctx.fillText('[ PEPPER ] BSL CARTOGRAPHY', 120, 250);
   }
 
   drawMapScreen() {
-    this.ctx.fillStyle = '#0c0722';
+    this.ctx.fillStyle = '#030712';
     this.ctx.fillRect(0, 0, 240, 320);
 
     const unlocked = this.getUnlockedLevel();
     const scores = JSON.parse(localStorage.getItem('burgerpanic_level_scores') || '{}');
     const scrollY = Math.round(this.mapScrollY);
+    const now = Date.now();
 
-    // Save context for scrollable world
+    // Save context for scrollable cartography world
     this.ctx.save();
     this.ctx.translate(0, -scrollY);
 
-    // 1. Twilight / Candy Sky Gradient (920px tall world)
+    // 1. Metroid Deep Space / BSL Cartography Network Background
     const bgGrad = this.ctx.createLinearGradient(0, 0, 0, 920);
-    bgGrad.addColorStop(0, '#0c0722');
-    bgGrad.addColorStop(0.3, '#1c1038');
-    bgGrad.addColorStop(0.65, '#161d42');
-    bgGrad.addColorStop(1, '#091526');
+    bgGrad.addColorStop(0, '#030712');
+    bgGrad.addColorStop(0.3, '#071026');
+    bgGrad.addColorStop(0.65, '#050f24');
+    bgGrad.addColorStop(1, '#020617');
     this.ctx.fillStyle = bgGrad;
     this.ctx.fillRect(0, 0, 240, 920);
 
-    // Fluffy candy pastel clouds along the path
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-    const clouds = [
-      { x: 40, y: 120, rx: 35, ry: 12 },
-      { x: 190, y: 220, rx: 42, ry: 14 },
-      { x: 60, y: 360, rx: 38, ry: 13 },
-      { x: 180, y: 490, rx: 45, ry: 15 },
-      { x: 50, y: 640, rx: 40, ry: 14 },
-      { x: 200, y: 770, rx: 42, ry: 15 }
-    ];
-    for (const c of clouds) {
+    // Holographic Radar Grid Lines
+    this.ctx.strokeStyle = 'rgba(0, 240, 255, 0.05)';
+    this.ctx.lineWidth = 1;
+    for (let gy = 0; gy < 920; gy += 32) {
       this.ctx.beginPath();
-      this.ctx.ellipse(c.x, c.y, c.rx, c.ry, 0, 0, Math.PI * 2);
-      this.ctx.ellipse(c.x - 10, c.y - 4, c.rx * 0.7, c.ry * 0.8, 0, 0, Math.PI * 2);
-      this.ctx.ellipse(c.x + 12, c.y - 2, c.rx * 0.6, c.ry * 0.7, 0, 0, Math.PI * 2);
-      this.ctx.fill();
+      this.ctx.moveTo(0, gy);
+      this.ctx.lineTo(240, gy);
+      this.ctx.stroke();
+    }
+    for (let gx = 0; gx < 240; gx += 32) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(gx, 0);
+      this.ctx.lineTo(gx, 920);
+      this.ctx.stroke();
     }
 
-    // Twinkling stars
+    // Deep Space Starfield & Cosmic Dust
     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    for (let sy = 20; sy < 900; sy += 38) {
-      const sx = ((sy * 43) % 210) + 15;
-      const pulse = (Math.sin(Date.now() / 400 + sy) + 1) * 0.8 + 0.5;
+    for (let sy = 20; sy < 900; sy += 36) {
+      const sx = ((sy * 47) % 210) + 15;
+      const pulse = (Math.sin(now / 350 + sy) + 1) * 0.7 + 0.4;
       this.ctx.fillRect(sx, sy, pulse, pulse);
     }
 
-    // 2. Draw Golden Candy Road Ribbons connecting nodes
+    // 2. High-Tech Fiber-Optic Conduits Connecting Sector Nodes
     for (let i = 0; i < this.mapNodes.length - 1; i++) {
       const n1 = this.mapNodes[i];
       const n2 = this.mapNodes[i + 1];
@@ -1658,106 +1749,117 @@ class BurgerPanicGame {
         });
       }
 
-      // Outer path border
+      // Outer Conduit Armor
       this.ctx.beginPath();
       this.ctx.moveTo(pts[0].x, pts[0].y);
       for (let p = 1; p < pts.length; p++) {
         this.ctx.lineTo(pts[p].x, pts[p].y);
       }
-      this.ctx.lineWidth = 12;
-      this.ctx.strokeStyle = isSegmentUnlocked ? 'rgba(180, 115, 15, 0.75)' : 'rgba(30, 30, 45, 0.6)';
+      this.ctx.lineWidth = 10;
+      this.ctx.strokeStyle = isSegmentUnlocked ? 'rgba(0, 150, 200, 0.4)' : 'rgba(20, 25, 40, 0.6)';
       this.ctx.lineCap = 'round';
       this.ctx.lineJoin = 'round';
       this.ctx.stroke();
 
-      // Inner golden ribbon
-      this.ctx.lineWidth = 8;
-      this.ctx.strokeStyle = isSegmentUnlocked ? '#fbbf24' : '#2d2d3f';
+      // Glowing Data Core Line
+      this.ctx.lineWidth = 4;
+      this.ctx.strokeStyle = isSegmentUnlocked ? '#00f0ff' : '#1e293b';
       this.ctx.stroke();
 
-      // Sweet cream center dashes
-      this.ctx.lineWidth = 2.5;
-      this.ctx.strokeStyle = isSegmentUnlocked ? '#fffbeb' : '#47475c';
-      this.ctx.setLineDash([4, 6]);
-      this.ctx.stroke();
-      this.ctx.setLineDash([]);
+      // Pulsing Fiber-Optic Light Packets (Traveling between nodes)
+      if (isSegmentUnlocked) {
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.setLineDash([4, 10]);
+        this.ctx.lineDashOffset = -(now / 25);
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+      }
     }
 
-    // 3. Draw Level Nodes (3D Candy Jewels)
+    // 3. Draw Metroid Sector Nodes
     for (let i = 0; i < this.mapNodes.length; i++) {
       const node = this.mapNodes[i];
       const isUnlocked = node.level <= unlocked;
       const isSelected = this.mapSelectedStage === node.level;
       const stars = this.getStageStars(node.level);
 
-      // Node soft drop shadow
+      // Node Shadow
       this.ctx.beginPath();
       this.ctx.arc(node.x, node.y + 3, 17, 0, Math.PI * 2);
-      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
       this.ctx.fill();
 
-      // Selected Glowing Aura
+      // Selected Glowing Target Reticle
       if (isSelected) {
-        const pulse = 20 + Math.sin(Date.now() / 150) * 2.5;
+        const pulse = 20 + Math.sin(now / 150) * 3;
         this.ctx.beginPath();
         this.ctx.arc(node.x, node.y, pulse, 0, Math.PI * 2);
-        this.ctx.strokeStyle = '#38bdf8';
-        this.ctx.lineWidth = 2.5;
+        this.ctx.strokeStyle = '#00ff66';
+        this.ctx.lineWidth = 2;
         this.ctx.stroke();
+
+        // Crosshairs
+        this.ctx.fillStyle = '#00ff66';
+        this.ctx.fillRect(node.x - pulse - 3, node.y - 1, 3, 2);
+        this.ctx.fillRect(node.x + pulse, node.y - 1, 3, 2);
+        this.ctx.fillRect(node.x - 1, node.y - pulse - 3, 2, 3);
+        this.ctx.fillRect(node.x - 1, node.y + pulse, 2, 3);
       }
 
-      // Outer Gold / Metal Rim
+      // Outer Metal Armor Ring
       this.ctx.beginPath();
       this.ctx.arc(node.x, node.y, 16, 0, Math.PI * 2);
-      this.ctx.fillStyle = isUnlocked ? (stars === 3 ? '#d97706' : '#0284c7') : '#27273a';
+      this.ctx.fillStyle = isUnlocked ? (stars === 3 ? '#eab308' : '#0284c7') : '#1e293b';
       this.ctx.fill();
 
-      // Inner Candy Sphere
+      // Inner Hologram Sector Orb
       const radGrad = this.ctx.createRadialGradient(node.x - 4, node.y - 5, 2, node.x, node.y, 14);
       if (isUnlocked) {
         if (stars === 3) {
           radGrad.addColorStop(0, '#fef08a');
-          radGrad.addColorStop(0.5, '#f59e0b');
-          radGrad.addColorStop(1, '#b45309');
+          radGrad.addColorStop(0.5, '#eab308');
+          radGrad.addColorStop(1, '#854d0e');
         } else {
-          radGrad.addColorStop(0, '#7dd3fc');
-          radGrad.addColorStop(0.5, '#0284c7');
-          radGrad.addColorStop(1, '#0369a1');
+          radGrad.addColorStop(0, '#67e8f9');
+          radGrad.addColorStop(0.5, '#06b6d4');
+          radGrad.addColorStop(1, '#0e7490');
         }
       } else {
-        radGrad.addColorStop(0, '#3f3f5a');
-        radGrad.addColorStop(1, '#181824');
+        radGrad.addColorStop(0, '#334155');
+        radGrad.addColorStop(1, '#0f172a');
       }
       this.ctx.beginPath();
-      this.ctx.arc(node.x, node.y, 13.5, 0, Math.PI * 2);
+      this.ctx.arc(node.x, node.y, 13, 0, Math.PI * 2);
       this.ctx.fillStyle = radGrad;
       this.ctx.fill();
 
-      // Specular Highlight (Curved glossy crescent sheen)
+      // Glass Crescent Highlight
       this.ctx.beginPath();
-      this.ctx.ellipse(node.x, node.y - 6, 8, 3.5, 0, 0, Math.PI * 2);
-      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+      this.ctx.ellipse(node.x, node.y - 5, 7, 3, 0, 0, Math.PI * 2);
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
       this.ctx.fill();
 
-      // Level Label or Lock Icon
+      // Level Label
       this.ctx.textAlign = 'center';
       if (isUnlocked) {
         this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = 'bold 9px "Press Start 2P", monospace';
+        this.ctx.font = 'bold 8.5px "Press Start 2P", monospace';
         this.ctx.fillText(node.level.toString(), node.x, node.y + 4);
 
         // Stars beneath node
-        this.drawStars(this.ctx, stars, node.x - 17, node.y + 20, 10, 12);
+        this.drawStars(this.ctx, stars, node.x - 17, node.y + 19, 10, 12);
       } else {
-        this.ctx.fillStyle = '#94a3b8';
-        this.ctx.font = '8px "Press Start 2P", monospace';
-        this.ctx.fillText('🔒', node.x, node.y + 3);
+        // High-Tech Lock Symbol
+        this.ctx.fillStyle = '#dc2626';
+        this.ctx.font = '7px "Press Start 2P", monospace';
+        this.ctx.fillText('🔒', node.x, node.y + 4);
       }
 
-      // Chef Avatar on Selected Level (Same sprite as the game)
+      // Chef Avatar on Selected Level
       if (isSelected) {
-        const bounce = Math.sin(Date.now() / 180) * 2;
-        const idleBlink = Math.floor(Date.now() / 400) % 8 === 0;
+        const bounce = Math.sin(now / 180) * 2;
+        const idleBlink = Math.floor(now / 400) % 8 === 0;
         const atlasName = idleBlink ? 'detenido_2' : 'detenido_1';
 
         const info = window.spriteManager.getAtlasInfo(atlasName);
@@ -1766,13 +1868,13 @@ class BurgerPanicGame {
         const drawX = Math.round(node.x - w / 2);
         const drawY = Math.round(node.y - 14 - h + bounce);
 
-        // Subtle ground shadow under Chef's feet
+        // Ground shadow under Chef's feet
         this.ctx.beginPath();
         this.ctx.ellipse(node.x, node.y - 13, 7, 2, 0, 0, Math.PI * 2);
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
         this.ctx.fill();
 
-        // Draw exact game sprite from Chef Atlas
+        // Draw sprite from Chef Atlas
         const drawn = window.spriteManager.drawAtlas(this.ctx, atlasName, drawX, drawY, false);
         if (!drawn) {
           const chefSpr = window.spriteManager.get('player_walk1');
@@ -1781,8 +1883,8 @@ class BurgerPanicGame {
           }
         }
 
-        // Floating golden arrow beacon above Chef
-        this.ctx.fillStyle = '#fbbf24';
+        // Floating Target Indicator above Chef
+        this.ctx.fillStyle = '#00ff66';
         this.ctx.font = '7px "Press Start 2P", monospace';
         this.ctx.fillText('▼', node.x, drawY - 4);
       }
@@ -1790,10 +1892,10 @@ class BurgerPanicGame {
 
     this.ctx.restore();
 
-    // 4. Fixed Top Modern Glass Header
-    this.ctx.fillStyle = 'rgba(12, 10, 26, 0.92)';
+    // 4. Fixed Top Metroid Cartography Header
+    this.ctx.fillStyle = 'rgba(4, 7, 18, 0.94)';
     this.ctx.fillRect(0, 0, 240, 36);
-    this.ctx.strokeStyle = 'rgba(244, 63, 94, 0.6)';
+    this.ctx.strokeStyle = '#00f0ff';
     this.ctx.lineWidth = 1.5;
     this.ctx.beginPath();
     this.ctx.moveTo(0, 36);
@@ -1801,21 +1903,21 @@ class BurgerPanicGame {
     this.ctx.stroke();
 
     // Back pill button
-    this.ctx.fillStyle = '#fb7185';
+    this.ctx.fillStyle = '#ff0055';
     this.ctx.font = '7px "Press Start 2P", monospace';
     this.ctx.textAlign = 'left';
-    this.ctx.fillText('◀ VOLVER', 10, 22);
+    this.ctx.fillText('◀ RETURN', 10, 22);
 
     // Total stars
     const totalStars = this.getTotalStars();
     this.ctx.textAlign = 'right';
-    this.ctx.fillStyle = '#fbbf24';
+    this.ctx.fillStyle = '#ffcc00';
     this.ctx.fillText(`★ ${totalStars.toFixed(1).replace('.0', '')}/45`, 230, 22);
 
-    // 5. Fixed Bottom Action Glass Drawer
-    this.ctx.fillStyle = 'rgba(12, 10, 26, 0.95)';
+    // 5. Fixed Bottom Sector Information Drawer
+    this.ctx.fillStyle = 'rgba(4, 7, 18, 0.96)';
     this.ctx.fillRect(0, 260, 240, 60);
-    this.ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
+    this.ctx.strokeStyle = '#00f0ff';
     this.ctx.lineWidth = 1.5;
     this.ctx.beginPath();
     this.ctx.moveTo(0, 260);
@@ -1832,43 +1934,44 @@ class BurgerPanicGame {
     // Stage Info
     this.ctx.textAlign = 'left';
     this.ctx.fillStyle = '#ffffff';
-    this.ctx.font = '7px "Press Start 2P", monospace';
-    this.ctx.fillText(`NIVEL ${selNode.level}: ${selNode.name}`, 10, 278);
+    this.ctx.font = '6.5px "Press Start 2P", monospace';
+    this.ctx.fillText(`SEC ${selNode.level}: ${selNode.name}`, 10, 277);
 
     if (isSelUnlocked) {
       if (isImplemented) {
-        this.ctx.fillStyle = '#38bdf8';
+        this.ctx.fillStyle = '#00f0ff';
         this.ctx.font = '6px "Press Start 2P", monospace';
-        this.ctx.fillText(`RÉCORD: ${selScore.toString().padStart(6, '0')} | ${selStars}★`, 10, 295);
+        this.ctx.fillText(`DATA: ${selScore.toString().padStart(6, '0')} | ${selStars}★`, 10, 295);
 
-        // Glowing Green Play Pill
-        const pulse = Math.floor(Date.now() / 350) % 2 === 0;
-        this.ctx.fillStyle = pulse ? '#10b981' : '#059669';
+        // Glowing Green Engage Pill
+        const pulse = Math.floor(now / 350) % 2 === 0;
+        this.ctx.fillStyle = pulse ? '#00ff66' : '#059669';
         this.ctx.beginPath();
         if (this.ctx.roundRect) {
-          this.ctx.roundRect(162, 280, 68, 26, 8);
+          this.ctx.roundRect(162, 280, 68, 26, 6);
           this.ctx.fill();
         } else {
           this.ctx.fillRect(162, 280, 68, 26);
         }
-        this.ctx.strokeStyle = '#6ee7b7';
+        this.ctx.strokeStyle = '#00f0ff';
         this.ctx.lineWidth = 1.5;
         this.ctx.stroke();
 
-        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillStyle = '#031a0e';
         this.ctx.font = 'bold 8px "Press Start 2P", monospace';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('JUGAR', 196, 297);
+        this.ctx.fillText('ENGAGE', 196, 297);
       } else {
-        this.ctx.fillStyle = '#f59e0b';
+        this.ctx.fillStyle = '#ffaa00';
         this.ctx.font = '6px "Press Start 2P", monospace';
-        this.ctx.fillText('¡PRÓXIMAMENTE!', 10, 295);
+        this.ctx.fillText('CLASSIFIED SECTOR', 10, 295);
       }
     } else {
-      this.ctx.fillStyle = '#94a3b8';
+      this.ctx.fillStyle = '#ff0055';
       this.ctx.font = '6px "Press Start 2P", monospace';
-      this.ctx.fillText('NIVEL BLOQUEADO', 10, 295);
-      this.ctx.fillText(`🔒 Supera Nivel ${selNode.level - 1} para abrir`, 10, 308);
+      this.ctx.fillText('SECTOR QUARANTINED', 10, 295);
+      this.ctx.fillStyle = '#64748b';
+      this.ctx.fillText(`🔒 Clear Sector ${selNode.level - 1} first`, 10, 308);
     }
   }
 

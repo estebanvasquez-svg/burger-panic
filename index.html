@@ -15,19 +15,28 @@
   <link rel="icon" type="image/png" href="icons/icon-192.png">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=72">
+  <link rel="stylesheet" href="css/style.css?v=73">
 </head>
 <body>
   <div id="app-container">
-    <!-- Top Arcade Bar -->
-    <header class="arcade-header">
-      <div class="logo-badge">BURGER PANIC</div>
+    <!-- Top GBA Console Bar with Shoulder Triggers & Power LED -->
+    <header class="arcade-header gba-header">
+      <div class="gba-shoulder-trigger trigger-left" title="Left Shoulder Trigger">L</div>
+      <div class="gba-power-block">
+        <span class="gba-power-led" title="GBA Power Indicator"></span>
+        <span class="gba-power-label">POWER</span>
+      </div>
+      <div class="logo-badge gba-logo-badge">
+        <span class="gba-logo-main">GAME BOY</span>
+        <span class="gba-logo-sub">ADVANCE</span>
+      </div>
       <div class="header-actions">
         <button id="btn-dev" class="arcade-btn-mini" title="Modo Desarrollador (Todos los niveles abiertos)" aria-label="Modo Desarrollador">🛠️</button>
         <button id="btn-map" class="arcade-btn-mini" aria-label="Mapa de Niveles">🗺️</button>
         <button id="btn-sound" class="arcade-btn-mini" aria-label="Sonido">🔊</button>
         <button id="btn-help" class="arcade-btn-mini" aria-label="Ayuda">❓</button>
       </div>
+      <div class="gba-shoulder-trigger trigger-right" title="Right Shoulder Trigger">R</div>
     </header>
 
     <!-- Developer Mode Toolbar (Desbloqueo de Niveles & Inspección Rápida) -->
@@ -35,21 +44,21 @@
       <div class="dev-toolbar-header">
         <span class="dev-tag">🛠️ DEV</span>
         <select id="dev-stage-select" class="dev-select" aria-label="Seleccionar Nivel">
-          <option value="1">1: Cocina Clásica</option>
-          <option value="2">2: Pizzería Retro</option>
-          <option value="3">3: Bistró Gourmet</option>
-          <option value="4">4: Marisquería Pulpo (Rampa)</option>
-          <option value="5">5: Barista (👑 Boss: Root Pack)</option>
-          <option value="6">6: Pastelería Felina (Pasarelas)</option>
-          <option value="7">7: Castillo (👑 Boss: Goopy)</option>
-          <option value="8">8: Forja Dragón (Elevador+Rampa)</option>
-          <option value="9">9: Cocina Alta Mar (Elevador+Pasarela)</option>
-          <option value="10">10: Heladería (👑 Boss: Baroness)</option>
-          <option value="11">11: Tren Bento (Balanceo+Elevador)</option>
-          <option value="12">12: Wok Panda (👑 Boss: Grim)</option>
-          <option value="13">13: Cosmic Diner (Columpio+Elevador)</option>
-          <option value="14">14: Costillas Jurásicas (Columpio+Elevador)</option>
-          <option value="15">15: Banquete Imperial (👑 Boss: King Dice)</option>
+          <option value="1">1: Sector 0: BSL Lab</option>
+          <option value="2">2: Sector 3: PYR Magma</option>
+          <option value="3">3: Sector 1: SRX Biosphere</option>
+          <option value="4">4: Sector 4: AQA Reactor</option>
+          <option value="5">5: Sector 2: TRO (👑 Boss: Root Pack)</option>
+          <option value="6">6: Sector 5: ARC Cryo</option>
+          <option value="7">7: PYR Core (👑 Boss: Goopy)</option>
+          <option value="8">8: Heavy Armor Forge</option>
+          <option value="9">9: Flagship Hangar</option>
+          <option value="10">10: Sector 6: NOC (👑 Boss: Baroness)</option>
+          <option value="11">11: Orbital Maglev Monorail</option>
+          <option value="12">12: Chozo Sanctuary (👑 Boss: Grim)</option>
+          <option value="13">13: Cosmic Observation Dock</option>
+          <option value="14">14: Leviathan Fossil Core</option>
+          <option value="15">15: Tourian Core (👑 Boss: King Dice)</option>
         </select>
         <button id="dev-btn-prev" class="dev-btn" title="Nivel Anterior">◀</button>
         <button id="dev-btn-next" class="dev-btn" title="Nivel Siguiente">▶</button>
@@ -58,33 +67,27 @@
       </div>
     </div>
 
-    <!-- Game Screen (Clean HD Display without CRT scanlines) -->
+    <!-- Game Screen (Authentic GBA Metroid Screen Lens) -->
     <main class="screen-wrapper">
-      <div class="bezel">
+      <div class="bezel gba-bezel">
+        <div class="gba-lens-top-trim">
+          <span class="gba-lens-text">METROID SPECIAL EDITION</span>
+        </div>
         <canvas id="gameCanvas" width="240" height="320"></canvas>
+        <div class="gba-lens-bottom-trim">
+          <span class="gba-lens-logo-text">GAME BOY <span class="gba-adv-italic">ADVANCE</span></span>
+        </div>
+        <div class="gba-screen-glare"></div>
       </div>
     </main>
 
-    <!-- Arcade Cabinet Controls Deck (CPO - Control Panel Overlay) -->
-    <footer class="controls-deck" id="arcade-controls-deck">
-      <!-- Metallic Corner Mounting Screws -->
-      <div class="cpo-screw cpo-screw-tl" title="Cabinet Bolt"></div>
-      <div class="cpo-screw cpo-screw-tr" title="Cabinet Bolt"></div>
-      <div class="cpo-screw cpo-screw-bl" title="Cabinet Bolt"></div>
-      <div class="cpo-screw cpo-screw-br" title="Cabinet Bolt"></div>
-
-      <!-- Classic Arcade Racing Stripes -->
-      <div class="cpo-stripes">
-        <span class="cpo-stripe stripe-magenta"></span>
-        <span class="cpo-stripe stripe-cyan"></span>
-        <span class="cpo-stripe stripe-amber"></span>
-      </div>
-
-      <!-- Left: 4-Way Virtual Arcade Joystick (Sanwa Style) -->
-      <div class="dpad-container">
-        <div class="joystick-cpo-label">JOYSTICK • 4-WAY</div>
-        <div class="dpad" id="dpad">
-          <div class="dpad-bezel-ring"></div>
+    <!-- Game Boy Advance Ergonomic Controls Deck -->
+    <footer class="controls-deck gba-controls-deck" id="arcade-controls-deck">
+      <!-- Left: Authentic GBA Cross D-Pad -->
+      <div class="dpad-container gba-dpad-container">
+        <div class="dpad-cpo-label">D - PAD</div>
+        <div class="dpad gba-cross-dpad" id="dpad">
+          <div class="dpad-cross-base"></div>
           <button class="dpad-btn dpad-up" id="dpad-up" aria-label="Arriba">
             <span class="dpad-arrow">▲</span>
           </button>
@@ -97,62 +100,54 @@
           <button class="dpad-btn dpad-down" id="dpad-down" aria-label="Abajo">
             <span class="dpad-arrow">▼</span>
           </button>
-          <!-- Authentic Arcade Rubber Dust Washer & 3D Ball-Top Lever -->
-          <div class="joystick-washer"></div>
-          <div class="dpad-center joystick-ball" id="joystick-ball">
-            <div class="ball-specular"></div>
+          <!-- GBA Center Dish Depression -->
+          <div class="dpad-center gba-center-dish" id="joystick-ball">
+            <div class="dish-inner-circle"></div>
           </div>
         </div>
       </div>
 
-      <!-- Center: Retro Cabinet Plaque & 1P Arcade Start/Pause Pushbutton -->
-      <div class="cpo-center-badge">
-        <div class="cpo-brand-tag">BURGER PANIC</div>
-        <div class="arcade-pause-wrapper">
-          <div class="pause-bezel-outer">
-            <button id="btn-pause" class="arcade-pause-btn" aria-label="1P PAUSA / START" title="Pausar / Reanudar Juego">
-              <span class="pause-lens">
-                <span class="pause-icon">⏸</span>
-                <span class="pause-label">PAUSE</span>
-              </span>
-            </button>
-          </div>
-          <span class="pause-cpo-sublabel">1P START</span>
+      <!-- Center: GBA Slanted Rubber Start Button & Diagonal Speaker Grill -->
+      <div class="cpo-center-badge gba-center-group">
+        <div class="gba-speaker-cluster" title="Stereo Speaker Grill">
+          <div class="speaker-row r1"><span></span><span></span></div>
+          <div class="speaker-row r2"><span></span><span></span></div>
+          <div class="speaker-row r3"><span></span><span></span></div>
         </div>
-        <div class="cpo-speaker-grill">
-          <span></span><span></span><span></span>
+
+        <div class="arcade-pause-wrapper gba-start-wrapper">
+          <button id="btn-pause" class="arcade-pause-btn gba-pill-btn" aria-label="START / PAUSE" title="Pausar / Reanudar Juego">
+            <span class="pause-lens">
+              <span class="pause-icon">START</span>
+            </span>
+          </button>
+          <span class="pause-cpo-sublabel gba-sublabel">PAUSE</span>
         </div>
       </div>
 
-      <!-- Right: Action Pushbuttons (Ergonomic Japanese Arcade Slant) -->
-      <div class="action-container">
-        <!-- Button A: Jump Escape (Lower-Left Position) -->
-        <div class="arcade-button-wrapper btn-wrap-jump">
-          <div class="button-bezel-outer">
-            <button class="btn-arcade-action btn-jump" id="btn-jump" aria-label="Saltar / Escapar (Botón A)">
-              <div class="btn-plunger-cap">
-                <span class="btn-arcade-key">A</span>
-                <span class="action-icon">👟</span>
-                <span class="action-label">JUMP</span>
-              </div>
-            </button>
-          </div>
-          <span class="button-cpo-sublabel">ESCAPAR</span>
+      <!-- Right: Authentic Ergonomic Slanted GBA A & B Buttons -->
+      <div class="action-container gba-action-container">
+        <!-- Button B: Pepper / Missile Toss (Higher-Left Slanted Position) -->
+        <div class="arcade-button-wrapper gba-btn-wrap-b">
+          <button class="btn-arcade-action btn-pepper gba-action-btn gba-btn-b" id="btn-pepper" aria-label="Pimienta / Misil (Botón B)">
+            <div class="btn-plunger-cap">
+              <span class="btn-arcade-key">B</span>
+              <span class="action-icon">🧂</span>
+              <span class="pepper-badge" id="pepper-count-badge">5</span>
+            </div>
+          </button>
+          <span class="button-cpo-sublabel">MISSILE</span>
         </div>
 
-        <!-- Button B: Pepper Toss (Higher-Right Position) -->
-        <div class="arcade-button-wrapper btn-wrap-pepper">
-          <div class="button-bezel-outer">
-            <button class="btn-arcade-action btn-pepper" id="btn-pepper" aria-label="Pimienta (Botón B)">
-              <div class="btn-plunger-cap">
-                <span class="btn-arcade-key">B</span>
-                <span class="action-icon">🧂</span>
-                <span class="action-label">PEPPER</span>
-                <span class="pepper-badge" id="pepper-count-badge">5</span>
-              </div>
-            </button>
-          </div>
-          <span class="button-cpo-sublabel">PIMIENTA</span>
+        <!-- Button A: Jump / Engage (Lower-Right Slanted Position) -->
+        <div class="arcade-button-wrapper gba-btn-wrap-a">
+          <button class="btn-arcade-action btn-jump gba-action-btn gba-btn-a" id="btn-jump" aria-label="Saltar / Escapar (Botón A)">
+            <div class="btn-plunger-cap">
+              <span class="btn-arcade-key">A</span>
+              <span class="action-icon">👟</span>
+            </div>
+          </button>
+          <span class="button-cpo-sublabel">JUMP</span>
         </div>
       </div>
     </footer>
@@ -184,17 +179,17 @@
   </div>
 
   <!-- Game Scripts -->
-  <script src="js/chef_atlas.js?v=72"></script>
-  <script src="js/enemies_atlas.js?v=72"></script>
-  <script src="js/items_atlas.js?v=72"></script>
-  <script src="js/audio.js?v=72"></script>
-  <script src="js/sprites.js?v=72"></script>
-  <script src="js/map.js?v=72"></script>
-  <script src="js/burger.js?v=72"></script>
-  <script src="js/entities.js?v=72"></script>
-  <script src="js/stage_themes.js?v=72"></script>
-  <script src="js/controls.js?v=72"></script>
-  <script src="js/game.js?v=72"></script>
+  <script src="js/chef_atlas.js?v=73"></script>
+  <script src="js/enemies_atlas.js?v=73"></script>
+  <script src="js/items_atlas.js?v=73"></script>
+  <script src="js/audio.js?v=73"></script>
+  <script src="js/sprites.js?v=73"></script>
+  <script src="js/map.js?v=73"></script>
+  <script src="js/burger.js?v=73"></script>
+  <script src="js/entities.js?v=73"></script>
+  <script src="js/stage_themes.js?v=73"></script>
+  <script src="js/controls.js?v=73"></script>
+  <script src="js/game.js?v=73"></script>
 
   <!-- Service Worker Registration for Offline Play & PWA -->
   <script>
