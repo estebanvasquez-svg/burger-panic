@@ -6,20 +6,22 @@ def create_plagas_atlas():
     pixels = atlas.load()
 
     # Color Palettes (Rich Retro Arcade 16-color palettes)
-    # 1. MOUSE (Ratón de Cocina)
-    C_M_OUTLINE = (28, 24, 38, 255)
-    C_M_BODY = (140, 140, 156, 255)
-    C_M_LIGHT = (180, 180, 200, 255)
-    C_M_DARK = (92, 92, 108, 255)
-    C_M_PINK = (255, 176, 196, 255)
-    C_M_PINK_D = (216, 130, 152, 255)
-    C_M_WHITE = (255, 255, 255, 255)
-    C_M_BLACK = (20, 16, 28, 255)
-    C_M_TAIL = (255, 160, 184, 255)
-    C_M_RED_SHD = (168, 24, 40, 255)
-    C_M_RED_MID = (236, 44, 60, 255)
-    C_M_RED_LGT = (255, 112, 128, 255)
-    C_STAR = (255, 216, 32, 255)
+    # 1. MOUSE (El Ratón Bandido de Cocina - Concepto Artístico Neo-Geo)
+    C_OUTLINE  = (22, 18, 30, 255)      # Deep ink outline
+    C_FUR_SHD  = (80, 80, 96, 255)      # Dark slate fur shadow
+    C_FUR_MID  = (136, 138, 154, 255)   # Rich silver fur midtone
+    C_FUR_LGT  = (188, 192, 208, 255)   # Soft platinum fur highlight
+    C_PINK_SHD = (196, 108, 134, 255)   # Rosy pink shadow (ears/feet/tail)
+    C_PINK_MID = (255, 172, 194, 255)   # Vibrant peach-pink (ears/snout/tail)
+    C_PINK_LGT = (255, 216, 230, 255)   # Inner ear gleam
+    C_RED_SHD  = (168, 24, 40, 255)     # Deep crimson bandana shadow
+    C_RED_MID  = (236, 44, 60, 255)     # Cute bandit red bandana
+    C_RED_LGT  = (255, 112, 128, 255)   # Bandana knot highlight
+    C_WHITE    = (255, 255, 255, 255)   # Eye catchlight & whiskers
+    C_BLACK    = (14, 12, 18, 255)      # Snout tip & beady eye pupils
+    C_STAR_GLD = (255, 214, 32, 255)    # Dizzy stars
+    C_STAR_ORG = (255, 152, 0, 255)     # Star glow
+    C_STAR     = (255, 216, 32, 255)    # Generic arcade star
 
     # 2. ROACH (Cucaracha de Cocina)
     C_R_OUTLINE = (40, 16, 8, 255)
@@ -52,93 +54,95 @@ def create_plagas_atlas():
                         pixels[px, py] = char_map[char]
 
     # =========================================================================
-    # ROW 1: MOUSE (RATÓN DE COCINA) - Y: 2
+    # ROW 1: MOUSE (EL RATÓN BANDIDO DE COCINA - CONCEPTO ARTÍSTICO PUNTO 2) - Y: 2
     # =========================================================================
     cm_mouse = {
-        'O': C_M_OUTLINE, 'G': C_M_BODY, 'H': C_M_LIGHT, 'D': C_M_DARK,
-        'P': C_M_PINK, 'p': C_M_PINK_D, 'W': C_M_WHITE, 'K': C_M_BLACK,
-        'T': C_M_TAIL, 'r': C_M_RED_SHD, 'R': C_M_RED_MID, 'b': C_M_RED_LGT,
-        '*': C_STAR, ' ': None
+        'O': C_OUTLINE, 'D': C_FUR_SHD, 'G': C_FUR_MID, 'L': C_FUR_LGT,
+        'p': C_PINK_SHD, 'P': C_PINK_MID, 'q': C_PINK_LGT,
+        'r': C_RED_SHD, 'R': C_RED_MID, 'b': C_RED_LGT,
+        'W': C_WHITE, 'K': C_BLACK, '*': C_STAR_GLD, '+': C_STAR_ORG,
+        'T': (255, 160, 184, 255),
+        ' ': None
     }
 
-    # Mouse Walk Frames 1-6
+    # 1. Walk Cycle (4 energetic frames with bandit bandana & expressive tail)
     m_walk1 = [
-        "  PPP      PPP   ",
-        " PHHPP    PPHP   ",
-        " PHGHPO  OPGHP   ",
-        "  OGHHHOOGHHHO   ",
-        " OGGHWKGGHWKGO   ",
-        " OGGHKKGGHKKGO   ",
-        "  OGGHPOPGHGO    ",
-        "  OGGGGGGGGGDO   ",
-        " OGGHWWHGGGGDO  T",
-        " OGGHWWHDDDGDO TT",
-        "  OGGGGGDDGGDO T ",
-        "   OGG  OGG  OT  ",
-        "   OPP  OPP  OT  ",
-        "   OpP  OpP  T   ",
-        "                 ",
+        "   PqP     PqP   ",
+        "  PqqPP   PPqqP  ",
+        "  PppPO   OPppP  ",
+        "   OGLLLOOGLLLO  ",
+        "  OGLLWKGGLLWKGO ",
+        "  OGGLKKGGGLKKGO ",
+        "   OGGPOPPGHGO   ",
+        "   OrRbbRRrRRO   ",
+        "  OGGRRRRRRRRDO  ",
+        " OGGGLGGGGGDDDDO ",
+        " OGGGLGGDGDDDDDO ",
+        "  OGGGGGDDGGDO TT",
+        "   OGG   OGG  OT ",
+        "   OPP   OPP  T  ",
+        "   Opp   Opp     ",
         "                 "
     ]
 
     m_walk2 = [
-        "  PPP      PPP   ",
-        " PHHPP    PPHP   ",
-        " PHGHPO  OPGHP   ",
-        "  OGHHHOOGHHHO   ",
-        " OGGHWKGGHWKGO   ",
-        " OGGHKKGGHKKGO   ",
-        "  OGGHPOPGHGO    ",
-        "  OGGGGGGGGGDO  T",
-        " OGGHWWHGGGGDO  T",
-        " OGGHWWHDDDGDO  T",
-        "  OGGGGGDDGGDO T ",
-        "  OPP    OPP   T ",
-        "  OpP    OpP  T  ",
-        "                 ",
+        "   PqP     PqP   ",
+        "  PqqPP   PPqqP  ",
+        "  PppPO   OPppP  ",
+        "   OGLLLOOGLLLO  ",
+        "  OGLLWKGGLLWKGO ",
+        "  OGGLKKGGGLKKGO ",
+        "   OGGPOPPGHGO   ",
+        "   OrRbbRRrRRO  T",
+        "  OGGRRRRRRRRDO T",
+        " OGGGLGGGGGDDDDOT",
+        " OGGGLGGDGDDDDDO ",
+        "  OGGGGGDDGGDO   ",
+        "  OPP     OPP    ",
+        "  Opp     Opp    ",
         "                 ",
         "                 "
     ]
 
     m_walk3 = [
-        "  PPP      PPP   ",
-        " PHHPP    PPHP   ",
-        " PHGHPO  OPGHP   ",
-        "  OGHHHOOGHHHO   ",
-        " OGGHWKGGHWKGO   ",
-        " OGGHKKGGHKKGO   ",
-        "  OGGHPOPGHGO    ",
-        "  OGGGGGGGGGDO T ",
-        " OGGHWWHGGGGDO TT",
-        " OGGHWWHDDDGDO  T",
+        "   PqP     PqP   ",
+        "  PqqPP   PPqqP  ",
+        "  PppPO   OPppP  ",
+        "   OGLLLOOGLLLO  ",
+        "  OGLLWKGGLLWKGO ",
+        "  OGGLKKGGGLKKGO ",
+        "   OGGPOPPGHGO   ",
+        "   OrRbbRRrRRO TT",
+        "  OGGRRRRRRRRDOT ",
+        " OGGGLGGGGGDDDDT ",
+        " OGGGLGGDGDDDDDOT",
         "  OGGGGGDDGGDO  T",
-        "   OGG    OPP   T",
-        "   OPP    OpP    ",
-        "   OpP           ",
-        "                 ",
+        "   OGG    OPP    ",
+        "   OPP    Opp    ",
+        "   Opp           ",
         "                 "
     ]
 
     m_walk4 = [
-        "  PPP      PPP   ",
-        " PHHPP    PPHP   ",
-        " PHGHPO  OPGHP   ",
-        "  OGHHHOOGHHHO   ",
-        " OGGHWKGGHWKGO   ",
-        " OGGHKKGGHKKGO   ",
-        "  OGGHPOPGHGO    ",
-        "  OGGGGGGGGGDO   ",
-        " OGGHWWHGGGGDO T ",
-        " OGGHWWHDDDGDO TT",
+        "   PqP     PqP   ",
+        "  PqqPP   PPqqP  ",
+        "  PppPO   OPppP  ",
+        "   OGLLLOOGLLLO  ",
+        "  OGLLWKGGLLWKGO ",
+        "  OGGLKKGGGLKKGO ",
+        "   OGGPOPPGHGO   ",
+        "   OrRbbRRrRRO   ",
+        "  OGGRRRRRRRRDO T",
+        " OGGGLGGGGGDDDDOTT",
+        " OGGGLGGDGDDDDDOT",
         "  OGGGGGDDGGDO  T",
-        "    OPP  OGG    T",
-        "    OpP  OPP    T",
-        "         OpP     ",
-        "                 ",
+        "    OPP   OGG    ",
+        "    Opp   OPP    ",
+        "          Opp    ",
         "                 "
     ]
 
-    # Mouse Climb Frames 1-3 (Back view - 100% Isolated, NO LADDER, clean transparent background)
+    # 2. Ladder Climb Cycle (Back view - 100% Isolated, NO LADDER, clean transparent background)
     m_climb1 = [
         " OPP       PqP   ",
         " OppPqP   PPqqP  ",
@@ -196,46 +200,46 @@ def create_plagas_atlas():
         "   Opp           "
     ]
 
-    # Mouse Stunned 1-2
+    # 3. Pepper Stunned Cycle (Swirling comic stars, dizzy spiral eyes, red bandana askew)
     m_stun1 = [
-        "  PPP      PPP   ",
-        " PHHPP    PPHP   ",
-        " PHGHPO  OPGHP   ",
-        "  OGHHHOOGHHHO   ",
-        " OGGH**GGH**GO   ",
-        " OGGH**GGH**GO   ",
-        "  OGGHPOPGHGO    ",
-        "  OGGGGGGGGGDO   ",
-        " OGGHWWHGGGGDO  T",
-        " OGGHWWHDDDGDO TT",
-        "  OGGGGGDDGGDO T ",
-        "   OGG  OGG  OT  ",
-        "   OPP  OPP   T  ",
-        "   OpP  OpP      ",
-        "                 ",
+        "   *+*     *+*   ",
+        "  PqP       PqP  ",
+        " PqqPP     PPqqP ",
+        " PppPO     OPppP ",
+        "  OGLLLO OOGLLLO ",
+        " OGLL**GG GLL**GO",
+        " OGGL**GG GGL**GO",
+        "  OGGPOPP PGHGO  ",
+        "   OrRbbRR rRRO  ",
+        "  OGGRRRRR RRRDO ",
+        " OGGGLGGGG GDDDDO",
+        "  OGGGGGDD GGDO T",
+        "   OGG  OG G  OT ",
+        "   OPP  OP P  T  ",
+        "   Opp  Op p     ",
         "                 "
     ]
 
     m_stun2 = [
-        "  PPP      PPP   ",
-        " PHHPP    PPHP   ",
-        " PHGHPO  OPGHP   ",
-        "  OGHHHOOGHHHO   ",
-        " OGGH**GGH**GO   ",
-        " OGGH**GGH**GO   ",
-        "  OGGHPOPGHGO    ",
-        "  OGGGGGGGGGDO   ",
-        " OGGHWWHDDDGDO  T",
-        "  OGGGGGDDGGDO TT",
-        "   OPP    OPP  T ",
-        "   OpP    OpP  T ",
-        "                 ",
+        "  +*+       +*+  ",
+        "  PqP       PqP  ",
+        " PqqPP     PPqqP ",
+        " PppPO     OPppP ",
+        "  OGLLLO OOGLLLO ",
+        " OGLL**GG GLL**GO",
+        " OGGL**GG GGL**GO",
+        "  OGGPOPP PGHGO  ",
+        "   OrRbbRR rRRO  ",
+        "  OGGRRRRR RRRDO ",
+        "  OGGGGGDD GGDO T",
+        "   OPP    OPP  TT",
+        "   Opp    Opp  T ",
         "                 ",
         "                 ",
         "                 "
     ]
 
-    # Mouse Squashed 1-2
+    # 4. Squashed Pancake Cycle (Comically flat under burger, popped eyes, red bandana spread)
     m_squash1 = [
         "                 ",
         "                 ",
@@ -246,13 +250,13 @@ def create_plagas_atlas():
         "                 ",
         "                 ",
         "                 ",
-        "  PPP      PPP   ",
-        " PHHPP    PPHP   ",
-        "OGGHWKWKGGHWKWGO ",
-        "OGGGGHPOPGGGGGGO ",
-        " OGGGGGGGGGGGDO  ",
-        "  OPPPPPPPPPDO TT",
-        "   OpPpPpPpPO TT "
+        "   PqP     PqP   ",
+        "  PqqPP   PPqqP  ",
+        "OGLLWKWK GGLLWKWGO",
+        "OrRbbRRr RrRbbRRrO",
+        "OGGGGHPO PGGGGGGDO",
+        " OPPPPPP PPPPPDO T",
+        "  Oppppp pppppOTTT"
     ]
 
     m_squash2 = [
@@ -266,28 +270,28 @@ def create_plagas_atlas():
         "                 ",
         "                 ",
         "                 ",
-        "  PPP      PPP   ",
-        "OGGHWKWKGGHWKWGO ",
-        "OGGGGHPOPGGGGGGO ",
-        " OGGGGGGGGGGGDO T",
-        "  OPPPPPPPPPDO TT",
-        "   OpPpPpPpPO TT "
+        "   PqP     PqP   ",
+        "OGLLWKWK GGLLWKWGO",
+        "OrRbbRRr RrRbbRRrO",
+        " OGGGGGG GGGGGDO T",
+        " OPPPPPP PPPPPDO T",
+        "  Oppppp pppppOTTT"
     ]
 
-    # Draw Mouse Sprites at Row 1 coordinates (matching enemies_atlas.js)
+    # Draw Mouse Sprites at Row 1 coordinates (matching enemies_atlas.js, 17x16 frames)
     draw_matrix(m_walk1, cm_mouse, 2, 2)    # hotdog_walk1
-    draw_matrix(m_walk2, cm_mouse, 19, 2)   # hotdog_walk2
-    draw_matrix(m_walk3, cm_mouse, 36, 2)   # hotdog_walk3
-    draw_matrix(m_walk4, cm_mouse, 54, 2)   # hotdog_walk4
-    draw_matrix(m_walk1, cm_mouse, 71, 2)   # hotdog_walk5
-    draw_matrix(m_walk2, cm_mouse, 87, 2)   # hotdog_walk6
-    draw_matrix(m_climb1, cm_mouse, 104, 2) # hotdog_climb1
-    draw_matrix(m_climb2, cm_mouse, 120, 2) # hotdog_climb2
-    draw_matrix(m_climb3, cm_mouse, 137, 2) # hotdog_climb3
-    draw_matrix(m_stun1, cm_mouse, 153, 2)  # hotdog_stunned
-    draw_matrix(m_stun2, cm_mouse, 173, 2)  # hotdog_stunned2
-    draw_matrix(m_squash1, cm_mouse, 193, 2)# hotdog_squashed
-    draw_matrix(m_squash2, cm_mouse, 216, 2)# hotdog_squashed2
+    draw_matrix(m_walk2, cm_mouse, 20, 2)   # hotdog_walk2
+    draw_matrix(m_walk3, cm_mouse, 38, 2)   # hotdog_walk3
+    draw_matrix(m_walk4, cm_mouse, 56, 2)   # hotdog_walk4
+    draw_matrix(m_walk1, cm_mouse, 74, 2)   # hotdog_walk5
+    draw_matrix(m_walk2, cm_mouse, 92, 2)   # hotdog_walk6
+    draw_matrix(m_climb1, cm_mouse, 110, 2) # hotdog_climb1
+    draw_matrix(m_climb2, cm_mouse, 128, 2) # hotdog_climb2
+    draw_matrix(m_climb3, cm_mouse, 146, 2) # hotdog_climb3
+    draw_matrix(m_stun1, cm_mouse, 164, 2)  # hotdog_stunned
+    draw_matrix(m_stun2, cm_mouse, 182, 2)  # hotdog_stunned2
+    draw_matrix(m_squash1, cm_mouse, 200, 2)# hotdog_squashed
+    draw_matrix(m_squash2, cm_mouse, 218, 2)# hotdog_squashed2
 
     # =========================================================================
     # ROW 2: ROACH (CUCARACHA DE COCINA) - Y: 33

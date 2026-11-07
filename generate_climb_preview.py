@@ -191,3 +191,4 @@ def generate_climb_preview():
 
 if __name__ == '__main__':
     generate_climb_preview()
+
