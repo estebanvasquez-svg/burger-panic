@@ -81,6 +81,7 @@ class BurgerPanicGame {
     this.controls.onPepperPress = () => {
       if (this.state === 'MAP') {
         this.state = (this.player && !this.player.isDead) ? 'PAUSED' : 'TITLE';
+        if (this.state === 'PAUSED') this.updatePauseButtonUI(true);
         return;
       }
       if (this.state === 'STAGE_CLEAR') {
@@ -120,12 +121,44 @@ class BurgerPanicGame {
     };
 
     this.controls.onPausePress = () => {
-      if (this.state === 'PLAYING') {
-        this.state = 'PAUSED';
-      } else if (this.state === 'PAUSED') {
-        this.state = 'PLAYING';
-      }
+      this.togglePause();
     };
+  }
+
+  togglePause() {
+    if (this.state === 'PLAYING') {
+      this.state = 'PAUSED';
+      if (window.soundManager && window.soundManager.playArcadeClick) {
+        window.soundManager.playArcadeClick();
+      }
+      this.updatePauseButtonUI(true);
+    } else if (this.state === 'PAUSED') {
+      this.state = 'PLAYING';
+      if (window.soundManager && window.soundManager.playArcadeClick) {
+        window.soundManager.playArcadeClick();
+      }
+      this.updatePauseButtonUI(false);
+    }
+  }
+
+  updatePauseButtonUI(isPaused) {
+    const pauseBtn = document.getElementById('btn-pause');
+    if (!pauseBtn) return;
+    if (isPaused) {
+      pauseBtn.classList.add('paused');
+      const label = pauseBtn.querySelector('.pause-label');
+      if (label) label.textContent = 'RESUME';
+      const icon = pauseBtn.querySelector('.pause-icon');
+      if (icon) icon.textContent = '▶';
+      pauseBtn.setAttribute('title', 'Reanudar Juego');
+    } else {
+      pauseBtn.classList.remove('paused');
+      const label = pauseBtn.querySelector('.pause-label');
+      if (label) label.textContent = 'PAUSE';
+      const icon = pauseBtn.querySelector('.pause-icon');
+      if (icon) icon.textContent = '⏸';
+      pauseBtn.setAttribute('title', 'Pausar Juego');
+    }
   }
 
   startGame() {
@@ -181,6 +214,7 @@ class BurgerPanicGame {
 
   openMap(stageToFocus = null) {
     if (this.state === 'DYING') return;
+    this.updatePauseButtonUI(false);
     this.previousState = this.state;
     this.state = 'MAP';
     this.stateTimer = 0;
@@ -358,6 +392,7 @@ class BurgerPanicGame {
   }
 
   loadStage(index) {
+    this.updatePauseButtonUI(false);
     this.levelData = this.levelMap.getLevel(index);
     this.particles = [];
     this.screenShake = 0;
@@ -1859,6 +1894,8 @@ window.addEventListener('DOMContentLoaded', () => {
       game.isInitialBoot = false;
       const resumeStage = game.getLastPlayedStage();
       game.openMap(resumeStage);
+    } else if (game.state === 'PAUSED') {
+      game.togglePause();
     } else if (game.state === 'GAME_OVER') {
       const lostStage = (game.stageIndex || 0) + 1;
       game.saveCurrentStage(lostStage);
@@ -1877,6 +1914,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (coords.y <= 36) {
         game.isInitialBoot = false;
         game.state = (game.player && !game.player.isDead) ? 'PAUSED' : 'TITLE';
+        if (game.state === 'PAUSED') game.updatePauseButtonUI(true);
         return;
       }
 
@@ -1943,14 +1981,13 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Pause button
+  // Arcade Center Pause / Resume Button
   const pauseBtn = document.getElementById('btn-pause');
   if (pauseBtn) {
-    pauseBtn.addEventListener('click', () => {
-      if (window.burgerPanicGame.state === 'PLAYING') {
-        window.burgerPanicGame.state = 'PAUSED';
-      } else if (window.burgerPanicGame.state === 'PAUSED') {
-        window.burgerPanicGame.state = 'PLAYING';
+    pauseBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.burgerPanicGame) {
+        window.burgerPanicGame.togglePause();
       }
     });
   }

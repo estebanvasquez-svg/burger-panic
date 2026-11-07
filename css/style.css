@@ -321,46 +321,153 @@ canvas#gameCanvas {
 .stripe-cyan    { background: #00f0ff; box-shadow: 0 0 6px rgba(0, 240, 255, 0.8); }
 .stripe-amber   { background: #ffcc00; box-shadow: 0 0 6px rgba(255, 204, 0, 0.8); }
 
-/* Center Cabinet Plaque & Speaker Slits */
+/* Center Cabinet Plaque & 1P Start / Pause Arcade Pushbutton */
 .cpo-center-badge {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  pointer-events: none;
-  opacity: 0.85;
+  gap: 5px;
+  pointer-events: auto;
+  z-index: 5;
 }
 
 .cpo-brand-tag {
   font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
+  font-size: 7px;
   color: #ffcc00;
   text-shadow: 0 0 6px rgba(255, 204, 0, 0.7), 1px 1px 0 #ff0055;
   letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+.arcade-pause-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Molded Bezel Ring for 1P Arcade Button */
+.pause-bezel-outer {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4b4669 0%, #201e2e 50%, #0d0c14 100%);
+  padding: 3px;
+  border: 1px solid #141320;
+  box-shadow: 
+    0 6px 14px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.7),
+    inset 0 2px 2px rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Plunger Button - Retro Illuminated Acrylic Look */
+.arcade-pause-btn {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6d9 0%, #ffcc00 55%, #cc8800 100%);
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(255, 204, 0, 0.5),
+    inset 0 2px 3px rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  transition: all 0.08s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.arcade-pause-btn:active {
+  transform: translateY(2px) scale(0.92);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    inset 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+
+.arcade-pause-btn .pause-lens {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.arcade-pause-btn .pause-icon {
+  font-size: 13px;
+  line-height: 1;
+  color: #1a0f00;
+  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.4));
+}
+
+.arcade-pause-btn .pause-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 5.5px;
+  color: #1a0f00;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+  font-weight: bold;
+}
+
+/* Pulsating Green/Cyan Glow when Game is Paused (Waiting for Player to RESUME) */
+.arcade-pause-btn.paused {
+  background: radial-gradient(circle at 35% 30%, #c4ffef 0%, #00f0a0 55%, #008f57 100%);
+  border-color: #ffffff;
+  animation: arcadePausePulse 0.9s infinite alternate ease-in-out;
+}
+
+.arcade-pause-btn.paused .pause-icon,
+.arcade-pause-btn.paused .pause-label {
+  color: #032b1a;
+}
+
+@keyframes arcadePausePulse {
+  0% {
+    box-shadow: 0 0 10px rgba(0, 240, 160, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.8);
+    transform: scale(0.97);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(0, 240, 160, 0.95), 0 0 32px rgba(0, 240, 160, 0.5), inset 0 2px 4px #ffffff;
+    transform: scale(1.03);
+  }
+}
+
+.pause-cpo-sublabel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: #00f0ff;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.7), 0 1px 2px #000;
+  pointer-events: none;
 }
 
 .cpo-speaker-grill {
   display: flex;
   gap: 3px;
   padding: 2px 6px;
+  pointer-events: none;
 }
 
 .cpo-speaker-grill span {
   width: 3px;
-  height: 14px;
+  height: 8px;
   background: #09080e;
   border-radius: 2px;
   border: 1px solid #2d2940;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9);
-}
-
-.cpo-player-tag {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 6px;
-  color: #00f0ff;
-  letter-spacing: 0.5px;
-  text-shadow: 0 0 5px rgba(0, 240, 255, 0.6);
 }
 
 /* ---------------------------------
@@ -745,10 +852,25 @@ canvas#gameCanvas {
     font-size: 6px;
   }
   .action-container {
-    gap: 10px;
+    gap: 8px;
+  }
+  .cpo-brand-tag,
+  .cpo-speaker-grill {
+    display: none;
   }
   .cpo-center-badge {
-    display: none; /* Hide badge on very narrow screens to preserve space */
+    display: flex;
+    transform: scale(0.85);
+  }
+  .pause-bezel-outer {
+    width: 46px;
+    height: 46px;
+  }
+  .arcade-pause-btn .pause-icon {
+    font-size: 11px;
+  }
+  .arcade-pause-btn .pause-label {
+    font-size: 5px;
   }
 }
 
