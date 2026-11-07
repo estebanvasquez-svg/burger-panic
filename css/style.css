@@ -70,29 +70,42 @@ html, body {
 }
 
 .arcade-btn-mini {
-  background: #2a2842;
-  border: 1px solid #5b587a;
-  border-radius: 4px;
+  background: linear-gradient(180deg, #373352 0%, #201e33 60%, #151322 100%);
+  border: 1px solid #6b668f;
+  border-top-color: #8c86b8;
+  border-bottom-color: #0c0b14;
+  border-radius: 5px;
   color: #fff;
-  font-size: 12px;
-  padding: 4px 8px;
+  font-size: 13px;
+  padding: 5px 9px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.1s;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  transition: all 0.08s ease;
+  position: relative;
+}
+
+.arcade-btn-mini:hover {
+  background: linear-gradient(180deg, #444066 0%, #292642 60%, #1a182b 100%);
+  border-color: #a49ed4;
+  box-shadow: 0 0 10px rgba(0, 228, 255, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.4);
 }
 
 .arcade-btn-mini:active {
-  transform: scale(0.92);
-  background: #e40058;
+  transform: translateY(2px) scale(0.94);
+  background: linear-gradient(180deg, #e40058 0%, #99003b 100%);
+  border-color: #ff4d88;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 15px rgba(228, 0, 88, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 #btn-dev.active {
-  background: #00e436;
+  background: linear-gradient(180deg, #00ff55 0%, #009933 100%);
   color: #000;
-  border-color: #00ff40;
-  box-shadow: 0 0 10px rgba(0, 228, 54, 0.7);
+  border-color: #80ffaa;
+  box-shadow: 0 0 12px rgba(0, 255, 85, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+  font-weight: bold;
 }
 
 /* ---------------------------------
@@ -236,222 +249,506 @@ canvas#gameCanvas {
 }
 
 /* ---------------------------------
-   MOBILE CONTROLS DECK
+   ARCADE CABINET CONTROL PANEL (CPO)
    --------------------------------- */
 .controls-deck {
   flex-shrink: 0;
   width: 100%;
-  height: 170px;
-  background: linear-gradient(180deg, #181625 0%, #0c0b12 100%);
-  border-top: 3px solid #3b3756;
+  height: 185px;
+  background: radial-gradient(ellipse at 50% -10%, #29263d 0%, #171524 55%, #0a0912 100%);
+  border-top: 4px solid #5a557a;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 18px;
+  padding: 12px 18px 8px 18px;
   position: relative;
-  box-shadow: inset 0 3px 6px rgba(255, 255, 255, 0.05);
-  transition: opacity 0.2s ease;
+  box-shadow: inset 0 3px 8px rgba(255, 255, 255, 0.12), 0 -4px 15px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
 
 .controls-deck.hidden {
   display: none !important;
 }
 
-/* Virtual D-Pad */
+/* Chrome / Metallic Corner Screws */
+.cpo-screw {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e2e2ec 0%, #85829e 60%, #3a3748 100%);
+  border: 1px solid #1f1d2a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  z-index: 2;
+}
+
+.cpo-screw::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 2px;
+  width: 6px;
+  height: 1px;
+  background: #2a2738;
+}
+
+.cpo-screw-tl { top: 6px; left: 8px; }
+.cpo-screw-tr { top: 6px; right: 8px; }
+.cpo-screw-bl { bottom: 6px; left: 8px; }
+.cpo-screw-br { bottom: 6px; right: 8px; }
+
+/* Retro Arcade Racing Stripes (Neon Cabinet Art) */
+.cpo-stripes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  display: flex;
+  flex-direction: column;
+  z-index: 3;
+}
+
+.cpo-stripe {
+  width: 100%;
+  height: 1px;
+}
+
+.stripe-magenta { background: #ff0055; box-shadow: 0 0 6px rgba(255, 0, 85, 0.8); }
+.stripe-cyan    { background: #00f0ff; box-shadow: 0 0 6px rgba(0, 240, 255, 0.8); }
+.stripe-amber   { background: #ffcc00; box-shadow: 0 0 6px rgba(255, 204, 0, 0.8); }
+
+/* Center Cabinet Plaque & Speaker Slits */
+.cpo-center-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.cpo-brand-tag {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #ffcc00;
+  text-shadow: 0 0 6px rgba(255, 204, 0, 0.7), 1px 1px 0 #ff0055;
+  letter-spacing: 0.5px;
+}
+
+.cpo-speaker-grill {
+  display: flex;
+  gap: 3px;
+  padding: 2px 6px;
+}
+
+.cpo-speaker-grill span {
+  width: 3px;
+  height: 14px;
+  background: #09080e;
+  border-radius: 2px;
+  border: 1px solid #2d2940;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.cpo-player-tag {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: #00f0ff;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.6);
+}
+
+/* ---------------------------------
+   ARCADE JOYSTICK (SANWA D-PAD)
+   --------------------------------- */
 .dpad-container {
   position: relative;
-  width: 130px;
-  height: 130px;
+  width: 136px;
+  height: 136px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.joystick-cpo-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: #928cb0;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .dpad {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  background: radial-gradient(circle, #252336 40%, #151420 100%);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  background: radial-gradient(circle at 45% 45%, #2a273b 0%, #161424 60%, #0c0b14 100%);
+  border: 3px solid #3c3854;
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.9),
+    inset 0 3px 6px rgba(0, 0, 0, 0.9),
+    0 0 0 2px #100f1a;
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: none;
 }
 
+.dpad-bezel-ring {
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+/* Directional Buttons */
 .dpad-btn {
   position: absolute;
-  background: #37344f;
-  border: 1px solid #545075;
-  color: #a4a0c8;
-  font-size: 14px;
+  background: linear-gradient(180deg, #373350 0%, #211e33 100%);
+  border: 1px solid #4f4a73;
+  color: #8c86b2;
+  font-size: 13px;
   font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.05s, transform 0.05s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transition: all 0.06s ease;
+  z-index: 1;
+}
+
+.dpad-arrow {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
 }
 
 .dpad-up {
-  top: 6px;
-  left: 44px;
-  width: 42px;
-  height: 40px;
-  border-radius: 6px 6px 0 0;
+  top: 5px;
+  left: 41px;
+  width: 38px;
+  height: 34px;
+  border-radius: 8px 8px 3px 3px;
 }
 
 .dpad-down {
-  bottom: 6px;
-  left: 44px;
-  width: 42px;
-  height: 40px;
-  border-radius: 0 0 6px 6px;
+  bottom: 5px;
+  left: 41px;
+  width: 38px;
+  height: 34px;
+  border-radius: 3px 3px 8px 8px;
 }
 
 .dpad-left {
-  left: 6px;
-  top: 44px;
-  width: 40px;
-  height: 42px;
-  border-radius: 6px 0 0 6px;
+  left: 5px;
+  top: 41px;
+  width: 34px;
+  height: 38px;
+  border-radius: 8px 3px 3px 8px;
 }
 
 .dpad-right {
-  right: 6px;
-  top: 44px;
-  width: 40px;
-  height: 42px;
-  border-radius: 0 6px 6px 0;
+  right: 5px;
+  top: 41px;
+  width: 34px;
+  height: 38px;
+  border-radius: 3px 8px 8px 3px;
 }
 
-.dpad-center {
+.dpad-btn.active,
+.dpad-btn:active {
+  background: linear-gradient(180deg, #ffcc00 0%, #e69900 100%);
+  border-color: #ffe680;
+  color: #1a0f00;
+  box-shadow: 0 0 14px rgba(255, 204, 0, 0.9), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  transform: scale(0.94);
+}
+
+/* Rubber Dust Washer */
+.joystick-washer {
   position: absolute;
-  width: 28px;
-  height: 28px;
-  background: #201e30;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  background: radial-gradient(circle, #181622 40%, #0d0c14 100%);
+  border: 2px solid #28253a;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9), 0 2px 6px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 2;
 }
 
-.dpad-btn.active {
-  background: #fcb400;
-  color: #111;
-  box-shadow: 0 0 10px rgba(252, 180, 0, 0.8);
-  transform: scale(0.96);
+/* 3D Japanese Arcade Ball-Top Lever */
+.joystick-ball {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff5277 0%, #e40058 45%, #940035 80%, #4a0018 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.6);
+  z-index: 3;
+  pointer-events: none;
+  transition: transform 0.08s ease-out;
 }
 
-/* Action Buttons: JUMP & PEPPER */
+.ball-specular {
+  position: absolute;
+  top: 5px;
+  left: 8px;
+  width: 14px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 80%);
+  transform: rotate(-30deg);
+}
+
+/* ---------------------------------
+   ACTION BUTTONS (SANWA ARCADE SLANT)
+   --------------------------------- */
 .action-container {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
+  position: relative;
 }
 
+.arcade-button-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Ergonomic Japanese Arcade Slant: Button A is lower, Button B is higher */
+.btn-wrap-jump {
+  margin-top: 14px;
+}
+
+.btn-wrap-pepper {
+  margin-top: -12px;
+}
+
+.button-cpo-sublabel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: #8f8aa8;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* Sanwa Outer Mounting Bezel Ring */
+.button-bezel-outer {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4b4669 0%, #201e2e 50%, #0d0c14 100%);
+  padding: 3px;
+  border: 1px solid #141320;
+  box-shadow: 
+    0 8px 18px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.7),
+    inset 0 2px 2px rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Plunger Button Base */
 .btn-arcade-action {
   position: relative;
-  width: 78px;
-  height: 78px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  border: 3px solid #201d2d;
+  border: 2px solid rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.08s ease;
+  outline: none;
+  transition: all 0.06s ease;
+  overflow: visible;
 }
 
-/* Red Pepper Button */
-.btn-arcade-action.btn-pepper {
-  background: radial-gradient(circle at 35% 35%, #ff4b6e, #c0003c 70%, #6b0021 100%);
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.8), 0 0 15px rgba(228, 0, 88, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+.btn-plunger-cap {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
-.btn-arcade-action.btn-pepper:active,
-.btn-arcade-action.btn-pepper.active {
-  transform: translateY(3px) scale(0.95);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 25px rgba(228, 0, 88, 0.9);
-  background: radial-gradient(circle at 50% 50%, #ff2050, #960028 100%);
+/* Bold Arcade Key Badge (A / B) */
+.btn-arcade-key {
+  position: absolute;
+  top: 5px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
-/* Blue Jump Button */
+/* Button A: JUMP / ESCAPE (Electric Arcade Cyan) */
 .btn-arcade-action.btn-jump {
-  background: radial-gradient(circle at 35% 35%, #00d2ff, #0077c8 70%, #003e73 100%);
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 168, 252, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  background: radial-gradient(circle at 35% 25%, #6bf6ff 0%, #00b4d8 45%, #0077b6 80%, #023e8a 100%);
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.8),
+    0 0 16px rgba(0, 228, 255, 0.5),
+    inset 0 3px 5px rgba(255, 255, 255, 0.6),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.4);
 }
 
 .btn-arcade-action.btn-jump:active,
 .btn-arcade-action.btn-jump.active {
-  transform: translateY(3px) scale(0.95);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 25px rgba(0, 168, 252, 0.9);
-  background: radial-gradient(circle at 50% 50%, #00f0ff, #005096 100%);
+  transform: translateY(4px) scale(0.96);
+  background: radial-gradient(circle at 50% 50%, #00e1ff 0%, #005f9e 80%, #003259 100%);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    0 0 25px rgba(0, 240, 255, 0.95),
+    inset 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* Button B: PEPPER / ATTACK (Fiery Arcade Crimson Red) */
+.btn-arcade-action.btn-pepper {
+  background: radial-gradient(circle at 35% 25%, #ff5c7c 0%, #e40058 45%, #b50043 80%, #54001e 100%);
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.8),
+    0 0 16px rgba(255, 0, 85, 0.5),
+    inset 0 3px 5px rgba(255, 255, 255, 0.6),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.btn-arcade-action.btn-pepper:active,
+.btn-arcade-action.btn-pepper.active {
+  transform: translateY(4px) scale(0.96);
+  background: radial-gradient(circle at 50% 50%, #ff1a66 0%, #8c0033 80%, #400017 100%);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    0 0 25px rgba(255, 0, 85, 0.95),
+    inset 0 4px 8px rgba(0, 0, 0, 0.7);
 }
 
 .action-icon {
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1;
-  margin-bottom: 3px;
+  margin-top: 6px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
 }
 
 .action-label {
-  font-size: 8px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
   color: #fff;
   letter-spacing: 0.5px;
-  text-shadow: 1px 1px #400010;
-  font-weight: bold;
+  text-shadow: 1px 1px 2px #000;
+  margin-top: 2px;
 }
 
+/* Molded Arcade Token / Coin Badge */
 .pepper-badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #fcb400;
-  color: #111;
+  top: -4px;
+  right: -4px;
+  background: radial-gradient(circle at 35% 35%, #ffe680 0%, #fcb400 60%, #b87c00 100%);
+  color: #1a0f00;
   border: 2px solid #fff;
   border-radius: 50%;
-  width: 25px;
-  height: 25px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: 'Press Start 2P', monospace;
   font-size: 10px;
   font-weight: bold;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8), 0 0 8px rgba(252, 180, 0, 0.7);
+  z-index: 4;
 }
 
+/* Responsive adjustments */
 @media (min-width: 440px) {
-  .btn-arcade-action {
-    width: 84px;
-    height: 84px;
+  .controls-deck {
+    height: 195px;
+    padding: 14px 24px 10px 24px;
+  }
+  .dpad-container {
+    width: 146px;
+    height: 146px;
+  }
+  .dpad {
+    width: 130px;
+    height: 130px;
+  }
+  .button-bezel-outer {
+    width: 90px;
+    height: 90px;
   }
   .action-icon {
-    font-size: 30px;
-    margin-bottom: 4px;
+    font-size: 28px;
   }
   .action-label {
-    font-size: 9px;
+    font-size: 8px;
   }
   .action-container {
-    gap: 16px;
+    gap: 20px;
   }
 }
 
-@media (max-width: 350px) {
+@media (max-width: 360px) {
   .controls-deck {
-    padding: 8px 10px;
+    height: 175px;
+    padding: 8px 10px 6px 10px;
   }
   .dpad-container {
     width: 120px;
     height: 120px;
   }
-  .btn-arcade-action {
-    width: 68px;
-    height: 68px;
+  .dpad {
+    width: 108px;
+    height: 108px;
+  }
+  .dpad-up, .dpad-down {
+    left: 36px;
+    width: 34px;
+    height: 30px;
+  }
+  .dpad-left, .dpad-right {
+    top: 36px;
+    width: 30px;
+    height: 34px;
+  }
+  .button-bezel-outer {
+    width: 72px;
+    height: 72px;
   }
   .action-icon {
-    font-size: 24px;
+    font-size: 22px;
+  }
+  .action-label {
+    font-size: 6px;
   }
   .action-container {
-    gap: 8px;
+    gap: 10px;
+  }
+  .cpo-center-badge {
+    display: none; /* Hide badge on very narrow screens to preserve space */
   }
 }
 

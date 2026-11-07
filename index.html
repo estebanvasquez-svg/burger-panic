@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=40">
+  <link rel="stylesheet" href="css/style.css?v=65">
 </head>
 <body>
   <div id="app-container">
@@ -65,33 +65,85 @@
       </div>
     </main>
 
-    <!-- Mobile Vertical Controls Deck -->
-    <footer class="controls-deck">
-      <!-- 4-Way Virtual D-Pad -->
+    <!-- Arcade Cabinet Controls Deck (CPO - Control Panel Overlay) -->
+    <footer class="controls-deck" id="arcade-controls-deck">
+      <!-- Metallic Corner Mounting Screws -->
+      <div class="cpo-screw cpo-screw-tl" title="Cabinet Bolt"></div>
+      <div class="cpo-screw cpo-screw-tr" title="Cabinet Bolt"></div>
+      <div class="cpo-screw cpo-screw-bl" title="Cabinet Bolt"></div>
+      <div class="cpo-screw cpo-screw-br" title="Cabinet Bolt"></div>
+
+      <!-- Classic Arcade Racing Stripes -->
+      <div class="cpo-stripes">
+        <span class="cpo-stripe stripe-magenta"></span>
+        <span class="cpo-stripe stripe-cyan"></span>
+        <span class="cpo-stripe stripe-amber"></span>
+      </div>
+
+      <!-- Left: 4-Way Virtual Arcade Joystick (Sanwa Style) -->
       <div class="dpad-container">
+        <div class="joystick-cpo-label">JOYSTICK • 4-WAY</div>
         <div class="dpad" id="dpad">
-          <button class="dpad-btn dpad-up" id="dpad-up">▲</button>
-          <button class="dpad-btn dpad-left" id="dpad-left">◀</button>
-          <div class="dpad-center"></div>
-          <button class="dpad-btn dpad-right" id="dpad-right">▶</button>
-          <button class="dpad-btn dpad-down" id="dpad-down">▼</button>
+          <div class="dpad-bezel-ring"></div>
+          <button class="dpad-btn dpad-up" id="dpad-up" aria-label="Arriba">
+            <span class="dpad-arrow">▲</span>
+          </button>
+          <button class="dpad-btn dpad-left" id="dpad-left" aria-label="Izquierda">
+            <span class="dpad-arrow">◀</span>
+          </button>
+          <button class="dpad-btn dpad-right" id="dpad-right" aria-label="Derecha">
+            <span class="dpad-arrow">▶</span>
+          </button>
+          <button class="dpad-btn dpad-down" id="dpad-down" aria-label="Abajo">
+            <span class="dpad-arrow">▼</span>
+          </button>
+          <!-- Authentic Arcade Rubber Dust Washer & 3D Ball-Top Lever -->
+          <div class="joystick-washer"></div>
+          <div class="dpad-center joystick-ball" id="joystick-ball">
+            <div class="ball-specular"></div>
+          </div>
         </div>
       </div>
 
-      <!-- Action Buttons: JUMP & PEPPER -->
-      <div class="action-container">
-        <!-- Jump Escape Button -->
-        <button class="btn-arcade-action btn-jump" id="btn-jump" aria-label="Saltar / Escapar">
-          <span class="action-icon">👟</span>
-          <span class="action-label">JUMP</span>
-        </button>
+      <!-- Center: Retro Cabinet Plaque & Speaker Grill -->
+      <div class="cpo-center-badge">
+        <div class="cpo-brand-tag">BURGER PANIC</div>
+        <div class="cpo-speaker-grill">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="cpo-player-tag">1 PLAYER • ARCADE</div>
+      </div>
 
-        <!-- Pepper Action Button -->
-        <button class="btn-arcade-action btn-pepper" id="btn-pepper" aria-label="Pimienta">
-          <span class="action-icon">🧂</span>
-          <span class="action-label">PEPPER</span>
-          <span class="pepper-badge" id="pepper-count-badge">5</span>
-        </button>
+      <!-- Right: Action Pushbuttons (Ergonomic Japanese Arcade Slant) -->
+      <div class="action-container">
+        <!-- Button A: Jump Escape (Lower-Left Position) -->
+        <div class="arcade-button-wrapper btn-wrap-jump">
+          <div class="button-bezel-outer">
+            <button class="btn-arcade-action btn-jump" id="btn-jump" aria-label="Saltar / Escapar (Botón A)">
+              <div class="btn-plunger-cap">
+                <span class="btn-arcade-key">A</span>
+                <span class="action-icon">👟</span>
+                <span class="action-label">JUMP</span>
+              </div>
+            </button>
+          </div>
+          <span class="button-cpo-sublabel">ESCAPAR</span>
+        </div>
+
+        <!-- Button B: Pepper Toss (Higher-Right Position) -->
+        <div class="arcade-button-wrapper btn-wrap-pepper">
+          <div class="button-bezel-outer">
+            <button class="btn-arcade-action btn-pepper" id="btn-pepper" aria-label="Pimienta (Botón B)">
+              <div class="btn-plunger-cap">
+                <span class="btn-arcade-key">B</span>
+                <span class="action-icon">🧂</span>
+                <span class="action-label">PEPPER</span>
+                <span class="pepper-badge" id="pepper-count-badge">5</span>
+              </div>
+            </button>
+          </div>
+          <span class="button-cpo-sublabel">PIMIENTA</span>
+        </div>
       </div>
     </footer>
 
@@ -122,16 +174,16 @@
   </div>
 
   <!-- Game Scripts -->
-  <script src="js/chef_atlas.js?v=64"></script>
-  <script src="js/enemies_atlas.js?v=64"></script>
-  <script src="js/audio.js?v=64"></script>
-  <script src="js/sprites.js?v=64"></script>
-  <script src="js/map.js?v=64"></script>
-  <script src="js/burger.js?v=64"></script>
-  <script src="js/entities.js?v=64"></script>
-  <script src="js/stage_themes.js?v=64"></script>
-  <script src="js/controls.js?v=64"></script>
-  <script src="js/game.js?v=64"></script>
+  <script src="js/chef_atlas.js?v=65"></script>
+  <script src="js/enemies_atlas.js?v=65"></script>
+  <script src="js/audio.js?v=65"></script>
+  <script src="js/sprites.js?v=65"></script>
+  <script src="js/map.js?v=65"></script>
+  <script src="js/burger.js?v=65"></script>
+  <script src="js/entities.js?v=65"></script>
+  <script src="js/stage_themes.js?v=65"></script>
+  <script src="js/controls.js?v=65"></script>
+  <script src="js/game.js?v=65"></script>
 
   <!-- Service Worker Registration for Offline Play & PWA -->
   <script>

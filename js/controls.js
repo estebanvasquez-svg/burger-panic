@@ -98,6 +98,9 @@ class ControlsManager {
 
     if (!dpad) return;
 
+    const ball = document.getElementById('joystick-ball');
+
+    let prevDirKey = '';
     const handleDpadTouch = (e) => {
       e.preventDefault();
       // Unlock audio
@@ -107,7 +110,7 @@ class ControlsManager {
       }
 
       const rect = dpad.getBoundingClientRect();
-      const touch = e.touches[0];
+      const touch = e.touches ? e.touches[0] : e;
       if (!touch) return;
 
       const centerX = rect.left + rect.width / 2;
@@ -116,12 +119,21 @@ class ControlsManager {
       const dy = touch.clientY - centerY;
       const dist = Math.hypot(dx, dy);
 
-      if (dist < 12) {
+      if (dist < 10) {
         // Deadzone in the center
         this.input.x = 0;
         this.input.y = 0;
+        prevDirKey = '';
+        if (ball) ball.style.transform = 'translate(0px, 0px)';
         this.clearDpadActiveStyles();
         return;
+      }
+
+      // Tilt the arcade ball-top lever physically in 3D
+      if (ball) {
+        const tiltX = Math.max(-14, Math.min(14, dx * 0.28));
+        const tiltY = Math.max(-14, Math.min(14, dy * 0.28));
+        ball.style.transform = `translate(${tiltX}px, ${tiltY}px) scale(0.95)`;
       }
 
       // Determine dominant direction (Up, Down, Left, Right)
@@ -133,7 +145,15 @@ class ControlsManager {
         this.input.x = dx > 0 ? 1 : -1;
       }
 
-      this.vibrate(10);
+      const curDirKey = `${this.input.x},${this.input.y}`;
+      if (curDirKey !== prevDirKey) {
+        prevDirKey = curDirKey;
+        if (window.soundManager?.playArcadeClick) {
+          window.soundManager.playArcadeClick();
+        }
+        this.vibrate(12);
+      }
+
       this.updateDpadActiveStyles();
     };
 
@@ -141,6 +161,8 @@ class ControlsManager {
       e.preventDefault();
       this.input.x = 0;
       this.input.y = 0;
+      prevDirKey = '';
+      if (ball) ball.style.transform = 'translate(0px, 0px)';
       this.clearDpadActiveStyles();
     };
 
@@ -149,13 +171,32 @@ class ControlsManager {
     dpad.addEventListener('touchend', resetDpad, { passive: false });
     dpad.addEventListener('touchcancel', resetDpad, { passive: false });
 
-    // Jump Button Touch
+    // Desktop Mouse Drag on Arcade Joystick
+    let isMouseDraggingDpad = false;
+    dpad.addEventListener('mousedown', (e) => {
+      isMouseDraggingDpad = true;
+      handleDpadTouch(e);
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (isMouseDraggingDpad) {
+        handleDpadTouch(e);
+      }
+    });
+    window.addEventListener('mouseup', (e) => {
+      if (isMouseDraggingDpad) {
+        isMouseDraggingDpad = false;
+        resetDpad(e);
+      }
+    });
+
+    // Jump Button Touch & Click
     if (jumpBtn) {
       const triggerJump = (e) => {
         e.preventDefault();
         if (window.soundManager) {
           window.soundManager.init();
           window.soundManager.resume();
+          if (window.soundManager.playArcadeClick) window.soundManager.playArcadeClick();
         }
         this.vibrate(15);
         jumpBtn.classList.add('active');
@@ -173,13 +214,14 @@ class ControlsManager {
       jumpBtn.addEventListener('mouseup', releaseJump);
     }
 
-    // Pepper Button Touch
+    // Pepper Button Touch & Click
     if (pepperBtn) {
       const triggerPepper = (e) => {
         e.preventDefault();
         if (window.soundManager) {
           window.soundManager.init();
           window.soundManager.resume();
+          if (window.soundManager.playArcadeClick) window.soundManager.playArcadeClick();
         }
         this.vibrate(20);
         pepperBtn.classList.add('active');

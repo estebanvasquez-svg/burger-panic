@@ -130,6 +130,25 @@ class SoundManager {
     }
   }
 
+  // Authentic mechanical arcade microswitch click
+  playArcadeClick() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(2200, now);
+      osc.frequency.exponentialRampToValueAtTime(380, now + 0.016);
+      gain.gain.setValueAtTime(0.09, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.016);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.018);
+    } catch (e) {}
+  }
+
   // Ingredient bounce / drop
   playDrop() {
     if (this.muted || !this.ctx) return;
