@@ -17,8 +17,10 @@ function getNearestFloor(x, y, floors, tolerance = 6) {
   for (const f of floors) {
     if (typeof x === 'number') {
       const footCenter = x + 8;
-      if (footCenter >= f.x1 - 2 && footCenter <= f.x2 + 2) {
-        const floorY = getFloorElevation(f, footCenter);
+      // Allow detection if character body [x + 2, x + 14] overlaps platform [f.x1, f.x2]
+      if (x + 14 >= f.x1 - 2 && x + 2 <= f.x2 + 2) {
+        const checkX = Math.max(f.x1, Math.min(f.x2, footCenter));
+        const floorY = getFloorElevation(f, checkX);
         if (Math.abs(y - floorY) <= tolerance) {
           return f;
         }
@@ -383,6 +385,11 @@ class Player {
               this.y = getFloorElevation(topFloor, this.x + 8);
               this.isClimbing = false;
               this.facingDir = 'up';
+              const minWalkX = topFloor.x1;
+              const maxWalkX = topFloor.x2 - this.width;
+              if (maxWalkX >= minWalkX) {
+                this.x = Math.max(minWalkX, Math.min(maxWalkX, this.x));
+              }
               window.soundManager.playStep();
               return;
             } else {
@@ -398,6 +405,11 @@ class Player {
               this.y = getFloorElevation(botFloor, this.x + 8);
               this.isClimbing = false;
               this.facingDir = 'down';
+              const minWalkX = botFloor.x1;
+              const maxWalkX = botFloor.x2 - this.width;
+              if (maxWalkX >= minWalkX) {
+                this.x = Math.max(minWalkX, Math.min(maxWalkX, this.x));
+              }
               window.soundManager.playStep();
               return;
             } else {
@@ -427,8 +439,10 @@ class Player {
         if (currentFloor.vy) this.y += currentFloor.vy;
 
         const mapW = (this.levelData && this.levelData.width) ? this.levelData.width : 240;
+        const minX = currentFloor.x1;
+        const maxX = currentFloor.x2 - this.width;
 
-        if (newX >= currentFloor.x1 && newX <= currentFloor.x2 - this.width) {
+        if (newX >= minX && newX <= maxX) {
           this.x = newX;
           this.animTimer++;
           if (this.animTimer % 7 === 0) {
@@ -436,6 +450,20 @@ class Player {
           }
           if (this.animTimer % 14 === 0) {
             window.soundManager.playStep();
+          }
+        } else if (wantX < 0 && this.x > maxX) {
+          // Returning to platform from ladder edge
+          this.x = Math.max(minX, newX);
+          this.animTimer++;
+          if (this.animTimer % 7 === 0) {
+            this.animFrame = 1 - this.animFrame;
+          }
+        } else if (wantX > 0 && this.x < minX) {
+          // Returning to platform from left ladder edge
+          this.x = Math.min(maxX, newX);
+          this.animTimer++;
+          if (this.animTimer % 7 === 0) {
+            this.animFrame = 1 - this.animFrame;
           }
         } else {
           // If at the outer boundary of the stage, stop safely at the wall
