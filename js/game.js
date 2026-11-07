@@ -24,6 +24,8 @@ class BurgerPanicGame {
     this.pepperClouds = [];
     this.bonusItems = [];
     this.popups = [];
+    this.particles = [];
+    this.screenShake = 0;
     this.cameraX = 0;
 
     this.bonusSpawnTimer = 350;
@@ -357,6 +359,8 @@ class BurgerPanicGame {
 
   loadStage(index) {
     this.levelData = this.levelMap.getLevel(index);
+    this.particles = [];
+    this.screenShake = 0;
 
     // Initialize player (always start on the bottom ground floor of the stage)
     const bottomFloor = this.levelData.floors[this.levelData.floors.length - 1];
@@ -445,6 +449,91 @@ class BurgerPanicGame {
       this.player.lives++;
       window.soundManager.playLifeUp();
       this.popups.push(new window.ScorePopup(`1UP! COMBO x${count}!`, x, y - 10));
+    }
+  }
+
+  addScreenShake(amount = 4.0) {
+    this.screenShake = Math.max(this.screenShake, amount);
+  }
+
+  spawnBreadCrumbs(x, y) {
+    const colors = ['#f5d061', '#e8b839', '#ffffff', '#ff8b3d'];
+    for (let i = 0; i < 4; i++) {
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.6;
+      const spd = Math.random() * 1.8 + 0.8;
+      this.particles.push(new window.ArcadeParticle(
+        x + (Math.random() - 0.5) * 6,
+        y,
+        Math.cos(angle) * spd,
+        Math.sin(angle) * spd,
+        colors[Math.floor(Math.random() * colors.length)],
+        Math.random() < 0.5 ? 2 : 3,
+        18,
+        'rect'
+      ));
+    }
+  }
+
+  spawnLandingDust(x, y, width = 32) {
+    for (let i = 0; i < 6; i++) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const px = side === -1 ? x + 2 : x + width - 2;
+      this.particles.push(new window.ArcadeParticle(
+        px,
+        y,
+        side * (Math.random() * 1.4 + 0.6),
+        -(Math.random() * 0.8 + 0.2),
+        '#f0e6df',
+        Math.random() * 3 + 2.5,
+        16,
+        'smoke'
+      ));
+    }
+  }
+
+  spawnSquashSparks(x, y) {
+    const colors = ['#ffd700', '#ff3b30', '#ff9500', '#00f0ff', '#ffffff'];
+    for (let i = 0; i < 14; i++) {
+      const angle = (i / 14) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+      const spd = Math.random() * 2.8 + 1.2;
+      this.particles.push(new window.ArcadeParticle(
+        x,
+        y,
+        Math.cos(angle) * spd,
+        Math.sin(angle) * spd,
+        colors[i % colors.length],
+        Math.random() < 0.6 ? 3 : 4,
+        24,
+        'star'
+      ));
+    }
+    for (let i = 0; i < 5; i++) {
+      this.particles.push(new window.ArcadeParticle(
+        x + (Math.random() - 0.5) * 8,
+        y + (Math.random() - 0.5) * 6,
+        (Math.random() - 0.5) * 1.2,
+        (Math.random() - 0.5) * 1.2,
+        '#ffffff',
+        4,
+        16,
+        'smoke'
+      ));
+    }
+  }
+
+  spawnJumpDust(x, y) {
+    for (let i = 0; i < 4; i++) {
+      const side = i % 2 === 0 ? -1 : 1;
+      this.particles.push(new window.ArcadeParticle(
+        x + side * (Math.random() * 3 + 1),
+        y - 1,
+        side * (Math.random() * 0.8 + 0.4),
+        -(Math.random() * 0.5 + 0.1),
+        '#d0c8be',
+        2.5,
+        12,
+        'smoke'
+      ));
     }
   }
 
@@ -744,6 +833,15 @@ class BurgerPanicGame {
       }
     }
 
+    // 7.5. Dynamic Juice Particles
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.update();
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
+      }
+    }
+
     // 8. Check Stage Victory: Have all burger pieces landed on the plates?
     const allCompleted = this.burgers.every((b) => b.landedOnPlate);
     if (allCompleted && this.state !== 'STAGE_CLEAR') {
@@ -799,11 +897,18 @@ class BurgerPanicGame {
     // Draw HUD (fixed overlay)
     this.drawHUD();
 
-    // World Rendering (translated by camera for wide maps)
+    // World Rendering (translated by camera for wide maps + physical screen shake)
     this.ctx.save();
-    if (this.cameraX !== 0) {
-      this.ctx.translate(-Math.round(this.cameraX), 0);
+    let shakeX = 0;
+    let shakeY = 0;
+    if (this.screenShake > 0) {
+      shakeX = (Math.random() - 0.5) * this.screenShake;
+      shakeY = (Math.random() - 0.5) * this.screenShake;
+      this.screenShake *= 0.82;
+      if (this.screenShake < 0.25) this.screenShake = 0;
     }
+    const camRenderX = (this.cameraX !== 0) ? -Math.round(this.cameraX) : 0;
+    this.ctx.translate(camRenderX + Math.round(shakeX), Math.round(shakeY));
 
     // Draw Ladders
     this.drawLadders();
@@ -837,6 +942,11 @@ class BurgerPanicGame {
     // Draw Player
     if (this.player) {
       this.player.draw(this.ctx);
+    }
+
+    // Draw Dynamic Juice Particles
+    for (const p of this.particles) {
+      p.draw(this.ctx);
     }
 
     // Draw Popups

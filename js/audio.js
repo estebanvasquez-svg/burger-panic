@@ -345,127 +345,237 @@ class SoundManager {
   }
 
   // =========================================================================
-  // 8-BIT RETRO MERENGUE ENGINE: IL BARBIERE DI SIVIGLIA (Gioachino Rossini)
-  // "Largo al factotum della citta" + Overture + "Figaro! Figaro!" in 8-bit Merengue
+  // 8-BIT ENHANCED RETRO MERENGUE CHIPTUNE ENGINE
+  // Il Barbiere di Siviglia (Gioachino Rossini) + Arcade Punch & Arpeggios
   // =========================================================================
 
   playLeadNote(freq, time, dur) {
     if (!this.bgmMasterGain || !this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    try {
+      // Dual-oscillator arcade chorused square lead
+      const osc1 = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
 
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(freq, time);
+      osc1.type = 'square';
+      osc2.type = 'square';
+      osc1.frequency.setValueAtTime(freq, time);
+      // Subtle detune for rich vintage synth chorus
+      osc2.frequency.setValueAtTime(freq * 1.003, time);
 
-    gain.gain.setValueAtTime(0.040, time);
-    gain.gain.exponentialRampToValueAtTime(0.003, time + dur * 0.82);
+      // Subtle vibrato LFO after initial attack for musicality
+      if (dur > 0.12) {
+        const lfo = this.ctx.createOscillator();
+        const lfoGain = this.ctx.createGain();
+        lfo.frequency.setValueAtTime(5.8, time);
+        lfoGain.gain.setValueAtTime(0, time);
+        lfoGain.gain.setValueAtTime(freq * 0.018, time + 0.08);
 
-    osc.connect(gain);
-    gain.connect(this.bgmMasterGain);
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc1.frequency);
+        lfoGain.connect(osc2.frequency);
 
-    osc.start(time);
-    osc.stop(time + dur * 0.85);
+        lfo.start(time + 0.06);
+        lfo.stop(time + dur);
+      }
+
+      const peakGain = 0.046;
+      gain.gain.setValueAtTime(peakGain, time);
+      gain.gain.setValueAtTime(peakGain * 0.85, time + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.002, time + dur * 0.90);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(this.bgmMasterGain);
+
+      osc1.start(time);
+      osc2.start(time);
+      osc1.stop(time + dur * 0.92);
+      osc2.stop(time + dur * 0.92);
+    } catch (e) {}
   }
 
   playBrassNote(freq, time, dur) {
     if (!this.bgmMasterGain || !this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
+    try {
+      const osc = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
 
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(freq, time);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, time);
 
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(2200, time);
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2600, time);
+      filter.frequency.exponentialRampToValueAtTime(800, time + dur * 0.85);
 
-    gain.gain.setValueAtTime(0.024, time);
-    gain.gain.exponentialRampToValueAtTime(0.002, time + dur * 0.8);
+      gain.gain.setValueAtTime(0.028, time);
+      gain.gain.exponentialRampToValueAtTime(0.002, time + dur * 0.82);
 
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.bgmMasterGain);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.bgmMasterGain);
 
-    osc.start(time);
-    osc.stop(time + dur * 0.82);
+      osc.start(time);
+      osc.stop(time + dur * 0.85);
+    } catch (e) {}
   }
 
   playBassNote(freq, time, dur) {
     if (!this.bgmMasterGain || !this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    try {
+      // Slap Bass: Sub-triangle body + snappy sawtooth pluck
+      const oscSub = this.ctx.createOscillator();
+      const oscBite = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq, time);
+      oscSub.type = 'triangle';
+      oscSub.frequency.setValueAtTime(freq, time);
 
-    gain.gain.setValueAtTime(0.065, time);
-    gain.gain.exponentialRampToValueAtTime(0.005, time + dur * 0.85);
+      oscBite.type = 'sawtooth';
+      oscBite.frequency.setValueAtTime(freq, time);
 
-    osc.connect(gain);
-    gain.connect(this.bgmMasterGain);
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1100, time);
+      filter.frequency.exponentialRampToValueAtTime(220, time + dur * 0.6);
 
-    osc.start(time);
-    osc.stop(time + dur * 0.88);
+      const peakGain = 0.075;
+      gain.gain.setValueAtTime(peakGain, time);
+      gain.gain.exponentialRampToValueAtTime(0.005, time + dur * 0.88);
+
+      oscSub.connect(gain);
+      oscBite.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.bgmMasterGain);
+
+      oscSub.start(time);
+      oscBite.start(time);
+      oscSub.stop(time + dur * 0.90);
+      oscBite.stop(time + dur * 0.90);
+    } catch (e) {}
+  }
+
+  // Chiptune Shimmer Arpeggio (Addictive retro background sparkle)
+  playArpShimmer(bar, stepInBar, time, dur) {
+    if (!this.bgmMasterGain || !this.ctx) return;
+    try {
+      // Determine harmony chord based on bar section
+      let chordNotes;
+      if ([1, 5, 9, 11, 13].includes(bar)) {
+        // G Major / G7
+        chordNotes = [392.00, 493.88, 587.33, 698.46, 783.99]; // G4, B4, D5, F5, G5
+      } else if ([3, 6, 14].includes(bar)) {
+        // F Major / Subdominant
+        chordNotes = [349.23, 440.00, 523.25, 698.46, 880.00]; // F4, A4, C5, F5, A5
+      } else {
+        // C Major (Tonic)
+        chordNotes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
+      }
+
+      const noteFreq = chordNotes[stepInBar % chordNotes.length];
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(noteFreq, time);
+
+      const arpGain = 0.012; // Gentle, crystal-clear background sparkle
+      gain.gain.setValueAtTime(arpGain, time);
+      gain.gain.exponentialRampToValueAtTime(0.0005, time + dur * 0.65);
+
+      osc.connect(gain);
+      gain.connect(this.bgmMasterGain);
+
+      osc.start(time);
+      osc.stop(time + dur * 0.70);
+    } catch (e) {}
   }
 
   playGuiraScrape(time, isAccent, dur) {
     if (!this.noiseBuffer || !this.bgmMasterGain || !this.ctx) return;
-    const source = this.ctx.createBufferSource();
-    source.buffer = this.noiseBuffer;
+    try {
+      const source = this.ctx.createBufferSource();
+      source.buffer = this.noiseBuffer;
 
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'highpass';
-    filter.frequency.setValueAtTime(3400, time);
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(isAccent ? 3200 : 4200, time);
 
-    const gain = this.ctx.createGain();
-    const peakGain = isAccent ? 0.034 : 0.016;
-    gain.gain.setValueAtTime(peakGain, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      const gain = this.ctx.createGain();
+      const peakGain = isAccent ? 0.040 : 0.018;
+      gain.gain.setValueAtTime(peakGain, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
 
-    source.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.bgmMasterGain);
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.bgmMasterGain);
 
-    source.start(time);
-    source.stop(time + dur);
+      source.start(time);
+      source.stop(time + dur);
+    } catch (e) {}
   }
 
+  // Tambora Rim / Snare with crisp arcade snap
   playTamboraRim(time) {
     if (!this.bgmMasterGain || !this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(1200, time);
-    osc.frequency.exponentialRampToValueAtTime(380, time + 0.028);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1400, time);
+      osc.frequency.exponentialRampToValueAtTime(320, time + 0.035);
 
-    gain.gain.setValueAtTime(0.042, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.028);
+      gain.gain.setValueAtTime(0.052, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.035);
 
-    osc.connect(gain);
-    gain.connect(this.bgmMasterGain);
+      osc.connect(gain);
+      gain.connect(this.bgmMasterGain);
 
-    osc.start(time);
-    osc.stop(time + 0.028);
+      osc.start(time);
+      osc.stop(time + 0.035);
+
+      // Add small noise crack for snappy punch
+      if (this.noiseBuffer) {
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = this.noiseBuffer;
+        const nFilter = this.ctx.createBiquadFilter();
+        nFilter.type = 'bandpass';
+        nFilter.frequency.setValueAtTime(4500, time);
+        const nGain = this.ctx.createGain();
+        nGain.gain.setValueAtTime(0.032, time);
+        nGain.gain.exponentialRampToValueAtTime(0.001, time + 0.030);
+
+        noise.connect(nFilter);
+        nFilter.connect(nGain);
+        nGain.connect(this.bgmMasterGain);
+        noise.start(time);
+        noise.stop(time + 0.030);
+      }
+    } catch (e) {}
   }
 
+  // Punchy Arcade Tambora Skin / Kick with solid low-end bounce
   playTamboraSkin(time) {
     if (!this.bgmMasterGain || !this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
 
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(170, time);
-    osc.frequency.exponentialRampToValueAtTime(54, time + 0.075);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(240, time);
+      osc.frequency.exponentialRampToValueAtTime(46, time + 0.080);
 
-    gain.gain.setValueAtTime(0.075, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.075);
+      gain.gain.setValueAtTime(0.125, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.085);
 
-    osc.connect(gain);
-    gain.connect(this.bgmMasterGain);
+      osc.connect(gain);
+      gain.connect(this.bgmMasterGain);
 
-    osc.start(time);
-    osc.stop(time + 0.075);
+      osc.start(time);
+      osc.stop(time + 0.085);
+    } catch (e) {}
   }
 
   scheduleMerengueStep(step, time, stepDur) {
@@ -486,17 +596,20 @@ class SoundManager {
       this.playBrassNote(brassFreq, time, stepDur * 1.3);
     }
 
-    // 3. Merengue Bass Tumbao
+    // 3. Merengue Bass Tumbao with slap punch
     const bassFreq = MERENGUE_SCORE.bass[step];
     if (bassFreq && bassFreq > 0) {
       this.playBassNote(bassFreq, time, stepDur * 1.7);
     }
 
-    // 4. Guira Scrapes (continuous 16th-note Dominican merengue groove)
-    const isGuiraAccent = (stepInBar % 4 === 2);
-    this.playGuiraScrape(time, isGuiraAccent, isGuiraAccent ? 0.045 : 0.025);
+    // 4. Arpeggiator Shimmer (Addictive rhythmic drive)
+    this.playArpShimmer(bar, stepInBar, time, stepDur);
 
-    // 5. Tambora (Rim and Skin hits)
+    // 5. Guira Scrapes (continuous 16th-note Dominican merengue groove)
+    const isGuiraAccent = (stepInBar % 4 === 2);
+    this.playGuiraScrape(time, isGuiraAccent, isGuiraAccent ? 0.048 : 0.026);
+
+    // 6. Tambora (Rim and Skin hits)
     const isRepiqueBar = (bar === 10);
     if (isRepiqueBar) {
       // Merengue roll during the famous Figaro! Figaro! Figaro! line
@@ -507,11 +620,15 @@ class SoundManager {
         this.playTamboraSkin(time);
       }
     } else {
-      // Standard Merengue Tambora pattern
+      // Standard Merengue Tambora pattern with punchy kick & rim
       if ([0, 6, 8, 12].includes(stepInBar)) {
         this.playTamboraRim(time);
       }
       if ([4, 10, 14].includes(stepInBar)) {
+        this.playTamboraSkin(time);
+      }
+      // Accent kick on the downbeat of each measure
+      if (stepInBar === 0) {
         this.playTamboraSkin(time);
       }
     }

@@ -99,6 +99,7 @@ class Player {
     this.animTimer = 0;
     this.isTossingPepper = false;
     this.pepperTimer = 0;
+    this.landSquashTimer = 0;
   }
 
   resetPosition() {
@@ -114,6 +115,7 @@ class Player {
     this.isDead = false;
     this.deathTimer = 0;
     this.isTossingPepper = false;
+    this.landSquashTimer = 0;
     this.invulnerableTimer = 120; // ~2 seconds of grace flicker
   }
 
@@ -172,6 +174,9 @@ class Player {
     this.isClimbing = false;
     this.vx = jumpVx;
     this.vy = jumpVx === 0 ? -4.3 : -3.8; // High vertical vault or horizontal arc
+    if (window.burgerPanicGame && window.burgerPanicGame.spawnJumpDust) {
+      window.burgerPanicGame.spawnJumpDust(this.x + 8, this.y + 14);
+    }
     window.soundManager.playJump();
     return true;
   }
@@ -229,6 +234,10 @@ class Player {
 
     if (this.invulnerableTimer > 0) {
       this.invulnerableTimer--;
+    }
+
+    if (this.landSquashTimer > 0) {
+      this.landSquashTimer--;
     }
 
     if (this.isTossingPepper) {
@@ -316,6 +325,10 @@ class Player {
               this.vx = 0;
               this.isJumping = false;
               this.isClimbing = false;
+              this.landSquashTimer = 4;
+              if (window.burgerPanicGame && window.burgerPanicGame.spawnJumpDust) {
+                window.burgerPanicGame.spawnJumpDust(footCenter, floorY + 14);
+              }
               window.soundManager.playLand();
               break;
             }
@@ -604,12 +617,42 @@ class Player {
     const drawY = (this.y + 14) - h;
     const drawX = Math.round(this.x + 8 - w / 2);
 
+    // Subtle arcade Squash & Stretch anchored to Chef's feet
+    let scaleX = 1.0;
+    let scaleY = 1.0;
+    if (this.landSquashTimer > 0) {
+      scaleX = 1.14;
+      scaleY = 0.88; // Impact squash upon landing
+    } else if (this.isJumping) {
+      if (this.vy < 0) {
+        scaleX = 0.92;
+        scaleY = 1.10; // Vault stretch
+      } else {
+        scaleX = 0.95;
+        scaleY = 1.05; // Fall stretch
+      }
+    }
+
+    const hasScale = (scaleX !== 1.0 || scaleY !== 1.0);
+    if (hasScale) {
+      ctx.save();
+      const footX = this.x + 8;
+      const footY = this.y + 14;
+      ctx.translate(footX, footY);
+      ctx.scale(scaleX, scaleY);
+      ctx.translate(-footX, -footY);
+    }
+
     // Draw from atlas with accurate alignment
     const drawn = window.spriteManager.drawAtlas(ctx, atlasName, drawX, drawY, flip);
     if (!drawn) {
       // Fallback
       const spr = window.spriteManager.get('player_walk1');
       if (spr) ctx.drawImage(spr, this.x, this.y, 16, 16);
+    }
+
+    if (hasScale) {
+      ctx.restore();
     }
   }
 }
@@ -1128,7 +1171,7 @@ class PepperCloud {
 }
 
 // ========================================================
-// BONUS ITEM (ICE CREAM, COFFEE)
+// BONUS ITEM (ICE CREAM, COFFEE, EXTRA LIFE)
 // ========================================================
 class BonusItem {
   constructor(x, y, type = 'bonus_icecream') {
@@ -1136,6 +1179,7 @@ class BonusItem {
     this.y = y;
     this.type = type;
     this.timer = 500; // Time before disappearing
+    this.sparklePhase = Math.random() * Math.PI * 2;
   }
 
   update() {
@@ -1148,29 +1192,126 @@ class BonusItem {
     // Slight flash when expiring
     if (this.timer < 100 && Math.floor(this.timer / 8) % 2 === 0) return;
     ctx.drawImage(spr, this.x, this.y, 16, 16);
+
+    // Subtle 4-point sparkle star shimmering above collectible items
+    const phase = (Date.now() / 140) + this.sparklePhase;
+    const sx = this.x + 8 + Math.cos(phase) * 7;
+    const sy = this.y + 2 + Math.sin(phase * 1.5) * 3;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(Math.round(sx) - 1, Math.round(sy), 3, 1);
+    ctx.fillRect(Math.round(sx), Math.round(sy) - 1, 1, 3);
   }
 }
 
 // ========================================================
-// SCORE POPUP (+500, etc.)
+// ARCADE PARTICLE (JUICE & VIBRANT PHYSICAL DUST/SPARKS)
+// ========================================================
+class ArcadeParticle {
+  constructor(x, y, vx, vy, color, size, life, shape = 'rect') {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.color = color;
+    this.size = size;
+    this.initialLife = life;
+    this.life = life;
+    this.shape = shape; // 'rect', 'star', 'smoke'
+    this.gravity = shape === 'smoke' ? -0.015 : 0.14;
+    this.rot = Math.random() * Math.PI * 2;
+    this.rotSpeed = (Math.random() - 0.5) * 0.28;
+  }
+
+  update() {
+    this.life--;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += this.gravity;
+    this.rot += this.rotSpeed;
+    if (this.shape === 'smoke') {
+      this.vx *= 0.94;
+      this.size *= 1.03;
+    }
+  }
+
+  draw(ctx) {
+    const alpha = Math.max(0, this.life / this.initialLife);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(Math.round(this.x), Math.round(this.y));
+    ctx.rotate(this.rot);
+    ctx.fillStyle = this.color;
+
+    if (this.shape === 'star') {
+      const s = Math.round(this.size);
+      ctx.fillRect(-s, -1, s * 2, 2);
+      ctx.fillRect(-1, -s, 2, s * 2);
+    } else if (this.shape === 'smoke') {
+      ctx.beginPath();
+      ctx.arc(0, 0, Math.max(1, this.size), 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillRect(-Math.round(this.size / 2), -Math.round(this.size / 2), this.size, this.size);
+    }
+    ctx.restore();
+  }
+}
+
+// ========================================================
+// SCORE POPUP (JUICY ELASTIC BOUNCE & RETRO STROKE)
 // ========================================================
 class ScorePopup {
   constructor(text, x, y) {
     this.text = text;
     this.x = x;
     this.y = y;
-    this.timer = 45;
+    this.initialTimer = 50;
+    this.timer = 50;
+
+    // Pick vibrant arcade color based on event type
+    const upper = text.toUpperCase();
+    if (upper.includes('VIDA') || upper.includes('COMBO')) {
+      this.color = '#ff2a85'; // Neon magenta
+      this.strokeColor = '#ffffff';
+    } else if (upper.includes('SQUASH') || upper.includes('APLASTA')) {
+      this.color = '#00f0ff'; // Neon electric cyan
+      this.strokeColor = '#000000';
+    } else if (upper.includes('PERFECT') || upper.includes('1000')) {
+      this.color = '#39ff14'; // Neon lime
+      this.strokeColor = '#000000';
+    } else {
+      this.color = '#ffd700'; // Gold yellow
+      this.strokeColor = '#000000';
+    }
   }
 
   update() {
     this.timer--;
-    this.y -= 0.6;
+    this.y -= 0.65;
   }
 
   draw(ctx) {
-    ctx.fillStyle = '#fcb400';
+    ctx.save();
+    const progress = 1 - (this.timer / this.initialTimer);
+    // Elastic scale pop in first 8 frames: 1.4 -> 1.0
+    const scale = this.timer > 42 ? 1.4 - (50 - this.timer) * 0.05 : 1.0;
+
+    ctx.translate(Math.round(this.x), Math.round(this.y));
+    ctx.scale(scale, scale);
+
     ctx.font = '8px "Press Start 2P", monospace';
-    ctx.fillText(this.text, this.x, this.y);
+    ctx.textAlign = 'center';
+
+    // Bold arcade contrast outline
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = this.strokeColor;
+    ctx.strokeText(this.text, 0, 0);
+
+    // Vibrant face fill
+    ctx.fillStyle = this.color;
+    ctx.fillText(this.text, 0, 0);
+
+    ctx.restore();
   }
 }
 
@@ -1178,4 +1319,5 @@ window.Player = Player;
 window.Enemy = Enemy;
 window.PepperCloud = PepperCloud;
 window.BonusItem = BonusItem;
+window.ArcadeParticle = ArcadeParticle;
 window.ScorePopup = ScorePopup;

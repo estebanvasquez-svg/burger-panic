@@ -25,6 +25,7 @@ class BurgerPiece {
     this.targetY = this.y;
     this.landedOnPlate = false;
     this.riders = []; // Enemies currently riding this falling piece
+    this.bounceTimer = 0; // Squash & stretch bounce when landing
   }
 
   // Check if player walks across segments
@@ -49,6 +50,9 @@ class BurgerPiece {
           this.segments[i].stepped = true;
           this.segments[i].dropY = 3; // Visual dip
           newlyStepped = true;
+          if (window.burgerPanicGame && window.burgerPanicGame.spawnBreadCrumbs) {
+            window.burgerPanicGame.spawnBreadCrumbs(segX1 + 4, this.y + 6);
+          }
         }
       }
     }
@@ -127,9 +131,17 @@ class BurgerPiece {
 
         if (enemyCenter >= this.x - 2 && enemyCenter <= this.x + this.width + 2) {
           if (this.y + 12 >= enemyTop && this.y <= enemyBottom) {
-            // Squash enemy!
+            // Squash enemy with juicy physical feedback!
             enemy.squash();
             window.soundManager.playSquash();
+            if (window.burgerPanicGame) {
+              if (window.burgerPanicGame.spawnSquashSparks) {
+                window.burgerPanicGame.spawnSquashSparks(enemy.x + 8, enemy.y + 8);
+              }
+              if (window.burgerPanicGame.addScreenShake) {
+                window.burgerPanicGame.addScreenShake(5.0);
+              }
+            }
             if (addScoreCallback) {
               addScoreCallback(500, enemy.x, enemy.y);
             }
@@ -142,7 +154,17 @@ class BurgerPiece {
     if (this.y >= this.targetY) {
       this.y = this.targetY;
       this.falling = false;
+      this.bounceTimer = 5; // Squash & stretch bounce impact
       window.soundManager.playLand();
+
+      if (window.burgerPanicGame) {
+        if (window.burgerPanicGame.spawnLandingDust) {
+          window.burgerPanicGame.spawnLandingDust(this.x, this.y + 6, this.width);
+        }
+        if (window.burgerPanicGame.addScreenShake) {
+          window.burgerPanicGame.addScreenShake(2.8);
+        }
+      }
 
       // Reset step state
       this.segments.forEach((s) => {
@@ -200,6 +222,23 @@ class BurgerPiece {
     const sw = sprite.width / 4;
     const sh = sprite.height;
 
+    if (this.bounceTimer > 0) {
+      this.bounceTimer--;
+    }
+
+    const isBouncing = this.bounceTimer > 0;
+    const scaleX = isBouncing ? 1.12 : 1.0;
+    const scaleY = isBouncing ? 0.78 : 1.0;
+
+    if (isBouncing) {
+      ctx.save();
+      const centerX = this.x + this.width / 2;
+      const bottomY = this.y + 14;
+      ctx.translate(centerX, bottomY);
+      ctx.scale(scaleX, scaleY);
+      ctx.translate(-centerX, -bottomY);
+    }
+
     // Draw 4 segments resting cleanly on top of the girder
     for (let i = 0; i < 4; i++) {
       const segX = this.x + i * 8;
@@ -209,6 +248,10 @@ class BurgerPiece {
         i * sw, 0, sw, sh, // source slice
         segX, segY, 8, 8 // destination
       );
+    }
+
+    if (isBouncing) {
+      ctx.restore();
     }
   }
 }
