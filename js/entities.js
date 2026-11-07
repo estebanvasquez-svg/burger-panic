@@ -319,7 +319,7 @@ class Player {
         for (const f of floors) {
           const floorY = getFloorElevation(f, footCenter);
           if (oldY <= floorY + 1 && this.y >= floorY - 3 && this.y <= floorY + 16) {
-            if (footCenter >= f.x1 - 1 && footCenter <= f.x2 + 1) {
+            if (this.x + 12 >= f.x1 - 2 && this.x + 4 <= f.x2 + 2) {
               this.y = floorY;
               this.vy = 0;
               this.vx = 0;
@@ -446,16 +446,25 @@ class Player {
         this.facingDir = this.dir === 1 ? 'right' : 'left';
         this.vx = wantX * this.speed;
 
-        // Carry dynamic floor velocity
+        // Carry dynamic horizontal floor velocity (swaying, swing)
         let newX = this.x + this.vx;
         if (currentFloor.vx) newX += currentFloor.vx;
-        if (currentFloor.vy) this.y += currentFloor.vy;
 
         const mapW = (this.levelData && this.levelData.width) ? this.levelData.width : 240;
         const minX = currentFloor.x1;
         const maxX = currentFloor.x2 - this.width;
 
-        if (newX >= minX && newX <= maxX) {
+        let canWalkOnCurrent = (newX >= minX && newX <= maxX);
+
+        if (!canWalkOnCurrent && wantX < 0 && this.x > maxX) {
+          canWalkOnCurrent = true;
+          newX = Math.max(minX, newX);
+        } else if (!canWalkOnCurrent && wantX > 0 && this.x < minX) {
+          canWalkOnCurrent = true;
+          newX = Math.min(maxX, newX);
+        }
+
+        if (canWalkOnCurrent) {
           this.x = newX;
           this.animTimer++;
           if (this.animTimer % 7 === 0) {
@@ -464,32 +473,42 @@ class Player {
           if (this.animTimer % 14 === 0) {
             window.soundManager.playStep();
           }
-        } else if (wantX < 0 && this.x > maxX) {
-          // Returning to platform from ladder edge
-          this.x = Math.max(minX, newX);
-          this.animTimer++;
-          if (this.animTimer % 7 === 0) {
-            this.animFrame = 1 - this.animFrame;
-          }
-        } else if (wantX > 0 && this.x < minX) {
-          // Returning to platform from left ladder edge
-          this.x = Math.min(maxX, newX);
-          this.animTimer++;
-          if (this.animTimer % 7 === 0) {
-            this.animFrame = 1 - this.animFrame;
-          }
         } else {
-          // If at the outer boundary of the stage, stop safely at the wall
-          if (newX < 12) {
-            this.x = 12;
-          } else if (newX > mapW - this.width - 6) {
-            this.x = mapW - this.width - 6;
-          } else {
-            // Interior platform gap: stepped off into empty air, fall by gravity!
+          // Check if an adjacent connecting floor or diagonal ramp connects at this boundary!
+          const nextFootX = newX + 8;
+          const connectingFloor = floors.find(f => {
+            if (f === currentFloor) return false;
+            if (newX + 14 < f.x1 - 2 || newX + 2 > f.x2 + 2) return false;
+            const checkX = Math.max(f.x1, Math.min(f.x2, nextFootX));
+            const elev = getFloorElevation(f, checkX);
+            return Math.abs(elev - this.y) <= 8;
+          });
+
+          if (connectingFloor) {
+            // Seamless transition onto adjacent floor or diagonal ramp without falling
             this.x = newX;
-            this.isJumping = true;
-            this.vy = 0.5;
-            this.vx = wantX * this.speed;
+            const newFootX = Math.max(connectingFloor.x1, Math.min(connectingFloor.x2, newX + 8));
+            this.y = getFloorElevation(connectingFloor, newFootX);
+            this.animTimer++;
+            if (this.animTimer % 7 === 0) {
+              this.animFrame = 1 - this.animFrame;
+            }
+            if (this.animTimer % 14 === 0) {
+              window.soundManager.playStep();
+            }
+          } else {
+            // If at the outer boundary of the stage, stop safely at the wall
+            if (newX < 12) {
+              this.x = 12;
+            } else if (newX > mapW - this.width - 6) {
+              this.x = mapW - this.width - 6;
+            } else {
+              // Real interior platform gap: stepped off into empty air, fall by gravity!
+              this.x = newX;
+              this.isJumping = true;
+              this.vy = 0.5;
+              this.vx = wantX * this.speed;
+            }
           }
         }
       }
@@ -498,7 +517,6 @@ class Player {
       // If standing still on a dynamic moving floor (elevator, swaying, swing), ride along!
       if (currentFloor && !this.isJumping && !this.isClimbing) {
         if (currentFloor.vx) this.x += currentFloor.vx;
-        if (currentFloor.vy) this.y += currentFloor.vy;
         const footCenter = this.x + 8;
         this.y = getFloorElevation(currentFloor, footCenter);
       }
@@ -1012,9 +1030,8 @@ class Enemy {
       const footX = this.x + 8;
       this.y = getFloorElevation(currentFloor, footX);
 
-      // Carry moving floor velocity
+      // Carry moving floor velocity horizontally (swaying platforms, swings)
       if (currentFloor.vx) this.x += currentFloor.vx;
-      if (currentFloor.vy) this.y += currentFloor.vy;
 
       const nextX = this.x + this.dir * this.speed;
 
@@ -1249,15 +1266,37 @@ class PepperCloud {
 // ========================================================
 class BonusItem {
   constructor(x, y, type = 'bonus_icecream') {
+    this.startX = x;
+    this.startY = y;
     this.x = x;
     this.y = y;
     this.type = type;
     this.timer = 550; // Time before disappearing
     this.sparklePhase = Math.random() * Math.PI * 2;
+    this.dynamicFloor = null;
+    this.relOffsetX = 0;
   }
 
-  update() {
+  update(floors) {
     this.timer--;
+    // If sitting on a dynamic moving floor (elevator, swaying, swing), ride along smoothly!
+    if (floors && !this.dynamicFloor) {
+      this.dynamicFloor = floors.find(f => 
+        (f.type === 'elevator' || f.type === 'swaying' || f.type === 'swing') &&
+        this.x + 8 >= f.x1 - 4 && this.x + 8 <= f.x2 + 4 &&
+        Math.abs(f.y - this.startY) <= 18
+      );
+      if (this.dynamicFloor) {
+        const midX = (this.dynamicFloor.x1 + this.dynamicFloor.x2) / 2;
+        this.relOffsetX = this.startX - midX;
+      }
+    }
+
+    if (this.dynamicFloor) {
+      const midX = (this.dynamicFloor.x1 + this.dynamicFloor.x2) / 2;
+      this.x = Math.round(midX + this.relOffsetX);
+      this.y = this.dynamicFloor.y;
+    }
   }
 
   draw(ctx) {

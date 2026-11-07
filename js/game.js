@@ -849,7 +849,7 @@ class BurgerPanicGame {
 
     for (let i = this.bonusItems.length - 1; i >= 0; i--) {
       const item = this.bonusItems[i];
-      item.update();
+      item.update(this.levelData.floors);
       // Player pickup check
       const dist = Math.hypot((item.x + 8) - (this.player.x + 8), (item.y + 8) - (this.player.y + 8));
       if (dist < 14) {

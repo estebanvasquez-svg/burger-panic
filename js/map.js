@@ -608,7 +608,7 @@ class LevelMap {
         width: 380,
         bonusSpots: [
           { x: 42, y: 144 },
-          { x: 146, y: 96 },
+          { x: 110, y: 96 },
           { x: 240, y: 144 },
           { x: 338, y: 96 }
         ],
@@ -1173,7 +1173,7 @@ class LevelMap {
         name: 'EL BANQUETE IMPERIAL',
         width: 420,
         bonusSpots: [
-          { x: 46, y: 144 },
+          { x: 26, y: 144 },
           { x: 160, y: 96 },
           { x: 266, y: 144 },
           { x: 374, y: 96 }

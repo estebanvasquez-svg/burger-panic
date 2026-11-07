@@ -82,7 +82,7 @@ class BurgerPiece {
   findNextFloorBelow() {
     const floors = this.levelData.floors;
     const plateFloor = floors[floors.length - 1];
-    let candidateY = plateFloor.y;
+    let closestY = plateFloor ? plateFloor.y : 288;
 
     for (const f of floors) {
       let floorY = f.y;
@@ -90,15 +90,14 @@ class BurgerPiece {
         const ratio = Math.max(0, Math.min(1, (this.x + 16 - f.x1) / Math.max(1, f.x2 - f.x1)));
         floorY = Math.round(f.y1 + (f.y2 - f.y1) * ratio);
       }
-      if (floorY > this.y + 6) {
+      if (floorY > this.y + 6 && floorY < closestY) {
         // Only land on floor segments that physically span this burger piece
         if (this.x + 6 >= f.x1 && this.x + this.width - 6 <= f.x2) {
-          candidateY = floorY;
-          break;
+          closestY = floorY;
         }
       }
     }
-    return candidateY;
+    return closestY;
   }
 
   update(allBurgers, enemies, addScoreCallback, onComboCallback) {
