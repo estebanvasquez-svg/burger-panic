@@ -700,8 +700,8 @@ class Enemy {
     }
 
     this.animTimer++;
-    if (this.animTimer % 8 === 0) {
-      this.animFrame = 1 - this.animFrame;
+    if (this.animTimer % 7 === 0) {
+      this.animFrame = (this.animFrame + 1) % 4;
     }
 
     if (this.changeDirCooldown > 0) {
@@ -916,9 +916,17 @@ class Enemy {
 
       // Sprite flicker: alternating high and low opacity
       ctx.globalAlpha = flash ? 1.0 : 0.35;
-      const spr = window.spriteManager.get(`${this.type}_walk1`);
-      if (spr) {
-        ctx.drawImage(spr, this.x, this.y, this.width, this.height);
+      const spawnSpr = `${this.type}_walk1`;
+      const info = window.spriteManager.getEnemyAtlasInfo(spawnSpr);
+      if (info) {
+        const drawY = (this.y + 16) - info.h;
+        const drawX = Math.round(this.x + 8 - info.w / 2);
+        window.spriteManager.drawEnemyAtlas(ctx, spawnSpr, drawX, drawY, false);
+      } else {
+        const spr = window.spriteManager.get(spawnSpr);
+        if (spr) {
+          ctx.drawImage(spr, this.x, this.y, this.width, this.height);
+        }
       }
       ctx.restore();
       return;
@@ -928,28 +936,42 @@ class Enemy {
     let sprName = `${this.type}_walk1`;
 
     if (this.state === 'squashed') {
-      sprName = `${this.type}_squashed`;
+      sprName = (this.squashTimer < 40) ? `${this.type}_squashed2` : `${this.type}_squashed`;
     } else if (this.state === 'stunned') {
-      sprName = `${this.type}_stunned`;
+      sprName = (Math.floor(this.animTimer / 8) % 2 === 0) ? `${this.type}_stunned` : `${this.type}_stunned2`;
       // Shaking dizzy animation
-      const shakeX = (Math.random() - 0.5) * 3;
+      const shakeX = (Math.random() - 0.5) * 2;
       ctx.translate(shakeX, 0);
+    } else if (this.isClimbing) {
+      const climbFrame = (this.animFrame % 3) + 1;
+      sprName = `${this.type}_climb${climbFrame}`;
     } else {
-      sprName = this.animFrame === 0 ? `${this.type}_walk1` : `${this.type}_walk2`;
+      const walkFrame = (this.animFrame % 4) + 1;
+      sprName = `${this.type}_walk${walkFrame}`;
     }
 
-    const spr = window.spriteManager.get(sprName);
-    if (!spr) {
-      ctx.restore();
-      return;
+    const flip = (this.dir === -1 && this.state !== 'squashed' && this.state !== 'stunned' && !this.isClimbing);
+    const info = window.spriteManager.getEnemyAtlasInfo(sprName);
+    let drawn = false;
+
+    if (info) {
+      const drawY = (this.y + 16) - info.h;
+      const drawX = Math.round(this.x + 8 - info.w / 2);
+      drawn = window.spriteManager.drawEnemyAtlas(ctx, sprName, drawX, drawY, flip);
     }
 
-    if (this.dir === -1 && this.state !== 'squashed' && this.state !== 'stunned') {
-      ctx.translate(this.x + this.width, this.y);
-      ctx.scale(-1, 1);
-      ctx.drawImage(spr, 0, 0, this.width, this.height);
-    } else {
-      ctx.drawImage(spr, this.x, this.y, this.width, this.height);
+    if (!drawn) {
+      const fallbackName = this.animFrame % 2 === 0 ? `${this.type}_walk1` : `${this.type}_walk2`;
+      const spr = window.spriteManager.get(sprName) || window.spriteManager.get(fallbackName);
+      if (spr) {
+        if (flip) {
+          ctx.translate(this.x + this.width, this.y);
+          ctx.scale(-1, 1);
+          ctx.drawImage(spr, 0, 0, this.width, this.height);
+        } else {
+          ctx.drawImage(spr, this.x, this.y, this.width, this.height);
+        }
+      }
     }
 
     // If stunned, draw cartoon dizzy stars above head

@@ -7,6 +7,7 @@ class SpriteManager {
     this.sprites = {};
     this.initSprites();
     this.initAtlas();
+    this.initEnemiesAtlas();
     this.loadBackground('title_cover', 'assets/title_cover.png');
     this.loadBackground('bg_stage_4', 'assets/bg_stage4_octopus.png');
     this.loadBackground('bg_stage_5', 'assets/bg_stage5_coffee.png');
@@ -63,6 +64,41 @@ class SpriteManager {
 
   getAtlasInfo(name) {
     const atlasData = window.CHEF_ATLAS_DATA || window.PETER_ATLAS_DATA;
+    if (atlasData) {
+      return atlasData[name] || null;
+    }
+    return null;
+  }
+
+  initEnemiesAtlas() {
+    this.enemiesAtlasImg = new Image();
+    this.enemiesAtlasImg.src = 'assets/enemies_atlas.png';
+    this.enemiesAtlasLoaded = false;
+    this.enemiesAtlasImg.onload = () => {
+      this.enemiesAtlasLoaded = true;
+    };
+  }
+
+  drawEnemyAtlas(ctx, name, dx, dy, flip = false) {
+    const atlasData = window.ENEMIES_ATLAS_DATA;
+    if (!this.enemiesAtlasLoaded || !atlasData) return false;
+    const info = atlasData[name];
+    if (!info) return false;
+
+    ctx.save();
+    if (flip) {
+      ctx.translate(dx + info.w, dy);
+      ctx.scale(-1, 1);
+      ctx.drawImage(this.enemiesAtlasImg, info.x, info.y, info.w, info.h, 0, 0, info.w, info.h);
+    } else {
+      ctx.drawImage(this.enemiesAtlasImg, info.x, info.y, info.w, info.h, dx, dy, info.w, info.h);
+    }
+    ctx.restore();
+    return true;
+  }
+
+  getEnemyAtlasInfo(name) {
+    const atlasData = window.ENEMIES_ATLAS_DATA;
     if (atlasData) {
       return atlasData[name] || null;
     }
