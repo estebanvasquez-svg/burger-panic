@@ -459,6 +459,13 @@ class BurgerPanicGame {
     this.stageEarnedStars = 0;
     this.devMode = localStorage.getItem('burgerpanic_dev_mode') === 'true';
     this.toastTimeout = null;
+
+    // Initialize Stage Boss if defined for this level
+    if (this.levelData && this.levelData.boss && window.Boss) {
+      this.boss = new window.Boss(this.levelData.boss, this.levelData);
+    } else {
+      this.boss = null;
+    }
   }
 
   updatePepperUI() {
@@ -814,6 +821,24 @@ class BurgerPanicGame {
       }
     }
 
+    // 5.5. Update Stage Boss (if present)
+    if (this.boss && !this.boss.isDead) {
+      this.boss.update(this.player, this.levelData.ladders, this.levelData.floors);
+      if (
+        this.boss.state === 'normal' &&
+        !this.player.isDead &&
+        this.player.invulnerableTimer === 0
+      ) {
+        const dist = Math.hypot((this.boss.x + 12) - (this.player.x + 8), (this.boss.y + 12) - (this.player.y + 8));
+        if (dist < 14 && !this.player.isJumping) {
+          this.player.die();
+          this.state = 'DYING';
+          this.stateTimer = 90;
+          return;
+        }
+      }
+    }
+
     // 6. Bonus items spawn & pickup (Max 3 regular items + 1 extra life item per level)
     this.bonusSpawnTimer--;
     if (this.bonusSpawnTimer <= 0 && this.bonusItems.length === 0) {
@@ -1031,6 +1056,11 @@ class BurgerPanicGame {
       enemy.draw(this.ctx);
     }
 
+    // Draw Stage Boss
+    if (this.boss && !this.boss.isDead) {
+      this.boss.draw(this.ctx);
+    }
+
     // Draw Pepper Clouds
     for (const pc of this.pepperClouds) {
       pc.draw(this.ctx);
@@ -1124,6 +1154,11 @@ class BurgerPanicGame {
         this.ctx.textAlign = 'left';
         this.ctx.fillText(`x${this.player.lives}`, 194, 40);
       }
+    }
+
+    // Boss Health Bar in HUD (when on a Boss stage)
+    if (this.boss && !this.boss.isDead && this.boss.drawHUDHealthBar) {
+      this.boss.drawHUDHealthBar(this.ctx);
     }
   }
 

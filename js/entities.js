@@ -1251,6 +1251,19 @@ class PepperCloud {
         }
       }
     }
+
+    // Also check collision with active Boss if present
+    if (window.burgerPanicGame && window.burgerPanicGame.boss && !window.burgerPanicGame.boss.isDead) {
+      const boss = window.burgerPanicGame.boss;
+      const bx = boss.x + 12;
+      const by = boss.y + 12;
+      for (const p of this.particles) {
+        if (Math.hypot(p.x - bx, p.y - by) < 18) {
+          boss.onPepperHit();
+          break;
+        }
+      }
+    }
   }
 
   draw(ctx) {
@@ -1492,8 +1505,401 @@ class ScorePopup {
   }
 }
 
+// ========================================================
+// CUPHEAD-STYLE STAGE BOSS (5 ICONIC BOSS ENCOUNTERS)
+// ========================================================
+class Boss {
+  constructor(config, levelData) {
+    this.id = config.id || 'root_pack';
+    this.name = config.name || 'EL GRAN JEFE';
+    this.subtitle = config.subtitle || '¡A COCINAR!';
+    this.maxHealth = config.health || 300;
+    this.health = this.maxHealth;
+    this.x = config.x || 120;
+    this.y = config.y || 48;
+    this.startX = this.x;
+    this.startY = this.y;
+    this.width = 24;
+    this.height = 24;
+    this.speed = config.speed || 0.75;
+    this.baseSpeed = this.speed;
+    this.dir = 1;
+    this.levelData = levelData;
+
+    this.isEnraged = false;
+    this.isDead = false;
+    this.state = 'normal'; // 'normal', 'stunned', 'enraged', 'dying'
+    this.stunTimer = 0;
+    this.hitFlashTimer = 0;
+    this.pepperCooldown = 0;
+    this.attackTimer = 150;
+    this.projectiles = [];
+    this.animTimer = 0;
+  }
+
+  takeDamage(amount, source = 'attack') {
+    if (this.isDead) return;
+    this.health = Math.max(0, this.health - amount);
+    this.hitFlashTimer = 14;
+
+    if (window.burgerPanicGame) {
+      window.burgerPanicGame.addScore(source === 'burger' ? 1000 : 250, this.x + 8, this.y);
+      window.burgerPanicGame.spawnSquashSparks(this.x + 12, this.y + 12);
+      window.burgerPanicGame.addScreenShake(source === 'burger' ? 6.0 : 2.5);
+    }
+
+    if (this.health <= 0) {
+      this.defeat();
+      return;
+    }
+
+    if (this.health <= this.maxHealth * 0.5 && !this.isEnraged) {
+      this.enrage();
+    }
+  }
+
+  onPepperHit() {
+    if (this.isDead || this.pepperCooldown > 0) return;
+    this.pepperCooldown = 28;
+    this.stunTimer = 95;
+    this.state = 'stunned';
+    if (window.soundManager) window.soundManager.playStun();
+    this.takeDamage(35, 'pepper');
+  }
+
+  onBurgerCrush() {
+    if (this.isDead) return;
+    this.stunTimer = 110;
+    this.state = 'stunned';
+    if (window.soundManager) window.soundManager.playSquash();
+    this.takeDamage(100, 'burger');
+  }
+
+  enrage() {
+    this.isEnraged = true;
+    this.speed = this.baseSpeed * 1.45;
+    if (window.burgerPanicGame) {
+      window.burgerPanicGame.popups.push(
+        new window.ScorePopup(`¡${this.name} ENFURECIDO!`, this.x + 12, this.y - 10)
+      );
+      window.burgerPanicGame.addScreenShake(5.0);
+    }
+  }
+
+  defeat() {
+    this.isDead = true;
+    this.state = 'dying';
+    this.projectiles = [];
+    if (window.soundManager) window.soundManager.playSquash();
+    if (window.burgerPanicGame) {
+      window.burgerPanicGame.addScore(3000, this.x + 12, this.y);
+      window.burgerPanicGame.popups.push(
+        new window.ScorePopup(`¡JEFE DERROTADO! +3000`, this.x + 12, this.y - 14)
+      );
+      window.burgerPanicGame.spawnSquashSparks(this.x + 12, this.y + 12);
+      window.burgerPanicGame.addScreenShake(8.0);
+    }
+  }
+
+  update(player, ladders, floors) {
+    if (this.isDead) return;
+
+    this.animTimer++;
+    if (this.hitFlashTimer > 0) this.hitFlashTimer--;
+    if (this.pepperCooldown > 0) this.pepperCooldown--;
+
+    // Update active boss projectiles
+    const mapW = (this.levelData && this.levelData.width) ? this.levelData.width : 240;
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const p = this.projectiles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life--;
+
+      // Check player hit by boss projectile
+      if (player && !player.isDead && player.invulnerableTimer === 0) {
+        const dist = Math.hypot((p.x) - (player.x + 8), (p.y) - (player.y + 8));
+        if (dist < 10) {
+          player.die();
+          if (window.burgerPanicGame) {
+            window.burgerPanicGame.state = 'DYING';
+            window.burgerPanicGame.stateTimer = 90;
+          }
+          this.projectiles.splice(i, 1);
+          continue;
+        }
+      }
+
+      if (p.life <= 0 || p.x < 0 || p.x > mapW || p.y < 0 || p.y > 320) {
+        this.projectiles.splice(i, 1);
+      }
+    }
+
+    if (this.stunTimer > 0) {
+      this.stunTimer--;
+      if (this.stunTimer <= 0) {
+        this.state = 'normal';
+      }
+      return;
+    }
+
+    // Patrol along current platform & chase player horizontally
+    const curFloor = getNearestFloor(this.x, this.y, floors, 10);
+    const minX = curFloor ? curFloor.x1 + 4 : 20;
+    const maxX = curFloor ? Math.max(minX, curFloor.x2 - 24) : mapW - 28;
+
+    this.x += this.dir * this.speed;
+    if (this.x <= minX) {
+      this.x = minX;
+      this.dir = 1;
+    } else if (this.x >= maxX) {
+      this.x = maxX;
+      this.dir = -1;
+    }
+
+    if (curFloor) {
+      this.y = getFloorElevation(curFloor, this.x + 12);
+    }
+
+    // Boss signature Cuphead-style projectile attack
+    this.attackTimer--;
+    const fireInterval = this.isEnraged ? 115 : 175;
+    if (this.attackTimer <= 0 && player && !player.isDead) {
+      this.attackTimer = fireInterval;
+      this.fireAttack(player);
+    }
+  }
+
+  fireAttack(player) {
+    const bx = this.x + 12;
+    const by = this.y + 12;
+    const angle = Math.atan2((player.y + 8) - by, (player.x + 8) - bx);
+    const spd = this.isEnraged ? 1.85 : 1.35;
+
+    const colors = {
+      'root_pack': '#a3e635',
+      'goopy': '#38bdf8',
+      'baroness': '#f472b6',
+      'grim': '#fb923c',
+      'king_dice': '#c084fc'
+    };
+    const pColor = colors[this.id] || '#fbbf24';
+
+    this.projectiles.push({
+      x: bx,
+      y: by,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
+      color: pColor,
+      life: 190
+    });
+
+    if (this.isEnraged) {
+      // Spread shot in Phase 2 (Enrage)
+      for (const offset of [-0.32, 0.32]) {
+        this.projectiles.push({
+          x: bx,
+          y: by,
+          vx: Math.cos(angle + offset) * spd,
+          vy: Math.sin(angle + offset) * spd,
+          color: '#ff2a85',
+          life: 165
+        });
+      }
+    }
+  }
+
+  draw(ctx) {
+    if (this.isDead) return;
+
+    ctx.save();
+
+    // Draw Boss Projectiles (Cuphead Parry-Pink & glowing orbs)
+    for (const p of this.projectiles) {
+      const pulse = 3.5 + Math.sin(this.animTimer * 0.35) * 1.0;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(Math.round(p.x), Math.round(p.y), pulse + 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(Math.round(p.x), Math.round(p.y), pulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const bob = Math.sin(this.animTimer * (this.isEnraged ? 0.25 : 0.12)) * 2.5;
+    const bx = Math.round(this.x);
+    const by = Math.round(this.y - 6 + bob);
+
+    // Shadow on platform
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.beginPath();
+    ctx.ellipse(bx + 12, this.y + 15, 11, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Enrage fiery aura
+    if (this.isEnraged) {
+      const auraR = 16 + Math.sin(this.animTimer * 0.4) * 3;
+      ctx.fillStyle = 'rgba(255, 42, 133, 0.28)';
+      ctx.beginPath();
+      ctx.arc(bx + 12, by + 11, auraR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Flash white when taking damage
+    const isFlashing = this.hitFlashTimer > 0 && (this.hitFlashTimer % 2 === 0);
+
+    // Draw Cuphead-inspired Boss Character Pixel Art / Vector Silhouette
+    this.drawBossCharacter(ctx, bx, by, isFlashing);
+
+    // Stunned dizzy stars
+    if (this.stunTimer > 0) {
+      ctx.fillStyle = '#fde047';
+      for (let i = 0; i < 3; i++) {
+        const ang = (this.animTimer * 0.15) + (i * Math.PI * 2 / 3);
+        const sx = bx + 12 + Math.cos(ang) * 10;
+        const sy = by - 3 + Math.sin(ang) * 3;
+        ctx.fillRect(Math.round(sx) - 1, Math.round(sy) - 1, 3, 3);
+      }
+    }
+
+    ctx.restore();
+  }
+
+  drawBossCharacter(ctx, bx, by, isFlashing) {
+    ctx.save();
+    if (this.id === 'root_pack') {
+      // Sal Spudder / Root Pack (Giant angry cartoon Potato/Root Boss)
+      ctx.fillStyle = isFlashing ? '#ffffff' : (this.isEnraged ? '#d97706' : '#a16207');
+      ctx.beginPath();
+      ctx.ellipse(bx + 12, by + 11, 12, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#422006';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Leafy crown
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(bx + 8, by - 3, 8, 4);
+    } else if (this.id === 'goopy') {
+      // Goopy Le Grande (Giant Bouncing Blue Slime with Boxing Crown)
+      ctx.fillStyle = isFlashing ? '#ffffff' : (this.isEnraged ? '#2563eb' : '#0ea5e9');
+      ctx.beginPath();
+      ctx.arc(bx + 12, by + 11, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#082f49';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Red nose cap
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(bx + 10, by + 9, 4, 4);
+    } else if (this.id === 'baroness') {
+      // Baroness Von Bon Bon (Candy Castle Cupcake Queen)
+      ctx.fillStyle = isFlashing ? '#ffffff' : (this.isEnraged ? '#db2777' : '#f472b6');
+      ctx.beginPath();
+      ctx.arc(bx + 12, by + 11, 11, 0, Math.PI * 2);
+      ctx.fill();
+      // Golden Candy Crown
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(bx + 6, by - 2, 12, 4);
+      ctx.fillRect(bx + 7, by - 5, 2, 3);
+      ctx.fillRect(bx + 11, by - 6, 2, 4);
+      ctx.fillRect(bx + 15, by - 5, 2, 3);
+    } else if (this.id === 'grim') {
+      // Grim Matchstick (Fiery Emerald Dragon)
+      ctx.fillStyle = isFlashing ? '#ffffff' : (this.isEnraged ? '#dc2626' : '#16a34a');
+      ctx.beginPath();
+      ctx.ellipse(bx + 12, by + 11, 12, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Dragon Horns & Spikes
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(bx + 4, by - 2, 3, 5);
+      ctx.fillRect(bx + 17, by - 2, 3, 5);
+    } else {
+      // King Dice (Purple Casino Dapper Cube Boss)
+      ctx.fillStyle = isFlashing ? '#ffffff' : (this.isEnraged ? '#9333ea' : '#f8fafc');
+      ctx.fillRect(bx + 1, by, 22, 22);
+      ctx.strokeStyle = '#581c87';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(bx + 1, by, 22, 22);
+      // Purple bow tie
+      ctx.fillStyle = '#a855f7';
+      ctx.fillRect(bx + 8, by + 18, 8, 4);
+    }
+
+    // Cuphead 1930s Pie-Cut Cartoon Eyes & Grimace
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(bx + 5, by + 5, 5, 6);
+    ctx.fillRect(bx + 14, by + 5, 5, 6);
+    ctx.fillStyle = this.isEnraged ? '#ef4444' : '#000000';
+    const pupilOffset = this.dir > 0 ? 2 : 0;
+    ctx.fillRect(bx + 5 + pupilOffset, by + 7, 3, 3);
+    ctx.fillRect(bx + 14 + pupilOffset, by + 7, 3, 3);
+
+    // Angry brow
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(bx + 4, by + 4);
+    ctx.lineTo(bx + 10, by + 6);
+    ctx.moveTo(bx + 20, by + 4);
+    ctx.lineTo(bx + 14, by + 6);
+    ctx.stroke();
+
+    // Cartoon grin
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(bx + 6, by + 14, 12, 3);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(bx + 8, by + 14, 2, 2);
+    ctx.fillRect(bx + 11, by + 14, 2, 2);
+    ctx.fillRect(bx + 14, by + 14, 2, 2);
+
+    ctx.restore();
+  }
+
+  drawHUDHealthBar(ctx) {
+    if (this.isDead) return;
+
+    ctx.save();
+    const barW = 148;
+    const barH = 8;
+    const barX = 46;
+    const barY = 39;
+
+    // Dark arcade frame
+    ctx.fillStyle = 'rgba(10, 8, 20, 0.9)';
+    ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
+    ctx.strokeStyle = this.isEnraged ? '#ff2a85' : '#fcb400';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(barX - 1, barY - 1, barW + 2, barH + 2);
+
+    // Health fill
+    const ratio = Math.max(0, Math.min(1, this.health / this.maxHealth));
+    const fillW = Math.round(barW * ratio);
+    let fillColor = '#22c55e';
+    if (ratio <= 0.25) fillColor = '#ef4444';
+    else if (ratio <= 0.5) fillColor = '#f59e0b';
+
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(barX, barY, fillW, barH);
+
+    // Glossy top highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.fillRect(barX, barY, fillW, 2);
+
+    // Boss Name Tag centered on bar
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '5px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`👑 ${this.name} (${this.health}/${this.maxHealth})`, 120, barY + 6);
+
+    ctx.restore();
+  }
+}
+
 window.Player = Player;
 window.Enemy = Enemy;
+window.Boss = Boss;
 window.PepperCloud = PepperCloud;
 window.BonusItem = BonusItem;
 window.ArcadeParticle = ArcadeParticle;

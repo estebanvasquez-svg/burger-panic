@@ -149,10 +149,25 @@ class BurgerPiece {
       }
     }
 
+    // Also check if falling burger crushes an active Stage Boss!
+    if (window.burgerPanicGame && window.burgerPanicGame.boss && !window.burgerPanicGame.boss.isDead) {
+      const boss = window.burgerPanicGame.boss;
+      const bossCenter = boss.x + 12;
+      const bossTop = boss.y;
+      const bossBottom = boss.y + 24;
+      if (!this.hitBossOnThisFall && bossCenter >= this.x - 6 && bossCenter <= this.x + this.width + 6) {
+        if (this.y + 12 >= bossTop && this.y <= bossBottom) {
+          this.hitBossOnThisFall = true;
+          boss.onBurgerCrush();
+        }
+      }
+    }
+
     // Check landing on targetY
     if (this.y >= this.targetY) {
       this.y = this.targetY;
       this.falling = false;
+      this.hitBossOnThisFall = false;
       this.bounceTimer = 5; // Squash & stretch bounce impact
       window.soundManager.playLand();
 
