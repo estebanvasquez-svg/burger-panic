@@ -437,8 +437,7 @@ class LevelMap {
           { type: 'pickle', x: 124, y: 48 },
           { type: 'egg', x: 218, y: 48 }
         ],
-        enemySpeed: 0.92,
-        boss: { id: 'root_pack', name: 'THE ROOT PACK', x: 160, y: 48, health: 250, speed: 0.65 }
+        enemySpeed: 0.92
       },
 
       // ==========================================
@@ -598,8 +597,7 @@ class LevelMap {
           { type: 'pickle', x: 122, y: 48 },
           { type: 'egg', x: 214, y: 48 }
         ],
-        enemySpeed: 1.0,
-        boss: { id: 'goopy', name: 'GOOPY LE GRANDE', x: 160, y: 48, health: 300, speed: 0.72 }
+        enemySpeed: 1.0
       },
 
       // ==========================================
@@ -843,8 +841,7 @@ class LevelMap {
           { type: 'pickle', x: 124, y: 48 },
           { type: 'egg', x: 220, y: 48 }
         ],
-        enemySpeed: 1.12,
-        boss: { id: 'baroness', name: 'BARONESS VON BON BON', x: 160, y: 48, health: 350, speed: 0.78 }
+        enemySpeed: 1.12
       },
 
       // ==========================================
@@ -1007,8 +1004,7 @@ class LevelMap {
           { type: 'pickle', x: 136, y: 48 },
           { type: 'egg', x: 238, y: 48 }
         ],
-        enemySpeed: 1.18,
-        boss: { id: 'grim', name: 'GRIM MATCHSTICK', x: 170, y: 48, health: 400, speed: 0.85 }
+        enemySpeed: 1.18
       },
 
       // ==========================================
@@ -1250,8 +1246,7 @@ class LevelMap {
           { type: 'pickle', x: 160, y: 48 },
           { type: 'egg', x: 254, y: 48 }
         ],
-        enemySpeed: 1.25,
-        boss: { id: 'king_dice', name: 'KING DICE', x: 190, y: 48, health: 500, speed: 0.92 }
+        enemySpeed: 1.25
       }
     ];
   }
