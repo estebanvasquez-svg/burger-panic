@@ -8,6 +8,7 @@ class SpriteManager {
     this.initSprites();
     this.initAtlas();
     this.initEnemiesAtlas();
+    this.initItemsAtlas();
     this.loadBackground('title_cover', 'assets/title_cover.png');
     this.loadBackground('bg_stage_4', 'assets/bg_stage4_octopus.png');
     this.loadBackground('bg_stage_5', 'assets/bg_stage5_coffee.png');
@@ -76,6 +77,23 @@ class SpriteManager {
     this.enemiesAtlasLoaded = false;
     this.enemiesAtlasImg.onload = () => {
       this.enemiesAtlasLoaded = true;
+    };
+  }
+
+  initItemsAtlas() {
+    this.itemsAtlasImg = new Image();
+    this.itemsAtlasImg.src = 'assets/items_atlas.png';
+    this.itemsAtlasLoaded = false;
+    this.itemsAtlasImg.onload = () => {
+      this.itemsAtlasLoaded = true;
+      const atlasData = window.ITEMS_ATLAS_DATA;
+      if (atlasData) {
+        for (const [name, info] of Object.entries(atlasData)) {
+          const { canvas, ctx } = this.createCanvas(info.w, info.h);
+          ctx.drawImage(this.itemsAtlasImg, info.x, info.y, info.w, info.h, 0, 0, info.w, info.h);
+          this.sprites[name] = canvas;
+        }
+      }
     };
   }
 

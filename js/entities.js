@@ -1273,15 +1273,19 @@ class BonusItem {
     const now = Date.now();
     // Gentle arcade floating/bobbing oscillation (±2px)
     const bobY = Math.sin((now / 190) + this.sparklePhase) * 2;
-    const drawY = Math.round(this.y + bobY);
+    const targetSize = 20;
+    const drawX = Math.round(this.x - (targetSize - 16) / 2);
+    const drawY = Math.round(this.y + bobY - (targetSize - 16) / 2);
+    const centerX = this.x + 8;
+    const centerY = drawY + 10;
 
     ctx.save();
 
     // 1. Oval platform ambient shadow beneath hovering item
     ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
     ctx.beginPath();
-    const shadowWidth = Math.max(3, 6 - Math.abs(bobY) * 0.5);
-    ctx.ellipse(this.x + 8, this.y + 15, shadowWidth, 2, 0, 0, Math.PI * 2);
+    const shadowWidth = Math.max(3, 7 - Math.abs(bobY) * 0.6);
+    ctx.ellipse(centerX, this.y + 16, shadowWidth, 2, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // 2. Soft pulsating ambient glow halo tailored to item palette
@@ -1305,19 +1309,19 @@ class BonusItem {
       sparkleColor = '#ffd0e4';
     }
 
-    const pulse = 7 + Math.sin(now / 160) * 1.5;
+    const pulse = 9 + Math.sin(now / 160) * 1.5;
     ctx.fillStyle = haloColor;
     ctx.beginPath();
-    ctx.arc(this.x + 8, drawY + 8, pulse, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, pulse, 0, Math.PI * 2);
     ctx.fill();
 
     // 3. Render 16-Bit HD Arcade Sprite
-    ctx.drawImage(spr, this.x, drawY, 16, 16);
+    ctx.drawImage(spr, drawX, drawY, targetSize, targetSize);
 
     // 4. Sparkling 4-point twinkle stars orbiting the item
     const phase1 = (now / 140) + this.sparklePhase;
-    const sx1 = this.x + 8 + Math.cos(phase1) * 8;
-    const sy1 = drawY + 3 + Math.sin(phase1 * 1.6) * 4;
+    const sx1 = centerX + Math.cos(phase1) * 9;
+    const sy1 = centerY - 5 + Math.sin(phase1 * 1.6) * 4;
 
     ctx.fillStyle = sparkleColor;
     ctx.fillRect(Math.round(sx1) - 1, Math.round(sy1), 3, 1);
@@ -1326,8 +1330,8 @@ class BonusItem {
     // Secondary sparkle for extra life
     if (this.type === 'bonus_life') {
       const phase2 = phase1 + Math.PI;
-      const sx2 = this.x + 8 + Math.cos(phase2) * 7;
-      const sy2 = drawY + 6 + Math.sin(phase2 * 1.4) * 4;
+      const sx2 = centerX + Math.cos(phase2) * 8;
+      const sy2 = centerY - 2 + Math.sin(phase2 * 1.4) * 4;
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(Math.round(sx2) - 1, Math.round(sy2), 3, 1);
       ctx.fillRect(Math.round(sx2), Math.round(sy2) - 1, 1, 3);
