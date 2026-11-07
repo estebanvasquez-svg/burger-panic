@@ -760,8 +760,25 @@ class BurgerPanicGame {
     }
 
     // 5. Update Enemies
-    for (const enemy of this.enemies) {
+    for (let i = 0; i < this.enemies.length; i++) {
+      const enemy = this.enemies[i];
       enemy.update(this.player, this.levelData.ladders, this.levelData.floors);
+
+      // Soft anti-stacking separation (keeps enemies distinct and prevents clustering into a single sprite)
+      for (let j = i + 1; j < this.enemies.length; j++) {
+        const other = this.enemies[j];
+        if (
+          enemy.state === 'normal' && other.state === 'normal' &&
+          !enemy.isClimbing && !other.isClimbing &&
+          !enemy.isFalling && !other.isFalling
+        ) {
+          if (Math.abs(enemy.y - other.y) <= 4 && Math.abs(enemy.x - other.x) < 8) {
+            const push = (enemy.x <= other.x) ? -0.35 : 0.35;
+            enemy.x += push;
+            other.x -= push;
+          }
+        }
+      }
 
       // Check collision between enemy and player
       if (

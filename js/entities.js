@@ -692,6 +692,18 @@ class Enemy {
     this.animFrame = 0;
     this.animTimer = 0;
     this.changeDirCooldown = 0;
+
+    // Dead-end and anti-oscillation tracking
+    this.bouncedEdge = null;
+    this.bounceX = x;
+    this.pacingCount = 0;
+
+    // Differentiate speeds subtly so enemies don't cluster or walk in exact lockstep
+    let speedMod = 1.0;
+    if (type === 'pickle') speedMod = 1.08;
+    else if (type === 'egg') speedMod = 0.94;
+    this.speed = speed * speedMod;
+    this.baseSpeed = this.speed;
   }
 
   stun() {
@@ -753,6 +765,9 @@ class Enemy {
     this.landCooldown = 25;
     this.dir = 1;
     this.changeDirCooldown = 15;
+    this.bouncedEdge = null;
+    this.bounceX = this.x;
+    this.pacingCount = 0;
   }
 
   update(player, ladders, floors) {
@@ -879,6 +894,11 @@ class Enemy {
       return;
     }
 
+    // Clear edge bounce commitment once enemy has moved a safe distance (~28px) away from edge
+    if (this.bouncedEdge && Math.abs(this.x - this.bounceX) >= 28) {
+      this.bouncedEdge = null;
+    }
+
     // Walking / climbing ladder checks: Use tolerance = 3 to prevent horizontal snapping
     const currentLadder = getAvailableLadder(this.x, this.y, ladders, 3);
     const currentFloor = getNearestFloor(this.x, this.y, floors);
@@ -903,13 +923,32 @@ class Enemy {
           }
         }
 
+        // Dead-End Escape: If trapped/pacing this platform without finding player,
+        // take ANY open ladder direction to navigate out of the dead-end!
+        if (!wantClimb && (this.pacingCount || 0) >= 2) {
+          const canAltUp = currentLadder.y1 < this.y - 2;
+          const canAltDown = currentLadder.y2 > this.y + 2;
+          if (canAltUp || canAltDown) {
+            wantClimb = true;
+          }
+        }
+
         if (wantClimb) {
           this.isClimbing = true;
           this.x = currentLadder.x;
-          this.climbDir = canGoUp ? -1 : 1;
+          // Prioritize player direction if valid, otherwise take whichever ladder path is open
+          if (canGoUp) this.climbDir = -1;
+          else if (canGoDown) this.climbDir = 1;
+          else if (currentLadder.y1 < this.y - 2) this.climbDir = -1;
+          else this.climbDir = 1;
+
           this.changeDirCooldown = 25;
+          this.bouncedEdge = null;
+          this.pacingCount = 0;
         } else {
-          this.dir = dx >= 0 ? 1 : -1;
+          // IMPORTANT: Do NOT force this.dir = dx >= 0 ? 1 : -1 !
+          // The enemy must continue in its current heading to traverse the platform
+          // and reach other ladders or connecting ramps!
           this.changeDirCooldown = 20;
         }
       }
@@ -925,11 +964,14 @@ class Enemy {
           this.y = getFloorElevation(currentFloor, this.x + 8);
           this.dir = dx >= 0 ? 1 : -1;
           this.changeDirCooldown = 25;
+          this.bouncedEdge = null;
+          this.pacingCount = 0;
         }
       }
       // Case C: Walking on floor with no ladder: steer towards player
       else if (!this.isClimbing && currentFloor) {
-        if (Math.abs(dx) > 10 && Math.random() < 0.04) {
+        // Only steer towards player if NOT currently moving away from a recently bounced dead-end edge!
+        if (!this.bouncedEdge && Math.abs(dx) > 12 && Math.random() < 0.04) {
           this.dir = dx >= 0 ? 1 : -1;
           this.changeDirCooldown = 20;
         }
@@ -951,9 +993,18 @@ class Enemy {
         this.y = nextY;
       } else {
         this.isClimbing = false;
-        this.y = (this.climbDir < 0) ? currentLadder.y1 : currentLadder.y2;
+        const targetY = (this.climbDir < 0) ? currentLadder.y1 : currentLadder.y2;
+        const destFloor = floors.find(f => Math.abs(getFloorElevation(f, this.x + 8) - targetY) <= 8 &&
+          (this.x + 14 >= f.x1 && this.x + 2 <= f.x2));
+        if (destFloor) {
+          this.y = getFloorElevation(destFloor, this.x + 8);
+        } else {
+          this.y = targetY;
+        }
         this.dir = dx >= 0 ? 1 : -1;
         this.changeDirCooldown = 20;
+        this.bouncedEdge = null;
+        this.pacingCount = 0;
       }
     } else if (currentFloor) {
       if (!this.dir) this.dir = dx >= 0 ? 1 : -1;
@@ -967,25 +1018,48 @@ class Enemy {
 
       const nextX = this.x + this.dir * this.speed;
 
-      // Platform bounds check (smooth directional reversal, zero teleportation)
+      // Platform bounds check
       const minX = currentFloor.x1;
       const maxX = Math.max(minX, currentFloor.x2 - this.width);
 
-      if (this.dir > 0) {
-        if (nextX <= maxX) {
-          this.x = nextX;
-        } else {
-          this.x = maxX;
-          this.dir = -1;
-          this.changeDirCooldown = 15;
-        }
+      const canWalkOnCurrent = (this.dir > 0) ? (nextX <= maxX) : (nextX >= minX);
+
+      if (canWalkOnCurrent) {
+        this.x = nextX;
       } else {
-        if (nextX >= minX) {
+        // nextX is beyond currentFloor boundary.
+        // Check if an adjacent connecting floor or diagonal ramp supports this movement!
+        const nextFootX = nextX + 8;
+        const connectingFloor = floors.find(f => {
+          if (f === currentFloor) return false;
+          if (nextX + 14 < f.x1 - 2 || nextX + 2 > f.x2 + 2) return false;
+          const checkX = Math.max(f.x1, Math.min(f.x2, nextFootX));
+          const elev = getFloorElevation(f, checkX);
+          return Math.abs(elev - this.y) <= 8;
+        });
+
+        if (connectingFloor) {
+          // Seamless transition onto connecting platform or diagonal ramp!
           this.x = nextX;
+          const checkX = Math.max(connectingFloor.x1, Math.min(connectingFloor.x2, nextX + 8));
+          this.y = getFloorElevation(connectingFloor, checkX);
+          this.bouncedEdge = null;
+          this.pacingCount = 0;
         } else {
-          this.x = minX;
-          this.dir = 1;
-          this.changeDirCooldown = 15;
+          // True platform edge / dead end: reverse direction smoothly!
+          if (this.dir > 0) {
+            this.x = maxX;
+            this.dir = -1;
+            this.bouncedEdge = 'right';
+            this.bounceX = this.x;
+          } else {
+            this.x = minX;
+            this.dir = 1;
+            this.bouncedEdge = 'left';
+            this.bounceX = this.x;
+          }
+          this.pacingCount = (this.pacingCount || 0) + 1;
+          this.changeDirCooldown = 25;
         }
       }
     } else {
