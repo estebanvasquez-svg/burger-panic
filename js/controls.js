@@ -45,7 +45,7 @@ class ControlsManager {
       keys[e.code] = true;
       this.updateDirectionFromKeys(keys);
 
-      if (e.code === 'KeyP' || e.code === 'Escape') {
+      if (e.code === 'Escape' || e.code === 'KeyO' || e.code === 'Pause') {
         if (this.onPausePress) this.onPausePress();
       }
 
@@ -53,7 +53,8 @@ class ControlsManager {
         if (this.onJumpPress) this.onJumpPress();
       }
 
-      if (e.code === 'Space' || e.code === 'KeyZ' || e.code === 'KeyJ') {
+      // Pepper / Pimienta keys: P (Pimienta/Pepper), Spacebar, Z, J
+      if (e.code === 'KeyP' || e.code === 'Space' || e.code === 'KeyZ' || e.code === 'KeyJ') {
         if (!this.input.pepper) {
           this.input.pepper = true;
           if (this.onPepperPress) this.onPepperPress();
@@ -63,7 +64,7 @@ class ControlsManager {
 
     window.addEventListener('keyup', (e) => {
       keys[e.code] = false;
-      if (e.code === 'Space' || e.code === 'KeyZ' || e.code === 'KeyJ') {
+      if (e.code === 'KeyP' || e.code === 'Space' || e.code === 'KeyZ' || e.code === 'KeyJ') {
         this.input.pepper = false;
       }
       this.updateDirectionFromKeys(keys);

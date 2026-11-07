@@ -1883,10 +1883,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (window.burgerPanicGame.devMode) {
-      if (e.key === 'n' || e.key === 'N') {
+      if (e.key === ']' || e.key === 'PageDown' || e.key === '+' || e.key === 'n' || e.key === 'N') {
         const nextStage = ((window.burgerPanicGame.stageIndex || 0) + 1) + 1;
         window.burgerPanicGame.jumpToStage(nextStage);
-      } else if (e.key === 'p' || e.key === 'P') {
+      } else if (e.key === '[' || e.key === 'PageUp' || e.key === '-') {
         const prevStage = ((window.burgerPanicGame.stageIndex || 0) + 1) - 1;
         window.burgerPanicGame.jumpToStage(prevStage);
       } else if (e.key >= '1' && e.key <= '9') {
