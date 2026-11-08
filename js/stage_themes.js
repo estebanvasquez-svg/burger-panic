@@ -10,7 +10,7 @@ class StageThemesManager {
   }
 
   getTheme(stageNum) {
-    const s = Math.max(1, Math.min(stageNum || 1, 15));
+    const s = Math.max(1, Math.min(stageNum || 1, 16));
     switch (s) {
       case 1:
         return {
@@ -73,6 +73,35 @@ class StageThemesManager {
       case 3:
         return {
           id: 3,
+          name: 'EL COLOSO KILOBURNER',
+          wallColor: '#0b0c10',
+          wallTileColor: 'rgba(239, 68, 68, 0.05)',
+          platform: {
+            topColor: '#e0e6ed',
+            highlightColor: '#38bdf8',
+            bodyColor: '#1e293b',
+            trimColor: '#ef4444',
+            subColor: '#0284c7',
+            style: 'cyber_furnace'
+          },
+          ladder: {
+            railColor: '#38bdf8',
+            rungColor: '#0284c7',
+            highlightColor: '#ffffff',
+            shadowColor: '#0c4a6e',
+            style: 'industrial_scaffold'
+          },
+          plate: {
+            rimColor: '#ef4444',
+            bodyColor: '#0f172a',
+            shadowColor: '#38bdf8',
+            style: 'blast_dock'
+          }
+        };
+
+      case 4:
+        return {
+          id: 4,
           name: 'EL GRAN BISTRÓ GOURMET',
           wallColor: '#0d0d12',
           wallTileColor: 'rgba(212, 175, 55, 0.04)',
@@ -99,9 +128,9 @@ class StageThemesManager {
           }
         };
 
-      case 4:
+      case 5:
         return {
-          id: 4,
+          id: 5,
           name: 'LA MARISQUERÍA DEL PULPO',
           wallColor: '#050f1a',
           wallTileColor: 'rgba(52, 152, 219, 0.04)',
@@ -128,9 +157,9 @@ class StageThemesManager {
           }
         };
 
-      case 5:
+      case 6:
         return {
-          id: 5,
+          id: 6,
           name: 'LA ESTACIÓN DE CAFÉ & BARISTA',
           wallColor: '#100b08',
           wallTileColor: 'rgba(184, 115, 51, 0.04)',
@@ -157,9 +186,9 @@ class StageThemesManager {
           }
         };
 
-      case 6:
+      case 7:
         return {
-          id: 6,
+          id: 7,
           name: 'LA PASTELERÍA FELINA',
           wallColor: '#14080f',
           wallTileColor: 'rgba(244, 143, 177, 0.05)',
@@ -186,9 +215,9 @@ class StageThemesManager {
           }
         };
 
-      case 7:
+      case 8:
         return {
-          id: 7,
+          id: 8,
           name: 'EL ASADOR DEL CASTILLO',
           wallColor: '#0f0502',
           wallTileColor: 'rgba(255, 87, 34, 0.05)',
@@ -215,9 +244,9 @@ class StageThemesManager {
           }
         };
 
-      case 8:
+      case 9:
         return {
-          id: 8,
+          id: 9,
           name: 'EL HORNO DEL DRAGÓN',
           wallColor: '#140500',
           wallTileColor: 'rgba(255, 171, 0, 0.05)',
@@ -244,9 +273,9 @@ class StageThemesManager {
           }
         };
 
-      case 9:
+      case 10:
         return {
-          id: 9,
+          id: 10,
           name: 'LA COCINA DE ALTA MAR',
           wallColor: '#021214',
           wallTileColor: 'rgba(0, 150, 136, 0.05)',
@@ -273,9 +302,9 @@ class StageThemesManager {
           }
         };
 
-      case 10:
+      case 11:
         return {
-          id: 10,
+          id: 11,
           name: 'LA HELADERÍA BAJO CERO',
           wallColor: '#030b14',
           wallTileColor: 'rgba(128, 222, 234, 0.06)',
@@ -302,9 +331,9 @@ class StageThemesManager {
           }
         };
 
-      case 11:
+      case 12:
         return {
-          id: 11,
+          id: 12,
           name: 'LA PANADERÍA CRUJIENTE',
           wallColor: '#120b04',
           wallTileColor: 'rgba(245, 205, 121, 0.05)',
@@ -331,9 +360,9 @@ class StageThemesManager {
           }
         };
 
-      case 12:
+      case 13:
         return {
-          id: 12,
+          id: 13,
           name: 'EL WOK DEL PANDA GOURMET',
           wallColor: '#051208',
           wallTileColor: 'rgba(76, 175, 80, 0.05)',
@@ -360,9 +389,9 @@ class StageThemesManager {
           }
         };
 
-      case 13:
+      case 14:
         return {
-          id: 13,
+          id: 14,
           name: 'EL COMEDOR CÓSMICO',
           wallColor: '#0c0217',
           wallTileColor: 'rgba(124, 77, 255, 0.06)',
@@ -389,9 +418,9 @@ class StageThemesManager {
           }
         };
 
-      case 14:
+      case 15:
         return {
-          id: 14,
+          id: 15,
           name: 'EL MESÓN JURÁSICO DE CARNES',
           wallColor: '#120b08',
           wallTileColor: 'rgba(141, 110, 99, 0.05)',
@@ -418,10 +447,10 @@ class StageThemesManager {
           }
         };
 
-      case 15:
+      case 16:
       default:
         return {
-          id: 15,
+          id: 16,
           name: 'EL BANQUETE IMPERIAL DEL CHEF',
           wallColor: '#12020a',
           wallTileColor: 'rgba(255, 215, 0, 0.06)',

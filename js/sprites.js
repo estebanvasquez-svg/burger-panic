@@ -9,6 +9,7 @@ class SpriteManager {
     this.initAtlas();
     this.initEnemiesAtlas();
     this.initItemsAtlas();
+    this.initKiloburnerAtlas();
     this.loadBackground('title_cover', 'assets/title_cover.png');
     this.loadBackground('bg_stage_4', 'assets/bg_stage4_octopus.png');
     this.loadBackground('bg_stage_5', 'assets/bg_stage5_coffee.png');
@@ -95,6 +96,44 @@ class SpriteManager {
         }
       }
     };
+  }
+
+  initKiloburnerAtlas() {
+    this.kiloburnerAtlasImg = new Image();
+    this.kiloburnerAtlasImg.src = 'assets/kiloburner_atlas.png';
+    this.kiloburnerAtlasLoaded = false;
+    this.kiloburnerAtlasImg.onload = () => {
+      this.kiloburnerAtlasLoaded = true;
+    };
+  }
+
+  drawKiloburnerAtlas(ctx, name, dx, dy, targetW = null, targetH = null, flip = false) {
+    const atlasData = window.KILOBURNER_ATLAS_DATA;
+    if (!this.kiloburnerAtlasLoaded || !atlasData) return false;
+    const info = atlasData[name];
+    if (!info) return false;
+
+    const w = targetW !== null ? targetW : info.w;
+    const h = targetH !== null ? targetH : info.h;
+
+    ctx.save();
+    if (flip) {
+      ctx.translate(dx + w, dy);
+      ctx.scale(-1, 1);
+      ctx.drawImage(this.kiloburnerAtlasImg, info.x, info.y, info.w, info.h, 0, 0, w, h);
+    } else {
+      ctx.drawImage(this.kiloburnerAtlasImg, info.x, info.y, info.w, info.h, dx, dy, w, h);
+    }
+    ctx.restore();
+    return true;
+  }
+
+  getKiloburnerAtlasInfo(name) {
+    const atlasData = window.KILOBURNER_ATLAS_DATA;
+    if (atlasData) {
+      return atlasData[name] || null;
+    }
+    return null;
   }
 
   drawEnemyAtlas(ctx, name, dx, dy, flip = false) {

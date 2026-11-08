@@ -100,6 +100,7 @@ class Player {
     this.isTossingPepper = false;
     this.pepperTimer = 0;
     this.landSquashTimer = 0;
+    this.cryoCooldown = 0;
   }
 
   resetPosition() {
@@ -116,6 +117,7 @@ class Player {
     this.deathTimer = 0;
     this.isTossingPepper = false;
     this.landSquashTimer = 0;
+    this.cryoCooldown = 0;
     this.invulnerableTimer = 120; // ~2 seconds of grace flicker
   }
 
@@ -226,7 +228,38 @@ class Player {
     return true;
   }
 
+  fireCryoExtinguisher(cryoProjectiles, currentInput = null) {
+    if (this.isDead || this.cryoCooldown > 0) return false;
+
+    this.isTossingPepper = true;
+    this.pepperTimer = 10;
+    this.cryoCooldown = 12; // Rapid-fire cooldown (arcade rhythm)
+
+    let dir = (this.dir === -1) ? -1 : 1;
+    if (currentInput && currentInput.x !== 0) {
+      dir = (currentInput.x < 0) ? -1 : 1;
+    }
+    this.dir = dir;
+    this.facingDir = (dir === -1) ? 'left' : 'right';
+
+    const spawnX = (dir === -1) ? (this.x - 2) : (this.x + 18);
+    const spawnY = this.y + 7;
+
+    if (window.CryoProjectile) {
+      cryoProjectiles.push(new window.CryoProjectile(spawnX, spawnY, dir));
+    }
+
+    if (window.soundManager && window.soundManager.playPepper) {
+      window.soundManager.playPepper();
+    }
+    return true;
+  }
+
   update(input, ladders, floors) {
+    if (this.cryoCooldown > 0) {
+      this.cryoCooldown--;
+    }
+
     if (this.isDead) {
       this.deathTimer++;
       return;

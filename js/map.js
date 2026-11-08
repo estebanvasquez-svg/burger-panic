@@ -164,11 +164,98 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 3: Wide Kitchen & Broken Platforms
-      // Asymmetric layout with gaps, jumps & wide exploration
+      // STAGE 3: 💥 BOSS STAGE - EL COLOSO KILOBURNER
+      // Boss battle against the cybernetic giant burger
       // ==========================================
       {
         stageNumber: 3,
+        name: 'EL COLOSO KILOBURNER',
+        isBossStage: true,
+        boss: {
+          type: 'kiloburner',
+          health: 300,
+          name: 'KILOBURNER'
+        },
+        exclusivePower: 'CRYO_EXTINGUISHER',
+        width: 300,
+        bonusSpots: [
+          { x: 36, y: 96 },
+          { x: 140, y: 144 },
+          { x: 250, y: 96 },
+          { x: 140, y: 240 }
+        ],
+        floors: [
+          // Y = 48 (High lookout perches for sniping)
+          { y: 48, x1: 14, x2: 90 },
+          { y: 48, x1: 120, x2: 180 },
+          { y: 48, x1: 210, x2: 286 },
+
+          // Y = 96 (Upper combat girders)
+          { y: 96, x1: 14, x2: 104 },
+          { y: 96, x1: 130, x2: 170 },
+          { y: 96, x1: 196, x2: 286 },
+
+          // Y = 144 (Mid-level walkways)
+          { y: 144, x1: 14, x2: 84 },
+          { y: 144, x1: 110, x2: 190 },
+          { y: 144, x1: 216, x2: 286 },
+
+          // Y = 192 (Lower mid platforms)
+          { y: 192, x1: 14, x2: 100 },
+          { y: 192, x1: 126, x2: 174 },
+          { y: 192, x1: 200, x2: 286 },
+
+          // Y = 240 (Defense rampart)
+          { y: 240, x1: 14, x2: 114 },
+          { y: 240, x1: 140, x2: 160 },
+          { y: 240, x1: 186, x2: 286 },
+
+          // Y = 288 (Arena Plate Floor)
+          { y: 288, x1: 14, x2: 286 }
+        ],
+        ladders: [
+          // Left and right vertical escape ladders
+          { x: 18, y1: 48, y2: 288 },
+          { x: 276, y1: 48, y2: 288 },
+
+          // Strategic mid ladders
+          { x: 64, y1: 48, y2: 192 },
+          { x: 80, y1: 144, y2: 288 },
+          { x: 146, y1: 48, y2: 144 },
+          { x: 150, y1: 144, y2: 288 },
+          { x: 220, y1: 48, y2: 192 },
+          { x: 236, y1: 144, y2: 288 }
+        ],
+        burgers: [
+          // Stack 0 (Left Upper Bunker Burger)
+          { col: 0, x: 42, y: 48, type: 'bun_top' },
+          { col: 0, x: 42, y: 96, type: 'cheese' },
+          { col: 0, x: 42, y: 144, type: 'patty' },
+          { col: 0, x: 42, y: 192, type: 'bun_bottom' },
+
+          // Stack 1 (Right Boss Crush Burger - perfect trap for Kiloburner!)
+          { col: 1, x: 234, y: 48, type: 'bun_top' },
+          { col: 1, x: 234, y: 96, type: 'tomato' },
+          { col: 1, x: 234, y: 144, type: 'patty' },
+          { col: 1, x: 234, y: 192, type: 'bun_bottom' }
+        ],
+        plates: [
+          { x: 40, y: 288 },
+          { x: 232, y: 288 }
+        ],
+        playerStart: { x: 36, y: 288 },
+        enemies: [
+          { type: 'hotdog', x: 240, y: 48 }
+        ],
+        enemySpeed: 0.70
+      },
+
+      // ==========================================
+      // STAGE 4: Wide Kitchen & Broken Platforms
+      // Asymmetric layout with gaps, jumps & wide exploration
+      // ==========================================
+      {
+        stageNumber: 4,
         name: 'EL GRAN BISTRÓ GOURMET',
         bonusSpots: [
           { x: 44, y: 96 },
@@ -277,10 +364,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 4: LA MARISQUERÍA DEL PULPO (Wide Screen: 360px)
+      // STAGE 5: LA MARISQUERÍA DEL PULPO (Wide Screen: 360px)
       // ==========================================
       {
-        stageNumber: 4,
+        stageNumber: 5,
         name: 'LA MARISQUERÍA DEL PULPO',
         width: 360,
         bonusSpots: [
@@ -358,10 +445,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 5: LA ESTACIÓN DE CAFÉ & BARISTA (Wide Screen: 370px)
+      // STAGE 6: LA ESTACIÓN DE CAFÉ & BARISTA (Wide Screen: 370px)
       // ==========================================
       {
-        stageNumber: 5,
+        stageNumber: 6,
         name: 'LA ESTACIÓN DE CAFÉ & BARISTA',
         width: 370,
         bonusSpots: [
@@ -441,10 +528,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 6: LA PASTELERÍA FELINA (Wide Screen: 380px)
+      // STAGE 7: LA PASTELERÍA FELINA (Wide Screen: 380px)
       // ==========================================
       {
-        stageNumber: 6,
+        stageNumber: 7,
         name: 'LA PASTELERÍA FELINA',
         width: 380,
         bonusSpots: [
@@ -523,10 +610,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 7: EL ASADOR DEL CASTILLO (Wide Screen: 360px)
+      // STAGE 8: EL ASADOR DEL CASTILLO (Wide Screen: 360px)
       // ==========================================
       {
-        stageNumber: 7,
+        stageNumber: 8,
         name: 'EL ASADOR DEL CASTILLO',
         width: 360,
         bonusSpots: [
@@ -601,10 +688,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 8: LA FORJA DEL DRAGÓN (Wide Screen: 380px)
+      // STAGE 9: LA FORJA DEL DRAGÓN (Wide Screen: 380px)
       // ==========================================
       {
-        stageNumber: 8,
+        stageNumber: 9,
         name: 'LA FORJA DEL DRAGÓN',
         width: 380,
         bonusSpots: [
@@ -682,10 +769,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 9: LA COCINA DE ALTA MAR (Wide Screen: 390px)
+      // STAGE 10: LA COCINA DE ALTA MAR (Wide Screen: 390px)
       // ==========================================
       {
-        stageNumber: 9,
+        stageNumber: 10,
         name: 'LA COCINA DE ALTA MAR',
         width: 390,
         bonusSpots: [
@@ -764,10 +851,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 10: LA HELADERÍA BAJO CERO (Wide Screen: 370px)
+      // STAGE 11: LA HELADERÍA BAJO CERO (Wide Screen: 370px)
       // ==========================================
       {
-        stageNumber: 10,
+        stageNumber: 11,
         name: 'LA HELADERÍA BAJO CERO',
         width: 370,
         bonusSpots: [
@@ -845,10 +932,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 11: LA PANADERÍA CRUJIENTE (Wide Screen: 380px)
+      // STAGE 12: LA PANADERÍA CRUJIENTE (Wide Screen: 380px)
       // ==========================================
       {
-        stageNumber: 11,
+        stageNumber: 12,
         name: 'LA PANADERÍA CRUJIENTE',
         width: 380,
         bonusSpots: [
@@ -927,10 +1014,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 12: EL WOK DEL PANDA DORADO (Wide Screen: 390px)
+      // STAGE 13: EL WOK DEL PANDA DORADO (Wide Screen: 390px)
       // ==========================================
       {
-        stageNumber: 12,
+        stageNumber: 13,
         name: 'EL WOK DEL PANDA DORADO',
         width: 390,
         bonusSpots: [
@@ -1008,10 +1095,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 13: COSMIC DINER 3000 (Wide Screen: 400px)
+      // STAGE 14: COSMIC DINER 3000 (Wide Screen: 400px)
       // ==========================================
       {
-        stageNumber: 13,
+        stageNumber: 14,
         name: 'COSMIC DINER 3000',
         width: 400,
         bonusSpots: [
@@ -1088,10 +1175,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 14: COSTILLAS JURÁSICAS & VOLCÁN (Wide Screen: 410px)
+      // STAGE 15: COSTILLAS JURÁSICAS & VOLCÁN (Wide Screen: 410px)
       // ==========================================
       {
-        stageNumber: 14,
+        stageNumber: 15,
         name: 'COSTILLAS JURÁSICAS & VOLCÁN',
         width: 410,
         bonusSpots: [
@@ -1167,10 +1254,10 @@ class LevelMap {
       },
 
       // ==========================================
-      // STAGE 15: EL BANQUETE IMPERIAL (Wide Screen: 420px)
+      // STAGE 16: EL BANQUETE IMPERIAL (Wide Screen: 420px)
       // ==========================================
       {
-        stageNumber: 15,
+        stageNumber: 16,
         name: 'EL BANQUETE IMPERIAL',
         width: 420,
         bonusSpots: [

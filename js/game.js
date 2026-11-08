@@ -43,21 +43,22 @@ class BurgerPanicGame {
     this.mapScrollY = 600;
     this.mapTargetScrollY = 600;
     this.mapNodes = [
-      { level: 1,  x: 75,  y: 840, name: 'LA COCINA CLÁSICA' },
-      { level: 2,  x: 130, y: 785, name: 'LA DESPENSA DE ESPECIAS' },
-      { level: 3,  x: 175, y: 730, name: 'EL GRAN BISTRÓ GOURMET' },
-      { level: 4,  x: 155, y: 675, name: 'LA MARISQUERÍA DEL PULPO' },
-      { level: 5,  x: 95,  y: 620, name: 'LA ESTACIÓN DE CAFÉ & BARISTA' },
-      { level: 6,  x: 65,  y: 565, name: 'LA PASTELERÍA FELINA' },
-      { level: 7,  x: 85,  y: 510, name: 'EL ASADOR DEL CASTILLO' },
-      { level: 8,  x: 145, y: 455, name: 'EL HORNO DEL DRAGÓN' },
-      { level: 9,  x: 175, y: 400, name: 'LA COCINA DE ALTA MAR' },
-      { level: 10, x: 140, y: 345, name: 'LA HELADERÍA BAJO CERO' },
-      { level: 11, x: 85,  y: 290, name: 'LA PANADERÍA CRUJIENTE' },
-      { level: 12, x: 65,  y: 235, name: 'EL WOK DEL PANDA GOURMET' },
-      { level: 13, x: 115, y: 180, name: 'EL COMEDOR CÓSMICO' },
-      { level: 14, x: 170, y: 125, name: 'EL MESÓN JURÁSICO DE CARNES' },
-      { level: 15, x: 120, y: 70,  name: 'EL BANQUETE IMPERIAL DEL CHEF' }
+      { level: 1,  x: 75,  y: 880, name: 'LA COCINA CLÁSICA' },
+      { level: 2,  x: 130, y: 825, name: 'LA DESPENSA DE ESPECIAS' },
+      { level: 3,  x: 175, y: 770, name: 'EL COLOSO KILOBURNER', isBoss: true },
+      { level: 4,  x: 145, y: 715, name: 'EL GRAN BISTRÓ GOURMET' },
+      { level: 5,  x: 90,  y: 660, name: 'LA MARISQUERÍA DEL PULPO' },
+      { level: 6,  x: 65,  y: 605, name: 'LA ESTACIÓN DE CAFÉ & BARISTA' },
+      { level: 7,  x: 85,  y: 550, name: 'LA PASTELERÍA FELINA' },
+      { level: 8,  x: 145, y: 495, name: 'EL ASADOR DEL CASTILLO' },
+      { level: 9,  x: 175, y: 440, name: 'EL HORNO DEL DRAGÓN' },
+      { level: 10, x: 140, y: 385, name: 'LA COCINA DE ALTA MAR' },
+      { level: 11, x: 85,  y: 330, name: 'LA HELADERÍA BAJO CERO' },
+      { level: 12, x: 65,  y: 275, name: 'LA PANADERÍA CRUJIENTE' },
+      { level: 13, x: 115, y: 220, name: 'EL WOK DEL PANDA GOURMET' },
+      { level: 14, x: 170, y: 165, name: 'EL COMEDOR CÓSMICO' },
+      { level: 15, x: 135, y: 110, name: 'EL MESÓN JURÁSICO DE CARNES' },
+      { level: 16, x: 95,  y: 55,  name: 'EL BANQUETE IMPERIAL DEL CHEF' }
     ];
 
     this.controls = new window.ControlsManager();
@@ -98,8 +99,12 @@ class BurgerPanicGame {
         this.openMap(lostStage);
       } else if (this.state === 'PLAYING') {
         if (this.player) {
-          const tossed = this.player.throwPepper(this.pepperClouds, this.controls.input);
-          if (tossed) this.updatePepperUI();
+          if (this.kiloburnerBoss) {
+            this.player.fireCryoExtinguisher(this.cryoProjectiles, this.controls.input);
+          } else {
+            const tossed = this.player.throwPepper(this.pepperClouds, this.controls.input);
+            if (tossed) this.updatePepperUI();
+          }
         }
       }
     };
@@ -177,7 +182,7 @@ class BurgerPanicGame {
     if (stageNumber > unlocked) {
       return;
     }
-    const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 15;
+    const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 16;
     if (stageNumber > totalStages) {
       return;
     }
@@ -199,7 +204,7 @@ class BurgerPanicGame {
   }
 
   advanceNextStage() {
-    const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 15;
+    const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 16;
     if (this.stageIndex + 1 < totalStages) {
       this.stageIndex++;
       this.saveCurrentStage(this.stageIndex + 1);
@@ -255,7 +260,7 @@ class BurgerPanicGame {
 
   saveCurrentStage(stageNumber) {
     try {
-      const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 15;
+      const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 16;
       const validStage = Math.max(1, Math.min(stageNumber, totalStages));
       localStorage.setItem('burgerpanic_current_stage', validStage.toString());
       localStorage.setItem('burgerpanic_has_played', 'true');
@@ -268,7 +273,7 @@ class BurgerPanicGame {
     try {
       const saved = parseInt(localStorage.getItem('burgerpanic_current_stage'), 10);
       const unlocked = this.getUnlockedLevel();
-      const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 15;
+      const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 16;
       if (!isNaN(saved) && saved >= 1) {
         return Math.max(1, Math.min(saved, Math.min(unlocked, totalStages)));
       }
@@ -290,7 +295,7 @@ class BurgerPanicGame {
 
       const currentUnlocked = parseInt(localStorage.getItem('burgerpanic_unlocked_level') || '1', 10);
       const nextLevel = Math.max(currentUnlocked, stageNum + 1);
-      const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 15;
+      const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 16;
       localStorage.setItem('burgerpanic_unlocked_level', Math.min(nextLevel, totalStages).toString());
       this.saveCurrentStage(Math.min(nextLevel, totalStages));
 
@@ -315,7 +320,7 @@ class BurgerPanicGame {
   }
 
   getUnlockedLevel() {
-    const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 15;
+    const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 16;
     if (this.devMode) return totalStages;
     const val = parseInt(localStorage.getItem('burgerpanic_unlocked_level') || '1', 10);
     return Math.min(Math.max(1, val), totalStages);
@@ -375,7 +380,7 @@ class BurgerPanicGame {
   }
 
   jumpToStage(stageNum) {
-    const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 15;
+    const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 16;
     const target = Math.max(1, Math.min(stageNum, totalStages));
     this.startStage(target);
     this.updateDevSelect();
@@ -384,7 +389,7 @@ class BurgerPanicGame {
 
   getTotalStars() {
     let total = 0;
-    const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 15;
+    const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 16;
     for (let i = 1; i <= totalStages; i++) {
       total += this.getStageStars(i);
     }
@@ -461,17 +466,37 @@ class BurgerPanicGame {
     this.toastTimeout = null;
 
     // Initialize Stage Boss if defined for this level
-    if (this.levelData && this.levelData.boss && window.Boss) {
-      this.boss = new window.Boss(this.levelData.boss, this.levelData);
+    if (this.levelData && this.levelData.boss && this.levelData.boss.type === 'kiloburner' && window.KiloburnerBoss) {
+      this.kiloburnerBoss = new window.KiloburnerBoss(this.levelData.width || 300, this.height);
+      this.cryoProjectiles = [];
+      this.bossProjectiles = [];
     } else {
-      this.boss = null;
+      this.kiloburnerBoss = null;
+      this.cryoProjectiles = [];
+      this.bossProjectiles = [];
     }
+    this.boss = null;
+    this.updatePepperUI();
   }
 
   updatePepperUI() {
     const badge = document.getElementById('pepper-count-badge');
-    if (badge && this.player) {
-      badge.textContent = this.player.peppers;
+    const pepperBtn = document.getElementById('btn-pepper');
+    const labelSpan = pepperBtn ? pepperBtn.querySelector('.action-label') : null;
+    const iconSpan = pepperBtn ? pepperBtn.querySelector('.action-icon') : null;
+    const wrap = pepperBtn ? pepperBtn.closest('.arcade-button-wrapper') : null;
+    const subLabel = wrap ? wrap.querySelector('.button-cpo-sublabel') : null;
+
+    if (this.kiloburnerBoss) {
+      if (badge) badge.textContent = '∞';
+      if (labelSpan) labelSpan.textContent = 'NITRO';
+      if (iconSpan) iconSpan.textContent = '❄️';
+      if (subLabel) subLabel.textContent = 'EXTINTOR';
+    } else {
+      if (badge && this.player) badge.textContent = this.player.peppers;
+      if (labelSpan) labelSpan.textContent = 'PEPPER';
+      if (iconSpan) iconSpan.textContent = '🧂';
+      if (subLabel) subLabel.textContent = 'PIMIENTA';
     }
   }
 
@@ -654,7 +679,7 @@ class BurgerPanicGame {
 
         if (this.controls.input.up && !this.mapNavLock) {
           const unlocked = this.getUnlockedLevel();
-          if (this.mapSelectedStage < Math.min(unlocked + 1, 15)) {
+          if (this.mapSelectedStage < Math.min(unlocked + 1, 16)) {
             this.mapSelectedStage++;
             this.saveCurrentStage(this.mapSelectedStage);
             this.centerMapOnStage(this.mapSelectedStage);
@@ -821,20 +846,84 @@ class BurgerPanicGame {
       }
     }
 
-    // 5.5. Update Stage Boss (if present)
-    if (this.boss && !this.boss.isDead) {
-      this.boss.update(this.player, this.levelData.ladders, this.levelData.floors);
-      if (
-        this.boss.state === 'normal' &&
-        !this.player.isDead &&
-        this.player.invulnerableTimer === 0
-      ) {
-        const dist = Math.hypot((this.boss.x + 12) - (this.player.x + 8), (this.boss.y + 12) - (this.player.y + 8));
-        if (dist < 14 && !this.player.isJumping) {
-          this.player.die();
-          this.state = 'DYING';
-          this.stateTimer = 90;
-          return;
+    // 5.5. Update Kiloburner Giant Boss & Combat
+    if (this.kiloburnerBoss) {
+      this.kiloburnerBoss.update(this.player, this.levelData.floors, (proj) => {
+        if (!this.bossProjectiles) this.bossProjectiles = [];
+        this.bossProjectiles.push(proj);
+      });
+
+      // Update Player Cryo Projectiles
+      if (this.cryoProjectiles) {
+        for (let i = this.cryoProjectiles.length - 1; i >= 0; i--) {
+          const cp = this.cryoProjectiles[i];
+          cp.update();
+
+          // Hit check on Boss
+          if (this.kiloburnerBoss.checkHitByCryo(cp)) {
+            this.addScore(50, cp.x, cp.y);
+            this.popups.push(new window.ScorePopup('+50', cp.x, cp.y - 8));
+            for (let s = 0; s < 6; s++) {
+              this.particles.push(new window.ArcadeParticle(
+                cp.x, cp.y,
+                (Math.random() - 0.5) * 2.8,
+                (Math.random() - 0.5) * 2.8,
+                Math.random() < 0.6 ? '#38bdf8' : '#ffffff',
+                2, 16, 'spark'
+              ));
+            }
+            if (window.soundManager && window.soundManager.playBlip) {
+              window.soundManager.playBlip();
+            }
+            this.cryoProjectiles.splice(i, 1);
+            continue;
+          }
+
+          if (cp.life <= 0 || cp.x < 0 || cp.x > (this.levelData.width || 300) + 20) {
+            this.cryoProjectiles.splice(i, 1);
+          }
+        }
+      }
+
+      // Update Boss Projectiles (Meatballs)
+      if (this.bossProjectiles) {
+        for (let i = this.bossProjectiles.length - 1; i >= 0; i--) {
+          const bp = this.bossProjectiles[i];
+          bp.update(this.levelData.floors);
+
+          if (!this.player.isDead && this.player.invulnerableTimer === 0) {
+            const dist = Math.hypot((bp.x) - (this.player.x + 8), (bp.y) - (this.player.y + 8));
+            if (dist < 12) {
+              this.player.die();
+              this.state = 'DYING';
+              this.stateTimer = 90;
+              return;
+            }
+          }
+
+          if (bp.life <= 0 || bp.bounces > bp.maxBounces || bp.y > 320) {
+            this.bossProjectiles.splice(i, 1);
+          }
+        }
+      }
+
+      // Check Boss body/flame/claw damage against player
+      if (this.kiloburnerBoss.checkPlayerDamage(this.player)) {
+        this.player.die();
+        this.state = 'DYING';
+        this.stateTimer = 90;
+        return;
+      }
+
+      // Check burger crush damage on boss (-50 HP)
+      for (const b of this.burgers) {
+        if (this.kiloburnerBoss.checkHitByBurgerPiece(b)) {
+          this.addScore(500, this.kiloburnerBoss.x, this.kiloburnerBoss.y - 20);
+          this.popups.push(new window.ScorePopup('¡APLASTADO! -50 HP', this.kiloburnerBoss.x - 25, this.kiloburnerBoss.y - 30));
+          this.screenShake = 12;
+          if (window.soundManager && window.soundManager.playDrop) {
+            window.soundManager.playDrop();
+          }
         }
       }
     }
@@ -944,9 +1033,17 @@ class BurgerPanicGame {
       }
     }
 
-    // 8. Check Stage Victory: Have all burger pieces landed on the plates?
-    const allCompleted = this.burgers.every((b) => b.landedOnPlate);
-    if (allCompleted && this.state !== 'STAGE_CLEAR') {
+    // 8. Check Stage Victory:
+    let isVictory = false;
+    if (this.kiloburnerBoss) {
+      if (this.kiloburnerBoss.isDead && this.kiloburnerBoss.defeatSequenceDone) {
+        isVictory = true;
+      }
+    } else {
+      isVictory = this.burgers.every((b) => b.landedOnPlate);
+    }
+
+    if (isVictory && this.state !== 'STAGE_CLEAR') {
       window.soundManager.playClear();
       this.addScore(1000, 100, 150);
       if (this.player) {
@@ -1056,9 +1153,19 @@ class BurgerPanicGame {
       enemy.draw(this.ctx);
     }
 
-    // Draw Stage Boss
-    if (this.boss && !this.boss.isDead) {
-      this.boss.draw(this.ctx);
+    // Draw Cryo Projectiles (Player Exclusive Weapon)
+    if (this.cryoProjectiles) {
+      for (const cp of this.cryoProjectiles) cp.draw(this.ctx);
+    }
+
+    // Draw Boss Projectiles (Meatballs)
+    if (this.bossProjectiles) {
+      for (const bp of this.bossProjectiles) bp.draw(this.ctx);
+    }
+
+    // Draw Kiloburner Giant Boss
+    if (this.kiloburnerBoss) {
+      this.kiloburnerBoss.draw(this.ctx, this.sprites);
     }
 
     // Draw Pepper Clouds
@@ -1082,6 +1189,11 @@ class BurgerPanicGame {
     }
 
     this.ctx.restore();
+
+    // Render Boss Health Bar (Fixed screen coordinate overlay)
+    if (this.kiloburnerBoss) {
+      this.kiloburnerBoss.drawBossHealthBar(this.ctx, this.canvas.width);
+    }
 
     // Overlays for specific states
     if (this.state === 'READY') {
@@ -1709,13 +1821,19 @@ class BurgerPanicGame {
       // Outer Gold / Metal Rim
       this.ctx.beginPath();
       this.ctx.arc(node.x, node.y, 16, 0, Math.PI * 2);
-      this.ctx.fillStyle = isUnlocked ? (stars === 3 ? '#d97706' : '#0284c7') : '#27273a';
+      this.ctx.fillStyle = isUnlocked
+        ? (node.isBoss ? '#ef4444' : (stars === 3 ? '#d97706' : '#0284c7'))
+        : '#27273a';
       this.ctx.fill();
 
       // Inner Candy Sphere
       const radGrad = this.ctx.createRadialGradient(node.x - 4, node.y - 5, 2, node.x, node.y, 14);
       if (isUnlocked) {
-        if (stars === 3) {
+        if (node.isBoss) {
+          radGrad.addColorStop(0, '#fca5a5');
+          radGrad.addColorStop(0.5, '#dc2626');
+          radGrad.addColorStop(1, '#7f1d1d');
+        } else if (stars === 3) {
           radGrad.addColorStop(0, '#fef08a');
           radGrad.addColorStop(0.5, '#f59e0b');
           radGrad.addColorStop(1, '#b45309');
@@ -1824,16 +1942,17 @@ class BurgerPanicGame {
 
     const selNode = this.mapNodes.find((n) => n.level === this.mapSelectedStage) || this.mapNodes[0];
     const isSelUnlocked = selNode.level <= unlocked;
-    const availableStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 15;
+    const availableStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 16;
     const isImplemented = selNode.level <= availableStages;
     const selStars = this.getStageStars(selNode.level);
     const selScore = scores[selNode.level] || 0;
 
     // Stage Info
     this.ctx.textAlign = 'left';
-    this.ctx.fillStyle = '#ffffff';
+    this.ctx.fillStyle = selNode.isBoss ? '#ef4444' : '#ffffff';
     this.ctx.font = '7px "Press Start 2P", monospace';
-    this.ctx.fillText(`NIVEL ${selNode.level}: ${selNode.name}`, 10, 278);
+    const stagePrefix = selNode.isBoss ? '💥 JEFE' : `NIVEL ${selNode.level}`;
+    this.ctx.fillText(`${stagePrefix}: ${selNode.name}`, 10, 278);
 
     if (isSelUnlocked) {
       if (isImplemented) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'burgerpanic-mobile-v72';
+const CACHE_NAME = 'burgerpanic-mobile-v75';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   './assets/peter_atlas.png',
   './assets/enemies_atlas.png',
   './assets/items_atlas.png',
+  './assets/kiloburner_atlas.png',
   './assets/bg_stage4_octopus.png',
   './assets/bg_stage5_coffee.png',
   './assets/bg_stage6_cat.png',
@@ -24,8 +25,10 @@ const ASSETS = [
   './js/chef_atlas.js',
   './js/enemies_atlas.js',
   './js/items_atlas.js',
+  './js/kiloburner_atlas.js',
   './js/audio.js',
   './js/sprites.js',
+  './js/kiloburner.js',
   './js/map.js',
   './js/burger.js',
   './js/entities.js',
