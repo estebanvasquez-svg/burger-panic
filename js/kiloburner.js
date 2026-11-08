@@ -1,23 +1,24 @@
 /**
  * Kiloburner - Giant Cyborg Boss & Exclusive Level 3 Weapon System
- * Burger Panic Mobile Arcade
+ * Burger Panic Mobile Arcade - Cyber-Furnace Arena Art Edition
  */
 
 /**
- * Cryo Extinguisher Projectile (Exclusive Level 3 Player Weapon)
- * Rapid cryogenic CO2 bursts fired by Chef Pepe using Button B
+ * Bio-Chemical Spray Projectile (Exclusive Level 3 Player Weapon)
+ * Rapid phosphorescent green chemical blast fired by Chef Pepe using Button B,
+ * matching the user's reference artwork.
  */
 class CryoProjectile {
   constructor(x, y, dir = 1) {
     this.x = x;
     this.y = y;
     this.dir = dir; // 1 = right, -1 = left
-    this.speed = 5.2; // High-speed ice blast
+    this.speed = 5.4; // High-speed chemical stream
     this.vx = this.dir * this.speed;
-    this.vy = (Math.random() - 0.5) * 0.4; // slight jitter
-    this.radius = 6;
-    this.life = 55; // frames
-    this.maxLife = 55;
+    this.vy = (Math.random() - 0.5) * 0.7; // conical spread
+    this.radius = 5.5;
+    this.life = 45; // frames
+    this.maxLife = 45;
     this.particles = [];
   }
 
@@ -26,17 +27,17 @@ class CryoProjectile {
     this.y += this.vy;
     this.life--;
 
-    // Spawn sub-zero vapor and ice flake particles
-    if (Math.random() < 0.75) {
+    // Spawn expanding conical spray particles with neon acid glow
+    if (Math.random() < 0.85) {
       this.particles.push({
         x: this.x + (Math.random() - 0.5) * 6,
         y: this.y + (Math.random() - 0.5) * 6,
-        vx: -this.vx * 0.2 + (Math.random() - 0.5) * 0.8,
-        vy: -0.3 + (Math.random() - 0.5) * 0.8,
+        vx: -this.vx * 0.15 + (Math.random() - 0.5) * 0.8,
+        vy: (Math.random() - 0.5) * 0.8,
         life: 14 + Math.random() * 8,
         maxLife: 22,
-        size: 1.5 + Math.random() * 2,
-        color: Math.random() < 0.6 ? '#67e8f9' : '#ffffff'
+        size: 2 + Math.random() * 2.5,
+        color: Math.random() < 0.5 ? '#4ade80' : (Math.random() < 0.8 ? '#22c55e' : '#a3e635')
       });
     }
 
@@ -52,37 +53,37 @@ class CryoProjectile {
   }
 
   draw(ctx) {
-    // Draw ice vapor trail
+    // Draw bio-spray mist and droplet trail
     for (const p of this.particles) {
       const alpha = Math.max(0, p.life / p.maxLife);
       ctx.save();
-      ctx.globalAlpha = alpha * 0.8;
+      ctx.globalAlpha = alpha * 0.85;
       ctx.fillStyle = p.color;
       ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(p.size), Math.round(p.size));
       ctx.restore();
     }
 
-    // Draw main cryogenic orb
+    // Draw main conical neon-green chemical jet
     ctx.save();
-    const pulse = Math.sin(Date.now() * 0.02) * 1.5;
+    const pulse = Math.sin(Date.now() * 0.03) * 1.5;
     const r = Math.max(2, this.radius + pulse * 0.5);
 
-    // Glowing cyan/white outer aura
-    const grad = ctx.createRadialGradient(this.x, this.y, 1, this.x, this.y, r + 4);
+    // Glowing phosphorescent green outer aura
+    const grad = ctx.createRadialGradient(this.x, this.y, 1, this.x, this.y, r + 5);
     grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(0.4, '#38bdf8');
-    grad.addColorStop(0.8, '#0284c7');
-    grad.addColorStop(1, 'rgba(2, 132, 199, 0)');
+    grad.addColorStop(0.35, '#a3e635');
+    grad.addColorStop(0.7, '#22c55e');
+    grad.addColorStop(1, 'rgba(34, 197, 94, 0)');
 
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, r + 4, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, r + 5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Solid core
+    // Solid bright core (white/lime)
     ctx.fillStyle = '#f0fdf4';
     ctx.beginPath();
-    ctx.arc(this.x, this.y, r * 0.6, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, r * 0.65, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -196,8 +197,8 @@ class KiloburnerBoss {
     this.arenaHeight = arenaHeight;
 
     // Anchor position (center-bottom reference)
-    this.x = 220; // Starts on the right side
-    this.baseY = 120; // Hover level across mid platforms
+    this.x = 275; // Right-hand cybernetic pedestal
+    this.baseY = 150; // Hover level aligning with sniper platform
     this.y = this.baseY;
 
     // Scale ratio from original ~240px sprite down to game size (~96x68)
@@ -217,9 +218,9 @@ class KiloburnerBoss {
 
     // Floating motion
     this.floatAngle = 0;
-    this.hoverSpeedX = 0.35;
-    this.minX = 140;
-    this.maxX = arenaWidth - 55;
+    this.hoverSpeedX = 0.30;
+    this.minX = 220;
+    this.maxX = 315;
 
     // Defeat states
     this.isDead = false;
@@ -599,9 +600,89 @@ class KiloburnerBoss {
 
     ctx.save();
 
+    // 1. Draw Hydraulic Piston & Heavy Power Cables connecting Boss to Floor (Reference Art)
+    if (this.state !== 'dead') {
+      const pistonX = Math.round(this.x);
+      const pistonTopY = Math.round(this.y - 8);
+      const pistonBottomY = 288;
+
+      // Chrome Hydraulic Piston Shaft
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(pistonX - 7, pistonTopY, 14, Math.max(0, pistonBottomY - pistonTopY));
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(pistonX - 4, pistonTopY, 5, Math.max(0, pistonBottomY - pistonTopY)); // highlight
+
+      // Heavy Power Cables curving down
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(pistonX - 22, pistonTopY - 10);
+      ctx.bezierCurveTo(pistonX - 35, pistonTopY + 20, pistonX - 30, pistonBottomY - 10, pistonX - 20, pistonBottomY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(pistonX + 22, pistonTopY - 10);
+      ctx.bezierCurveTo(pistonX + 35, pistonTopY + 20, pistonX + 30, pistonBottomY - 10, pistonX + 20, pistonBottomY);
+      ctx.stroke();
+
+      // Atmospheric White Steam Puffs rising from the hydraulic base
+      if (Math.random() < 0.25) {
+        if (!this.steamParticles) this.steamParticles = [];
+        this.steamParticles.push({
+          x: pistonX - 15 + Math.random() * 30,
+          y: pistonBottomY - 5,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: -0.6 - Math.random() * 0.6,
+          r: 3 + Math.random() * 4,
+          life: 25,
+          maxLife: 25
+        });
+      }
+      if (this.steamParticles) {
+        for (let i = this.steamParticles.length - 1; i >= 0; i--) {
+          const sp = this.steamParticles[i];
+          sp.x += sp.vx;
+          sp.y += sp.vy;
+          sp.r += 0.25;
+          sp.life--;
+          ctx.save();
+          ctx.globalAlpha = (sp.life / sp.maxLife) * 0.45;
+          ctx.fillStyle = '#f1f5f9';
+          ctx.beginPath();
+          ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          if (sp.life <= 0) this.steamParticles.splice(i, 1);
+        }
+      }
+
+      // 4 Red Emergency Strobe Beacons on the base pedestal (Reference Art)
+      const strobeOn = Math.sin(Date.now() * 0.012) > 0.1;
+      const beaconXs = [pistonX - 35, pistonX - 18, pistonX + 18, pistonX + 35];
+      for (const bx of beaconXs) {
+        // Black mounting fixture
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(bx - 3, pistonBottomY - 6, 6, 6);
+        // Red Dome
+        ctx.fillStyle = strobeOn ? '#ef4444' : '#7f1d1d';
+        ctx.beginPath();
+        ctx.arc(bx, pistonBottomY - 6, 3.5, Math.PI, 0);
+        ctx.fill();
+        if (strobeOn) {
+          ctx.save();
+          ctx.globalAlpha = 0.5;
+          ctx.fillStyle = '#f87171';
+          ctx.beginPath();
+          ctx.arc(bx, pistonBottomY - 6, 6.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+
     // Damage flash effect (white / cyan silhouette flash)
     if (this.hitFlashTimer > 0 && Math.floor(this.hitFlashTimer / 2) % 2 === 0) {
-      ctx.filter = 'brightness(2.2) drop-shadow(0 0 6px #38bdf8)';
+      ctx.filter = 'brightness(2.2) drop-shadow(0 0 6px #4ade80)';
     }
 
     // Low HP Warning Aura (Overheated engine pulse)
@@ -633,33 +714,54 @@ class KiloburnerBoss {
   }
 
   /**
-   * Render Retro Arcade Boss Health Bar at top of screen
+   * Render Retro Arcade Boss Health Bar matching Reference Artwork
+   * Positioned cleanly at bottom center with angled metal bracket
    */
   drawBossHealthBar(ctx, screenWidth) {
     if (this.defeatSequenceDone) return;
 
     ctx.save();
 
-    const barW = Math.min(220, screenWidth - 24);
-    const barH = 12;
+    const barW = Math.min(200, screenWidth - 40);
+    const barH = 10;
     const barX = Math.round((screenWidth - barW) / 2);
-    const barY = 22;
+    const barY = 286; // Clean bottom placement matching artwork
 
-    // Boss Name Plate with Flames & Cyber Skull
-    ctx.font = 'bold 9px "Press Start 2P", monospace, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
+    // 1. Angled Dark Armor Plate Bracket
+    const plateW = 100;
+    const plateH = 12;
+    const plateX = Math.round((screenWidth - plateW) / 2);
+    const plateY = barY - 11;
 
-    // Text Shadow
-    ctx.fillStyle = '#000000';
-    ctx.fillText('🔥 KILOBURNER CYBORG BOSS 🔥', screenWidth / 2 + 1, barY - 2);
-
-    // Text Gradient / Retro Chrome
-    ctx.fillStyle = (this.health <= this.maxHealth * 0.25) ? '#ef4444' : '#fbbf24';
-    ctx.fillText('🔥 KILOBURNER CYBORG BOSS 🔥', screenWidth / 2, barY - 3);
-
-    // Bezel Frame
     ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.moveTo(plateX - 6, plateY + plateH);
+    ctx.lineTo(plateX + 4, plateY);
+    ctx.lineTo(plateX + plateW - 4, plateY);
+    ctx.lineTo(plateX + plateW + 6, plateY + plateH);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Rivets on plate corners
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(plateX, plateY + 4, 2, 2);
+    ctx.fillRect(plateX + plateW - 2, plateY + 4, 2, 2);
+
+    // Boss Name: KILOBURNER in Crisp Pixel Font
+    ctx.font = 'bold 8px "Press Start 2P", monospace, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#000000';
+    ctx.fillText('KILOBURNER', screenWidth / 2 + 1, plateY + plateH / 2 + 1);
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillText('KILOBURNER', screenWidth / 2, plateY + plateH / 2);
+
+    // 2. Health Bar Outer Steel Housing
+    ctx.fillStyle = '#0b0f19';
     ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
 
     ctx.strokeStyle = '#64748b';
@@ -667,40 +769,33 @@ class KiloburnerBoss {
     ctx.strokeRect(barX - 2, barY - 2, barW + 4, barH + 4);
 
     // Health Track (Dark Red background)
-    ctx.fillStyle = '#450a0a';
+    ctx.fillStyle = '#3f0c0c';
     ctx.fillRect(barX, barY, barW, barH);
 
-    // Current HP Fill
+    // Current HP Fill (Vivid Fiery Red matching Reference Art)
     const healthRatio = Math.max(0, Math.min(1, this.health / this.maxHealth));
     const currentW = Math.round(barW * healthRatio);
 
     if (currentW > 0) {
-      const hpGrad = ctx.createLinearGradient(barX, barY, barX + barW, barY);
-      if (healthRatio > 0.5) {
-        hpGrad.addColorStop(0, '#f59e0b');
-        hpGrad.addColorStop(1, '#ef4444');
-      } else if (healthRatio > 0.25) {
-        hpGrad.addColorStop(0, '#eab308');
-        hpGrad.addColorStop(1, '#dc2626');
-      } else {
-        hpGrad.addColorStop(0, '#ef4444');
-        hpGrad.addColorStop(1, '#991b1b');
-      }
+      const hpGrad = ctx.createLinearGradient(barX, barY, barX, barY + barH);
+      hpGrad.addColorStop(0, '#f87171');
+      hpGrad.addColorStop(0.35, '#ef4444');
+      hpGrad.addColorStop(1, '#b91c1c');
 
       ctx.fillStyle = hpGrad;
       ctx.fillRect(barX, barY, currentW, barH);
 
       // Top gloss highlight
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
       ctx.fillRect(barX, barY, currentW, Math.floor(barH / 2));
     }
 
     // Health numbers / percentage overlay
-    ctx.font = '8px monospace';
+    ctx.font = '7px monospace';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(`${this.health}/${this.maxHealth}`, barX + barW - 4, barY + barH / 2);
+    ctx.fillText(`${this.health} HP`, barX + barW - 4, barY + barH / 2);
 
     ctx.restore();
   }
@@ -709,3 +804,4 @@ class KiloburnerBoss {
 window.KiloburnerBoss = KiloburnerBoss;
 window.CryoProjectile = CryoProjectile;
 window.MeatballProjectile = MeatballProjectile;
+

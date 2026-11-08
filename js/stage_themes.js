@@ -576,6 +576,43 @@ class StageThemesManager {
       const pulse = Math.floor((Date.now() / 200) % w);
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(x + pulse, y + 1, 6, 3);
+    } else if (p.style === 'cyber_furnace') {
+      // Industrial riveted steel truss girders with X-brace pattern (Matching Reference Art)
+      // Steel surface plate with heavy rivets
+      for (let bx = x; bx < f.x2; bx += 14) {
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(bx, y, 1, 3);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(bx + 4, y + 1, 2, 2);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(bx + 5, y + 2, 1, 1);
+      }
+      // Truss X-brace lattice underbody
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.2;
+      for (let bx = x; bx + 12 <= f.x2; bx += 12) {
+        ctx.beginPath();
+        ctx.moveTo(bx, y + 3);
+        ctx.lineTo(bx + 12, y + 9);
+        ctx.moveTo(bx + 12, y + 3);
+        ctx.lineTo(bx, y + 9);
+        ctx.stroke();
+      }
+      // Safety rail on upper catwalk (y === 104)
+      if (Math.abs(f.y - 104) <= 6) {
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 8);
+        ctx.lineTo(f.x2, y - 8);
+        ctx.stroke();
+        for (let bx = x + 4; bx < f.x2; bx += 16) {
+          ctx.beginPath();
+          ctx.moveTo(bx, y - 8);
+          ctx.lineTo(bx, y);
+          ctx.stroke();
+        }
+      }
     } else if (p.style === 'imperial_gold') {
       // Royal gold damask embroidery with velvet banner
       ctx.fillStyle = '#ffd700';

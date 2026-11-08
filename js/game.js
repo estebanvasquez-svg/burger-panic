@@ -489,9 +489,9 @@ class BurgerPanicGame {
 
     if (this.kiloburnerBoss) {
       if (badge) badge.textContent = '∞';
-      if (labelSpan) labelSpan.textContent = 'NITRO';
-      if (iconSpan) iconSpan.textContent = '❄️';
-      if (subLabel) subLabel.textContent = 'EXTINTOR';
+      if (labelSpan) labelSpan.textContent = 'SPRAY';
+      if (iconSpan) iconSpan.textContent = '🧪';
+      if (subLabel) subLabel.textContent = 'ÁCIDO VERDE';
     } else {
       if (badge && this.player) badge.textContent = this.player.peppers;
       if (labelSpan) labelSpan.textContent = 'PEPPER';
@@ -863,13 +863,13 @@ class BurgerPanicGame {
           if (this.kiloburnerBoss.checkHitByCryo(cp)) {
             this.addScore(50, cp.x, cp.y);
             this.popups.push(new window.ScorePopup('+50', cp.x, cp.y - 8));
-            for (let s = 0; s < 6; s++) {
+            for (let s = 0; s < 7; s++) {
               this.particles.push(new window.ArcadeParticle(
                 cp.x, cp.y,
-                (Math.random() - 0.5) * 2.8,
-                (Math.random() - 0.5) * 2.8,
-                Math.random() < 0.6 ? '#38bdf8' : '#ffffff',
-                2, 16, 'spark'
+                (Math.random() - 0.5) * 3.2,
+                (Math.random() - 0.5) * 3.2,
+                Math.random() < 0.5 ? '#4ade80' : (Math.random() < 0.8 ? '#a3e635' : '#ffffff'),
+                2.5, 18, 'spark'
               ));
             }
             if (window.soundManager && window.soundManager.playBlip) {
@@ -1129,6 +1129,48 @@ class BurgerPanicGame {
     const camRenderX = (this.cameraX !== 0) ? -Math.round(this.cameraX) : 0;
     this.ctx.translate(camRenderX + Math.round(shakeX), Math.round(shakeY));
 
+    // Render Cyber Furnace Environment Details for Stage 3 (matching reference artwork)
+    if (stageNum === 3) {
+      if (this.sprites.bg_stage_3) {
+        this.ctx.drawImage(this.sprites.bg_stage_3, 0, 0, 360, 320);
+      }
+
+      // Truss lattice support legs under the sniper platform (x: 60 to 140, y: 200 to 288)
+      this.ctx.strokeStyle = '#334155';
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeRect(62, 206, 8, 82);
+      this.ctx.strokeRect(130, 206, 8, 82);
+      this.ctx.lineWidth = 1.4;
+      for (let ty = 206; ty + 20 <= 288; ty += 20) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(70, ty);
+        this.ctx.lineTo(130, ty + 20);
+        this.ctx.moveTo(130, ty);
+        this.ctx.lineTo(70, ty + 20);
+        this.ctx.stroke();
+      }
+
+      // Animated Cheese Dripping from left pipe (x: 28, y: 240) into lava pit
+      const dropProgress = (Date.now() / 900) % 1;
+      const dropY = 240 + dropProgress * 48;
+      this.ctx.fillStyle = '#facc15';
+      this.ctx.beginPath();
+      this.ctx.arc(28, dropY, 2.5, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Animated Lava Pit Bubbles (x: 10 to 60, y: 290 to 318)
+      const t = Date.now() * 0.005;
+      for (let b = 0; b < 3; b++) {
+        const bx = 16 + b * 16 + Math.sin(t + b) * 4;
+        const bProgress = ((Date.now() / 1200 + b * 0.33) % 1);
+        const by = 312 - bProgress * 18;
+        this.ctx.fillStyle = bProgress > 0.8 ? '#fef08a' : '#f97316';
+        this.ctx.beginPath();
+        this.ctx.arc(bx, by, 1.5 + bProgress * 1.5, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+    }
+
     // Draw Ladders
     this.drawLadders();
 
@@ -1244,11 +1286,25 @@ class BurgerPanicGame {
     this.ctx.fillStyle = '#fcfcfc';
     this.ctx.fillText(this.highScore.toString().padStart(6, '0'), 170, 25);
 
-    // Pepper shaker icons remaining
-    const pepperSpr = window.spriteManager.get('pepper_icon');
-    if (pepperSpr && this.player) {
-      for (let i = 0; i < this.player.peppers; i++) {
-        this.ctx.drawImage(pepperSpr, 14 + i * 11, 33, 10, 10);
+    // Pepper shaker icons or Bio Ammo remaining (Matching Reference Art)
+    if (this.kiloburnerBoss) {
+      this.ctx.fillStyle = '#4ade80';
+      this.ctx.font = '6px "Press Start 2P", monospace';
+      this.ctx.textAlign = 'left';
+      this.ctx.fillText('PEPPER AMMO', 14, 34);
+      // Glowing green battery bars
+      for (let i = 0; i < 5; i++) {
+        this.ctx.fillStyle = '#22c55e';
+        this.ctx.fillRect(14 + i * 9, 37, 7, 5);
+        this.ctx.fillStyle = '#bbf7d0';
+        this.ctx.fillRect(14 + i * 9, 37, 7, 1);
+      }
+    } else {
+      const pepperSpr = window.spriteManager.get('pepper_icon');
+      if (pepperSpr && this.player) {
+        for (let i = 0; i < this.player.peppers; i++) {
+          this.ctx.drawImage(pepperSpr, 14 + i * 11, 33, 10, 10);
+        }
       }
     }
 

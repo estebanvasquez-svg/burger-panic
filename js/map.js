@@ -165,7 +165,7 @@ class LevelMap {
 
       // ==========================================
       // STAGE 3: 💥 BOSS STAGE - EL COLOSO KILOBURNER
-      // Boss battle against the cybernetic giant burger
+      // Industrial Cyber-Furnace Arena matching reference artwork
       // ==========================================
       {
         stageNumber: 3,
@@ -176,76 +176,65 @@ class LevelMap {
           health: 300,
           name: 'KILOBURNER'
         },
-        exclusivePower: 'CRYO_EXTINGUISHER',
-        width: 300,
+        exclusivePower: 'BIO_SPRAY',
+        width: 360,
         bonusSpots: [
-          { x: 36, y: 96 },
-          { x: 140, y: 144 },
-          { x: 250, y: 96 },
-          { x: 140, y: 240 }
+          { x: 35, y: 104 },
+          { x: 135, y: 104 },
+          { x: 265, y: 104 },
+          { x: 95, y: 200 }
         ],
         floors: [
-          // Y = 48 (High lookout perches for sniping)
-          { y: 48, x1: 14, x2: 90 },
-          { y: 48, x1: 120, x2: 180 },
-          { y: 48, x1: 210, x2: 286 },
+          // Y = 52 (High ceiling gantries)
+          { y: 52, x1: 24, x2: 90 },
+          { y: 52, x1: 260, x2: 340 },
 
-          // Y = 96 (Upper combat girders)
-          { y: 96, x1: 14, x2: 104 },
-          { y: 96, x1: 130, x2: 170 },
-          { y: 96, x1: 196, x2: 286 },
+          // Y = 104 (Catwalk with spectator silhouettes & upper drop burger)
+          { y: 104, x1: 24, x2: 160 },
+          { y: 104, x1: 200, x2: 340 },
 
-          // Y = 144 (Mid-level walkways)
-          { y: 144, x1: 14, x2: 84 },
-          { y: 144, x1: 110, x2: 190 },
-          { y: 144, x1: 216, x2: 286 },
+          // Y = 200 (Elevated sniper girder platform where Chef aims at the boss)
+          { y: 200, x1: 60, x2: 140 },
+          { y: 200, x1: 215, x2: 295 },
 
-          // Y = 192 (Lower mid platforms)
-          { y: 192, x1: 14, x2: 100 },
-          { y: 192, x1: 126, x2: 174 },
-          { y: 192, x1: 200, x2: 286 },
-
-          // Y = 240 (Defense rampart)
-          { y: 240, x1: 14, x2: 114 },
-          { y: 240, x1: 140, x2: 160 },
-          { y: 240, x1: 186, x2: 286 },
-
-          // Y = 288 (Arena Plate Floor)
-          { y: 288, x1: 14, x2: 286 }
+          // Y = 288 (Arena floor, cheese pipe drop & hydraulic boss base)
+          { y: 288, x1: 24, x2: 45 },
+          { y: 288, x1: 70, x2: 195 },
+          { y: 288, x1: 210, x2: 346 }
         ],
         ladders: [
-          // Left and right vertical escape ladders
-          { x: 18, y1: 48, y2: 288 },
-          { x: 276, y1: 48, y2: 288 },
-
-          // Strategic mid ladders
-          { x: 64, y1: 48, y2: 192 },
-          { x: 80, y1: 144, y2: 288 },
-          { x: 146, y1: 48, y2: 144 },
-          { x: 150, y1: 144, y2: 288 },
-          { x: 220, y1: 48, y2: 192 },
-          { x: 236, y1: 144, y2: 288 }
+          // Left vertical gantry ladder
+          { x: 34, y1: 52, y2: 104 },
+          // Mid ladder from catwalk to sniper platform
+          { x: 95, y1: 104, y2: 200 },
+          // Ladder from sniper platform down to central floor
+          { x: 125, y1: 200, y2: 288 },
+          // Right intermediate ladder
+          { x: 225, y1: 104, y2: 200 },
+          // Right perimeter safety ladder
+          { x: 320, y1: 52, y2: 288 }
         ],
         burgers: [
-          // Stack 0 (Left Upper Bunker Burger)
-          { col: 0, x: 42, y: 48, type: 'bun_top' },
-          { col: 0, x: 42, y: 96, type: 'cheese' },
-          { col: 0, x: 42, y: 144, type: 'patty' },
-          { col: 0, x: 42, y: 192, type: 'bun_bottom' },
+          // Stack 0 (Catwalk Left Burger)
+          { col: 0, x: 95, y: 104, type: 'bun_top' },
+          { col: 0, x: 95, y: 148, type: 'cheese' },
+          { col: 0, x: 95, y: 196, type: 'patty' },
+          { col: 0, x: 95, y: 244, type: 'bun_bottom' },
 
-          // Stack 1 (Right Boss Crush Burger - perfect trap for Kiloburner!)
-          { col: 1, x: 234, y: 48, type: 'bun_top' },
-          { col: 1, x: 234, y: 96, type: 'tomato' },
-          { col: 1, x: 234, y: 144, type: 'patty' },
-          { col: 1, x: 234, y: 192, type: 'bun_bottom' }
+          // Stack 1 (Boss Crush Burger directly above Kiloburner!)
+          { col: 1, x: 255, y: 104, type: 'bun_top' },
+          { col: 1, x: 255, y: 148, type: 'tomato' },
+          { col: 1, x: 255, y: 196, type: 'patty' },
+          { col: 1, x: 255, y: 244, type: 'bun_bottom' }
         ],
         plates: [
-          { x: 40, y: 288 },
-          { x: 232, y: 288 }
+          { x: 93, y: 288 },
+          { x: 253, y: 288 }
         ],
-        playerStart: { x: 36, y: 288 },
+        playerStart: { x: 75, y: 200 },
         enemies: [
-          { type: 'hotdog', x: 240, y: 48 }
+          // Drone hotdog patrolling upper gantry
+          { type: 'hotdog', x: 280, y: 52 }
         ],
         enemySpeed: 0.70
       },

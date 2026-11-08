@@ -11,6 +11,7 @@ class SpriteManager {
     this.initItemsAtlas();
     this.initKiloburnerAtlas();
     this.loadBackground('title_cover', 'assets/title_cover.png');
+    this.loadBackground('bg_stage_3', 'assets/bg_stage3_kiloburner.png');
     this.loadBackground('bg_stage_4', 'assets/bg_stage4_octopus.png');
     this.loadBackground('bg_stage_5', 'assets/bg_stage5_coffee.png');
     this.loadBackground('bg_stage_6', 'assets/bg_stage6_cat.png');

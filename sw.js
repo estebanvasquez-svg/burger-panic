@@ -10,6 +10,7 @@ const ASSETS = [
   './assets/enemies_atlas.png',
   './assets/items_atlas.png',
   './assets/kiloburner_atlas.png',
+  './assets/bg_stage3_kiloburner.png',
   './assets/bg_stage4_octopus.png',
   './assets/bg_stage5_coffee.png',
   './assets/bg_stage6_cat.png',
