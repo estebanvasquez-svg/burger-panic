@@ -805,82 +805,136 @@ class KiloburnerBoss {
 
     ctx.save();
 
-    // 1. Draw Hydraulic Piston & Heavy Power Cables connecting Boss to Floor (Reference Art)
+    // 1. Draw Heavy Industrial Suspension Cables holding Boss from the Ceiling (ONLY cables support the boss)
     if (this.state !== 'dead') {
-      const pistonX = Math.round(this.x);
-      const pistonTopY = Math.round(this.y - 8);
-      const pistonBottomY = 288;
+      const bossTopY = Math.round(this.y - this.logicalH * 0.85);
+      const isFlipped = (this.facing === 1);
+      const sway = Math.sin(this.floatAngle) * 5;
 
-      // Chrome Hydraulic Piston Shaft
-      ctx.fillStyle = '#475569';
-      ctx.fillRect(pistonX - 7, pistonTopY, 14, Math.max(0, pistonBottomY - pistonTopY));
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(pistonX - 4, pistonTopY, 5, Math.max(0, pistonBottomY - pistonTopY)); // highlight
+      // 4 heavy power & coolant conduits plugged into cranial sockets at top-rear of cyber skull
+      const cables = [
+        {
+          anchorX: Math.round(this.x - 38 + sway * 0.6),
+          socketX: Math.round(this.x + (isFlipped ? 26 : -26)),
+          socketY: bossTopY + 8,
+          curveOffset: -12 + sway,
+          color: '#1e293b',
+          hiColor: '#475569',
+          width: 3.5,
+          pulseSpeed: 0.003
+        },
+        {
+          anchorX: Math.round(this.x - 14 + sway * 0.4),
+          socketX: Math.round(this.x + (isFlipped ? 14 : -14)),
+          socketY: bossTopY + 2,
+          curveOffset: -6 + sway * 0.8,
+          color: '#0f172a',
+          hiColor: '#334155',
+          width: 4,
+          pulseSpeed: 0.004
+        },
+        {
+          anchorX: Math.round(this.x + 12 + sway * 0.3),
+          socketX: Math.round(this.x + (isFlipped ? -4 : 4)),
+          socketY: bossTopY + 4,
+          curveOffset: 8 + sway * 0.7,
+          color: '#1e293b',
+          hiColor: '#475569',
+          width: 3.5,
+          pulseSpeed: 0.005
+        },
+        {
+          anchorX: Math.round(this.x + 36 + sway * 0.5),
+          socketX: Math.round(this.x + (isFlipped ? -22 : 22)),
+          socketY: bossTopY + 12,
+          curveOffset: 16 + sway * 1.1,
+          color: '#0f172a',
+          hiColor: '#38bdf8',
+          width: 3,
+          pulseSpeed: 0.0035
+        }
+      ];
 
-      // Heavy Power Cables curving down
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(pistonX - 22, pistonTopY - 10);
-      ctx.bezierCurveTo(pistonX - 35, pistonTopY + 20, pistonX - 30, pistonBottomY - 10, pistonX - 20, pistonBottomY);
-      ctx.stroke();
+      for (const c of cables) {
+        // Ceiling anchor clamp box at top gantry (y = 0)
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(c.anchorX - 3, 0, 6, 8);
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(c.anchorX - 2, 0, 4, 3);
+        // Yellow safety hazard accent on clamp
+        ctx.fillStyle = '#eab308';
+        ctx.fillRect(c.anchorX - 2, 5, 4, 2);
 
-      ctx.beginPath();
-      ctx.moveTo(pistonX + 22, pistonTopY - 10);
-      ctx.bezierCurveTo(pistonX + 35, pistonTopY + 20, pistonX + 30, pistonBottomY - 10, pistonX + 20, pistonBottomY);
-      ctx.stroke();
+        // Cable Shadow/Backing
+        ctx.strokeStyle = '#020617';
+        ctx.lineWidth = c.width + 1.5;
+        ctx.beginPath();
+        ctx.moveTo(c.anchorX, 0);
+        const ctrlX = (c.anchorX + c.socketX) / 2 + c.curveOffset;
+        const ctrlY = (c.socketY) * 0.45;
+        ctx.quadraticCurveTo(ctrlX, ctrlY, c.socketX, c.socketY);
+        ctx.stroke();
 
-      // Atmospheric White Steam Puffs rising from the hydraulic base
-      if (Math.random() < 0.25) {
-        if (!this.steamParticles) this.steamParticles = [];
-        this.steamParticles.push({
-          x: pistonX - 15 + Math.random() * 30,
-          y: pistonBottomY - 5,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: -0.6 - Math.random() * 0.6,
-          r: 3 + Math.random() * 4,
-          life: 25,
-          maxLife: 25
+        // Main braided jacket
+        ctx.strokeStyle = c.color;
+        ctx.lineWidth = c.width;
+        ctx.beginPath();
+        ctx.moveTo(c.anchorX, 0);
+        ctx.quadraticCurveTo(ctrlX, ctrlY, c.socketX, c.socketY);
+        ctx.stroke();
+
+        // Center highlight line
+        ctx.strokeStyle = c.hiColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(c.anchorX, 0);
+        ctx.quadraticCurveTo(ctrlX, ctrlY, c.socketX, c.socketY);
+        ctx.stroke();
+
+        // Glowing cyber energy pulses traveling down the cable into Kiloburner
+        const pulseProgress = (Date.now() * c.pulseSpeed) % 1;
+        const pt = 1 - pulseProgress;
+        const pulseX = (1 - pt) * (1 - pt) * c.anchorX + 2 * (1 - pt) * pt * ctrlX + pt * pt * c.socketX;
+        const pulseY = (1 - pt) * (1 - pt) * 0 + 2 * (1 - pt) * pt * ctrlY + pt * pt * c.socketY;
+
+        ctx.fillStyle = (c.hiColor === '#38bdf8') ? '#38bdf8' : '#ef4444';
+        ctx.beginPath();
+        ctx.arc(pulseX, pulseY, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Boss armored socket port / collar on cyber skull
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(c.socketX - 3, c.socketY - 3, 6, 6);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(c.socketX - 3, c.socketY - 3, 6, 6);
+      }
+
+      // Occasional electric arc spark jumping at cranial sockets
+      if (Math.random() < 0.20) {
+        if (!this.cableSparks) this.cableSparks = [];
+        const sc = cables[Math.floor(Math.random() * cables.length)];
+        this.cableSparks.push({
+          x: sc.socketX + (Math.random() - 0.5) * 6,
+          y: sc.socketY + (Math.random() - 0.5) * 4,
+          vx: (Math.random() - 0.5) * 2,
+          vy: -Math.random() * 2,
+          color: Math.random() < 0.5 ? '#38bdf8' : '#fef08a',
+          life: 8,
+          maxLife: 8
         });
       }
-      if (this.steamParticles) {
-        for (let i = this.steamParticles.length - 1; i >= 0; i--) {
-          const sp = this.steamParticles[i];
-          sp.x += sp.vx;
-          sp.y += sp.vy;
-          sp.r += 0.25;
-          sp.life--;
+      if (this.cableSparks) {
+        for (let i = this.cableSparks.length - 1; i >= 0; i--) {
+          const spk = this.cableSparks[i];
+          spk.x += spk.vx;
+          spk.y += spk.vy;
+          spk.life--;
           ctx.save();
-          ctx.globalAlpha = (sp.life / sp.maxLife) * 0.45;
-          ctx.fillStyle = '#f1f5f9';
-          ctx.beginPath();
-          ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.fillStyle = spk.color;
+          ctx.fillRect(Math.round(spk.x), Math.round(spk.y), 2, 2);
           ctx.restore();
-          if (sp.life <= 0) this.steamParticles.splice(i, 1);
-        }
-      }
-
-      // 4 Red Emergency Strobe Beacons on the base pedestal (Reference Art)
-      const strobeOn = Math.sin(Date.now() * 0.012) > 0.1;
-      const beaconXs = [pistonX - 35, pistonX - 18, pistonX + 18, pistonX + 35];
-      for (const bx of beaconXs) {
-        // Black mounting fixture
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(bx - 3, pistonBottomY - 6, 6, 6);
-        // Red Dome
-        ctx.fillStyle = strobeOn ? '#ef4444' : '#7f1d1d';
-        ctx.beginPath();
-        ctx.arc(bx, pistonBottomY - 6, 3.5, Math.PI, 0);
-        ctx.fill();
-        if (strobeOn) {
-          ctx.save();
-          ctx.globalAlpha = 0.5;
-          ctx.fillStyle = '#f87171';
-          ctx.beginPath();
-          ctx.arc(bx, pistonBottomY - 6, 6.5, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
+          if (spk.life <= 0) this.cableSparks.splice(i, 1);
         }
       }
     }
