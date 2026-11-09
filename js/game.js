@@ -46,8 +46,8 @@ class BurgerPanicGame {
     this.spriteManager = window.spriteManager;
     this.mapSelectedStage = 1;
     this.mapNavLock = false;
-    this.mapScrollY = 600;
-    this.mapTargetScrollY = 600;
+    this.mapScrollY = 730;
+    this.mapTargetScrollY = 730;
     this.mapNodes = [
       { level: 1,  x: 75,  y: 880, name: 'LA COCINA CLÁSICA' },
       { level: 2,  x: 130, y: 825, name: 'LA DESPENSA DE ESPECIAS' },
@@ -243,8 +243,8 @@ class BurgerPanicGame {
     this.stateTimer = 0;
     const unlocked = this.getUnlockedLevel();
     if (stageToFocus) {
-      this.mapSelectedStage = Math.max(1, Math.min(stageToFocus, Math.min(unlocked, 15)));
-    } else if (!this.mapSelectedStage || this.mapSelectedStage < 1 || this.mapSelectedStage > 15) {
+      this.mapSelectedStage = Math.max(1, Math.min(stageToFocus, Math.min(unlocked, 16)));
+    } else if (!this.mapSelectedStage || this.mapSelectedStage < 1 || this.mapSelectedStage > 16) {
       this.mapSelectedStage = this.getLastPlayedStage();
     }
     this.saveCurrentStage(this.mapSelectedStage);
@@ -254,8 +254,9 @@ class BurgerPanicGame {
   centerMapOnStage(stageNum, immediate = false) {
     const node = this.mapNodes ? this.mapNodes.find((n) => n.level === stageNum) : null;
     if (node) {
-      const target = node.y - 150;
-      const maxScroll = 920 - 320;
+      // Center node in the open map area (between top header y=36 and bottom drawer y=260: center is ~148)
+      const target = node.y - 148;
+      const maxScroll = 1100 - 320; // 780px allows full clearance past Node 1 (y=880)
       this.mapTargetScrollY = Math.max(0, Math.min(target, maxScroll));
       if (immediate) {
         this.mapScrollY = this.mapTargetScrollY;
@@ -748,16 +749,19 @@ class BurgerPanicGame {
       case 'MAP':
         this.mapScrollY += (this.mapTargetScrollY - this.mapScrollY) * 0.18;
 
-        if (this.controls.input.up && !this.mapNavLock) {
+        const navUp = (this.controls.input.y < 0 || this.controls.input.up || this.controls.input.x > 0 || this.controls.input.right);
+        const navDown = (this.controls.input.y > 0 || this.controls.input.down || this.controls.input.x < 0 || this.controls.input.left);
+
+        if (navUp && !this.mapNavLock) {
           const unlocked = this.getUnlockedLevel();
-          if (this.mapSelectedStage < Math.min(unlocked + 1, 16)) {
+          if (this.mapSelectedStage < Math.min(unlocked, 16)) {
             this.mapSelectedStage++;
             this.saveCurrentStage(this.mapSelectedStage);
             this.centerMapOnStage(this.mapSelectedStage);
             if (window.soundManager) window.soundManager.playStep();
           }
           this.mapNavLock = true;
-        } else if (this.controls.input.down && !this.mapNavLock) {
+        } else if (navDown && !this.mapNavLock) {
           if (this.mapSelectedStage > 1) {
             this.mapSelectedStage--;
             this.saveCurrentStage(this.mapSelectedStage);
@@ -765,7 +769,7 @@ class BurgerPanicGame {
             if (window.soundManager) window.soundManager.playStep();
           }
           this.mapNavLock = true;
-        } else if (!this.controls.input.up && !this.controls.input.down) {
+        } else if (!navUp && !navDown) {
           this.mapNavLock = false;
         }
         break;
@@ -1999,14 +2003,15 @@ class BurgerPanicGame {
     this.ctx.save();
     this.ctx.translate(0, -scrollY);
 
-    // 1. Twilight / Candy Sky Gradient (920px tall world)
-    const bgGrad = this.ctx.createLinearGradient(0, 0, 0, 920);
+    // 1. Twilight / Candy Sky Gradient (1100px tall world)
+    const bgGrad = this.ctx.createLinearGradient(0, 0, 0, 1100);
     bgGrad.addColorStop(0, '#0c0722');
-    bgGrad.addColorStop(0.3, '#1c1038');
-    bgGrad.addColorStop(0.65, '#161d42');
-    bgGrad.addColorStop(1, '#091526');
+    bgGrad.addColorStop(0.25, '#1c1038');
+    bgGrad.addColorStop(0.55, '#161d42');
+    bgGrad.addColorStop(0.8, '#091526');
+    bgGrad.addColorStop(1, '#050b16');
     this.ctx.fillStyle = bgGrad;
-    this.ctx.fillRect(0, 0, 240, 920);
+    this.ctx.fillRect(0, 0, 240, 1100);
 
     // Fluffy candy pastel clouds along the path
     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
@@ -2016,7 +2021,9 @@ class BurgerPanicGame {
       { x: 60, y: 360, rx: 38, ry: 13 },
       { x: 180, y: 490, rx: 45, ry: 15 },
       { x: 50, y: 640, rx: 40, ry: 14 },
-      { x: 200, y: 770, rx: 42, ry: 15 }
+      { x: 200, y: 770, rx: 42, ry: 15 },
+      { x: 180, y: 920, rx: 44, ry: 15 },
+      { x: 50, y: 1010, rx: 40, ry: 14 }
     ];
     for (const c of clouds) {
       this.ctx.beginPath();
@@ -2028,13 +2035,45 @@ class BurgerPanicGame {
 
     // Twinkling stars
     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    for (let sy = 20; sy < 900; sy += 38) {
+    for (let sy = 20; sy < 1080; sy += 38) {
       const sx = ((sy * 43) % 210) + 15;
       const pulse = (Math.sin(Date.now() / 400 + sy) + 1) * 0.8 + 0.5;
       this.ctx.fillRect(sx, sy, pulse, pulse);
     }
 
     // 2. Draw Golden Candy Road Ribbons connecting nodes
+    // Starting path ribbon leading into Level 1
+    const nStart = this.mapNodes[0];
+    if (nStart) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(nStart.x, nStart.y);
+      this.ctx.lineTo(nStart.x, nStart.y + 65);
+      this.ctx.lineWidth = 12;
+      this.ctx.strokeStyle = 'rgba(180, 115, 15, 0.75)';
+      this.ctx.lineCap = 'round';
+      this.ctx.stroke();
+
+      this.ctx.lineWidth = 8;
+      this.ctx.strokeStyle = '#fbbf24';
+      this.ctx.stroke();
+
+      this.ctx.lineWidth = 2.5;
+      this.ctx.strokeStyle = '#fffbeb';
+      this.ctx.setLineDash([4, 6]);
+      this.ctx.stroke();
+      this.ctx.setLineDash([]);
+
+      // Start Landmark Banner at (75, 945)
+      this.ctx.fillStyle = '#1e293b';
+      this.ctx.fillRect(nStart.x - 30, nStart.y + 52, 60, 16);
+      this.ctx.strokeStyle = '#f59e0b';
+      this.ctx.lineWidth = 1.5;
+      this.ctx.strokeRect(nStart.x - 30, nStart.y + 52, 60, 16);
+      this.ctx.fillStyle = '#fbbf24';
+      this.ctx.font = 'bold 6.5px "Press Start 2P", monospace';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('★ INICIO ★', nStart.x, nStart.y + 63);
+    }
     for (let i = 0; i < this.mapNodes.length - 1; i++) {
       const n1 = this.mapNodes[i];
       const n2 = this.mapNodes[i + 1];
@@ -2334,7 +2373,8 @@ window.addEventListener('DOMContentLoaded', () => {
       const rect = canvas.getBoundingClientRect();
       const scaleY = 320 / rect.height;
       const scaledDy = dy * scaleY;
-      game.mapTargetScrollY = Math.max(0, Math.min(dragStartScrollY - scaledDy, 600));
+      const maxScroll = 1100 - 320; // 780px
+      game.mapTargetScrollY = Math.max(0, Math.min(dragStartScrollY - scaledDy, maxScroll));
       game.mapScrollY = game.mapTargetScrollY;
     }
   };
@@ -2350,6 +2390,14 @@ window.addEventListener('DOMContentLoaded', () => {
   canvas.addEventListener('touchstart', handlePointerDown, { passive: true });
   window.addEventListener('touchmove', handlePointerMove, { passive: true });
   window.addEventListener('touchend', handlePointerUp, { passive: true });
+
+  canvas.addEventListener('wheel', (e) => {
+    const game = window.burgerPanicGame;
+    if (!game || game.state !== 'MAP') return;
+    e.preventDefault();
+    const maxScroll = 1100 - 320;
+    game.mapTargetScrollY = Math.max(0, Math.min(game.mapTargetScrollY + e.deltaY * 0.65, maxScroll));
+  }, { passive: false });
 
   const handleCanvasInteraction = (e) => {
     if (window.soundManager) {

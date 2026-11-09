@@ -7,7 +7,11 @@ class ControlsManager {
     this.input = {
       x: 0,
       y: 0,
-      pepper: false
+      pepper: false,
+      get up() { return this.y < 0; },
+      get down() { return this.y > 0; },
+      get left() { return this.x < 0; },
+      get right() { return this.x > 0; }
     };
 
     this.onPepperPress = null;
