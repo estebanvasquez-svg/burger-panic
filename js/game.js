@@ -448,37 +448,46 @@ class BurgerPanicGame {
     // Initialize burgers
     this.burgers = this.levelData.burgers.map((b) => new window.BurgerPiece(b, this.levelData));
 
-    // Initialize enemies (Safety: ensure all enemies spawn on upper floors far from chef)
-    const MIN_SAFE_DIST = 170;
-    this.enemies = this.levelData.enemies.map((e) => {
-      let spawnX = e.x;
-      let spawnY = e.y;
-      const initialDist = Math.hypot((spawnX + 8) - (this.player.x + 8), (spawnY + 8) - (this.player.y + 8));
+    // Initialize enemies
+    if (this.levelData && this.levelData.isSciFi) {
+      this.enemies = this.levelData.enemies.map((e) => {
+        if (e.type === 'drone' && window.SecurityDrone) return new window.SecurityDrone(e.x, e.y);
+        if (e.type === 'crawler' && window.AlienCrawler) return new window.AlienCrawler(e.x, e.y);
+        if (e.type === 'soldier' && window.AlienSoldier) return new window.AlienSoldier(e.x, e.y);
+        return new window.Enemy(e.type, e.x, e.y, this.levelData.enemySpeed, this.levelData);
+      });
+    } else {
+      const MIN_SAFE_DIST = 170;
+      this.enemies = this.levelData.enemies.map((e) => {
+        let spawnX = e.x;
+        let spawnY = e.y;
+        const initialDist = Math.hypot((spawnX + 8) - (this.player.x + 8), (spawnY + 8) - (this.player.y + 8));
 
-      // Guard: If enemy is placed near player or on low floors, find highest/furthest upper platform
-      if (initialDist < MIN_SAFE_DIST || spawnY > this.player.y - 80) {
-        let bestCandidate = { x: spawnX, y: spawnY };
-        let maxDist = -1;
-        if (this.levelData && this.levelData.floors) {
-          const upperFloors = this.levelData.floors.filter((f) => f.y <= 120);
-          const candidateFloors = upperFloors.length > 0 ? upperFloors : this.levelData.floors;
-          for (const floor of candidateFloors) {
-            const checkXs = [floor.x1 + 8, Math.floor((floor.x1 + floor.x2) / 2), floor.x2 - 8];
-            for (const tx of checkXs) {
-              const d = Math.hypot(tx - this.player.x, floor.y - this.player.y);
-              if (d > maxDist) {
-                maxDist = d;
-                bestCandidate = { x: tx - 8, y: floor.y };
+        // Guard: If enemy is placed near player or on low floors, find highest/furthest upper platform
+        if (initialDist < MIN_SAFE_DIST || spawnY > this.player.y - 80) {
+          let bestCandidate = { x: spawnX, y: spawnY };
+          let maxDist = -1;
+          if (this.levelData && this.levelData.floors) {
+            const upperFloors = this.levelData.floors.filter((f) => f.y <= 120);
+            const candidateFloors = upperFloors.length > 0 ? upperFloors : this.levelData.floors;
+            for (const floor of candidateFloors) {
+              const checkXs = [floor.x1 + 8, Math.floor((floor.x1 + floor.x2) / 2), floor.x2 - 8];
+              for (const tx of checkXs) {
+                const d = Math.hypot(tx - this.player.x, floor.y - this.player.y);
+                if (d > maxDist) {
+                  maxDist = d;
+                  bestCandidate = { x: tx - 8, y: floor.y };
+                }
               }
             }
           }
+          spawnX = bestCandidate.x;
+          spawnY = bestCandidate.y;
         }
-        spawnX = bestCandidate.x;
-        spawnY = bestCandidate.y;
-      }
 
-      return new window.Enemy(e.type, spawnX, spawnY, this.levelData.enemySpeed, this.levelData);
-    });
+        return new window.Enemy(e.type, spawnX, spawnY, this.levelData.enemySpeed, this.levelData);
+      });
+    }
 
     this.pepperClouds = [];
     this.bonusItems = [];
@@ -694,12 +703,13 @@ class BurgerPanicGame {
     }
 
     // Keep camera focused on player for wider stages (unless stage is auto-scrolling)
-    const mapW = (this.levelData && this.levelData.width) ? this.levelData.width : 240;
+    const viewW = this.canvas ? this.canvas.width : 480;
+    const mapW = (this.levelData && this.levelData.width) ? this.levelData.width : viewW;
     if (this.levelData && this.levelData.autoScroll) {
       // Handled continuously by auto-scroller
-    } else if (mapW > 240 && this.player) {
-      const targetCamX = this.player.x + 8 - 120;
-      this.cameraX = Math.max(0, Math.min(targetCamX, mapW - 240));
+    } else if (mapW > viewW && this.player) {
+      const targetCamX = this.player.x + 8 - Math.round(viewW / 2);
+      this.cameraX = Math.max(0, Math.min(targetCamX, mapW - viewW));
     } else {
       this.cameraX = 0;
     }
@@ -894,34 +904,36 @@ class BurgerPanicGame {
       }
 
       // Check collision between enemy and player
+      const isHarmful = (enemy.state === 'normal' || enemy.type === 'crawler' || enemy.type === 'soldier' || (enemy.type === 'drone' && enemy.state === 'alert'));
       if (
-        enemy.state === 'normal' &&
+        isHarmful &&
         !enemy.isFalling &&
         (!enemy.landCooldown || enemy.landCooldown <= 0) &&
         !this.player.isDead &&
         this.player.invulnerableTimer === 0
       ) {
         const dx = Math.abs((enemy.x + 8) - (this.player.x + 8));
+        const dy = Math.abs((enemy.y + 8) - (this.player.y + 8));
 
         if (this.player.isJumping) {
-          // Chef is leaping in the air: can vault over enemies!
-          // Only collides if Chef's feet fail to clear the enemy's head
           const feetY = this.player.y + 14;
           const bodyY = this.player.y;
-          if (dx < 11 && feetY > enemy.y + 2 && bodyY < enemy.y + 16) {
-            this.player.die();
-            this.state = 'DYING';
-            this.stateTimer = 90;
-            return;
+          if (dx < 12 && feetY > enemy.y + 2 && bodyY < enemy.y + 16) {
+            const lethal = this.player.takeDamage ? this.player.takeDamage(25) : (this.player.die(), true);
+            if (lethal) {
+              this.state = 'DYING';
+              this.stateTimer = 90;
+              return;
+            }
           }
         } else {
-          const dist = Math.hypot((enemy.x + 8) - (this.player.x + 8), (enemy.y + 8) - (this.player.y + 8));
-          if (dist < 12) {
-            // Player hit!
-            this.player.die();
-            this.state = 'DYING';
-            this.stateTimer = 90;
-            return;
+          if (dx < 14 && dy < 16) {
+            const lethal = this.player.takeDamage ? this.player.takeDamage(20) : (this.player.die(), true);
+            if (lethal) {
+              this.state = 'DYING';
+              this.stateTimer = 90;
+              return;
+            }
           }
         }
       }
@@ -1212,6 +1224,10 @@ class BurgerPanicGame {
       if (this.kiloburnerBoss.isDead && this.kiloburnerBoss.defeatSequenceDone) {
         isVictory = true;
       }
+    } else if (this.levelData && this.levelData.isSciFi) {
+      // Metroidvania Victory: All alien hostiles eliminated and player reaches the unlocked right airlock!
+      const enemiesCleared = this.enemies.length > 0 && this.enemies.every((e) => e.isDead || e.hp <= 0);
+      isVictory = enemiesCleared && (this.player && this.player.x >= 445);
     } else {
       isVictory = this.burgers.every((b) => b.landedOnPlate);
     }
@@ -1240,12 +1256,13 @@ class BurgerPanicGame {
     }
 
     // 9. Camera Tracking for wide levels (unless stage is auto-scrolling)
-    const mapW = (this.levelData && this.levelData.width) ? this.levelData.width : 240;
+    const viewW2 = this.canvas ? this.canvas.width : 480;
+    const mapW2 = (this.levelData && this.levelData.width) ? this.levelData.width : viewW2;
     if (this.levelData && this.levelData.autoScroll) {
       // Auto-scrolling handled in 5.4 during playing state
-    } else if (mapW > 240 && this.player) {
-      const targetCamX = this.player.x + 8 - 120;
-      this.cameraX = Math.max(0, Math.min(targetCamX, mapW - 240));
+    } else if (mapW2 > viewW2 && this.player) {
+      const targetCamX = this.player.x + 8 - Math.round(viewW2 / 2);
+      this.cameraX = Math.max(0, Math.min(targetCamX, mapW2 - viewW2));
     } else {
       this.cameraX = 0;
     }
@@ -1258,7 +1275,9 @@ class BurgerPanicGame {
     const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
     const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
 
-    if (theme && this.state !== 'TITLE' && this.state !== 'MAP') {
+    if (this.levelData && this.levelData.isSciFi && window.SciFiCargoBay && this.state !== 'TITLE' && this.state !== 'MAP') {
+      window.SciFiCargoBay.draw(this.ctx, this);
+    } else if (theme && this.state !== 'TITLE' && this.state !== 'MAP') {
       this.ctx.fillStyle = theme.wallColor;
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -1678,9 +1697,14 @@ class BurgerPanicGame {
     const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
     const platSpr = window.spriteManager.get('platform');
 
+    const isSciFi = (this.levelData && this.levelData.isSciFi);
     for (const f of this.levelData.floors) {
       if (f.type === 'diagonal') {
-        this.drawDiagonalPlatform(f, theme || platSpr);
+        if (isSciFi && window.SciFiCargoBay) {
+          window.SciFiCargoBay.drawDiagonalStaircase(this.ctx, f);
+        } else {
+          this.drawDiagonalPlatform(f, theme || platSpr);
+        }
       } else if (f.type === 'elevator') {
         this.drawElevatorPlatform(f, theme || platSpr);
       } else if (f.type === 'swaying') {
@@ -1688,7 +1712,9 @@ class BurgerPanicGame {
       } else if (f.type === 'swing') {
         this.drawSwingPlatform(f, theme || platSpr);
       } else {
-        if (theme && window.stageThemesManager) {
+        if (isSciFi && window.SciFiCargoBay) {
+          window.SciFiCargoBay.drawGratingPlatform(this.ctx, f);
+        } else if (theme && window.stageThemesManager) {
           window.stageThemesManager.drawPlatform(this.ctx, f, theme);
         } else if (platSpr) {
           for (let x = f.x1; x < f.x2; x += 16) {

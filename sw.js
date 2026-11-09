@@ -1,4 +1,4 @@
-const CACHE_NAME = 'burgerpanic-mobile-v90';
+const CACHE_NAME = 'burgerpanic-mobile-v91';
 const ASSETS = [
   './',
   './index.html',
@@ -30,6 +30,8 @@ const ASSETS = [
   './js/audio.js',
   './js/sprites.js',
   './js/kiloburner.js',
+  './js/scifi_cargo_bay.js',
+  './js/scifi_enemies.js',
   './js/map.js',
   './js/burger.js',
   './js/entities.js',

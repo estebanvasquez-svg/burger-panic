@@ -13,80 +13,54 @@ class LevelMap {
     return [
 
       // ==========================================
-      // STAGE 1: Classic Beginner Kitchen
+      // ==========================================
+      // STAGE 1: Sector 1: Bahía de Carga (Cargo Bay)
       // ==========================================
       {
         stageNumber: 1,
-        name: 'LA COCINA CLÁSICA',
+        name: 'SECTOR 1: BAHÍA DE CARGA',
+        isSciFi: true,
+        width: 480,
+        height: 270,
         bonusSpots: [
-          { x: 26, y: 148 },
-          { x: 112, y: 100 },
-          { x: 196, y: 148 },
-          { x: 112, y: 244 }
+          { x: 30, y: 110 },
+          { x: 230, y: 176 },
+          { x: 420, y: 176 }
         ],
         floors: [
-          // y, xStart, xEnd
-          { y: 52, x1: 12, x2: 232 },
-          { y: 100, x1: 12, x2: 232 },
-          { y: 148, x1: 12, x2: 232 },
-          { y: 196, x1: 12, x2: 232 },
-          { y: 244, x1: 12, x2: 232 },
-          { y: 292, x1: 12, x2: 232 } // Plate floor
+          // 1. Lower main industrial deck grating
+          { y: 254, x1: 0, x2: 480 },
+          // 2. Left Mezzanine observation deck
+          { y: 110, x1: 0, x2: 100 },
+          // 3. Diagonal open metal stairway (connects left mezzanine to center catwalk)
+          { type: 'diagonal', x1: 100, y1: 110, x2: 176, y2: 176 },
+          // 4. Center structural catwalk (where Space Pepper starts)
+          { y: 176, x1: 176, x2: 286 },
+          // 5. Right security airlock platform
+          { y: 176, x1: 360, x2: 480 },
+          // 6. Cargo Crate A (walkable top)
+          { y: 218, x1: 210, x2: 246 },
+          // 7. Cargo Crate B (walkable top)
+          { y: 208, x1: 394, x2: 434 },
+          // 8. Cargo Crate C (walkable top)
+          { y: 232, x1: 352, x2: 394 }
         ],
         ladders: [
-          // x, yTop, yBottom
-          // Outer left/right ladders
-          { x: 12, y1: 52, y2: 292 },
-          { x: 212, y1: 52, y2: 292 },
-          // Inter-burger ladders
-          { x: 56, y1: 52, y2: 196 },
-          { x: 68, y1: 100, y2: 244 },
-          { x: 112, y1: 52, y2: 244 },
-          { x: 124, y1: 100, y2: 292 },
-          { x: 168, y1: 52, y2: 196 },
-          { x: 180, y1: 148, y2: 292 }
+          // Left service ladder down to lower floor
+          { x: 20, y1: 110, y2: 254 }
         ],
-        burgers: [
-          // Stack 0
-          { col: 0, x: 22, y: 52, type: 'bun_top' },
-          { col: 0, x: 22, y: 100, type: 'lettuce' },
-          { col: 0, x: 22, y: 148, type: 'patty' },
-          { col: 0, x: 22, y: 196, type: 'bun_bottom' },
-
-          // Stack 1
-          { col: 1, x: 78, y: 52, type: 'bun_top' },
-          { col: 1, x: 78, y: 100, type: 'cheese' },
-          { col: 1, x: 78, y: 148, type: 'patty' },
-          { col: 1, x: 78, y: 196, type: 'bun_bottom' },
-
-          // Stack 2
-          { col: 2, x: 134, y: 52, type: 'bun_top' },
-          { col: 2, x: 134, y: 100, type: 'lettuce' },
-          { col: 2, x: 134, y: 148, type: 'patty' },
-          { col: 2, x: 134, y: 196, type: 'bun_bottom' },
-
-          // Stack 3
-          { col: 3, x: 186, y: 52, type: 'bun_top' },
-          { col: 3, x: 186, y: 100, type: 'tomato' },
-          { col: 3, x: 186, y: 148, type: 'patty' },
-          { col: 3, x: 186, y: 196, type: 'bun_bottom' }
-        ],
-        plates: [
-          { x: 20, y: 292 },
-          { x: 76, y: 292 },
-          { x: 132, y: 292 },
-          { x: 184, y: 292 }
-        ],
-        playerStart: { x: 112, y: 292 },
+        burgers: [],
+        plates: [],
+        playerStart: { x: 220, y: 176 },
         enemies: [
-          { type: 'hotdog', x: 22, y: 52 },
-          { type: 'hotdog', x: 186, y: 52 },
-          { type: 'pickle', x: 112, y: 52 }
+          { type: 'drone', x: 168, y: 80 },
+          { type: 'crawler', x: 275, y: 254 },
+          { type: 'soldier', x: 412, y: 176 }
         ],
-        enemySpeed: 0.65
+        enemySpeed: 0.75
       },
 
-      // ==========================================
+// ==========================================
       // STAGE 2: The Staggered Labyrinth
       // ==========================================
       {
