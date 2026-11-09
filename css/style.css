@@ -200,7 +200,7 @@ html, body {
 }
 
 /* ---------------------------------
-   GAME SCREEN / MODERN HD DISPLAY
+   GAME SCREEN / FULL-WIDTH ARCADE DISPLAY
    --------------------------------- */
 .screen-wrapper {
   position: relative;
@@ -210,7 +210,7 @@ html, body {
   flex: 1;
   min-height: 0;
   width: 100%;
-  padding: 6px 10px;
+  padding: 4px 6px;
   background: radial-gradient(circle at 50% 30%, #161426 0%, #06050a 100%);
   overflow: hidden;
 }
@@ -219,25 +219,25 @@ html, body {
   position: relative;
   background: #080710;
   border: 2px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
+  border-radius: 10px;
   box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(130, 80, 255, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  width: 100%;
   height: 100%;
-  max-height: 100%;
   max-width: 100%;
-  aspect-ratio: 240 / 320;
+  max-height: 100%;
 }
 
 canvas#gameCanvas {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: fill;
   background-color: #050508;
-  border-radius: 8px;
+  border-radius: 6px;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;

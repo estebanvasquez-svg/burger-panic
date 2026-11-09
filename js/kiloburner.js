@@ -611,9 +611,10 @@ class KiloburnerBoss {
     this.y = this.baseY + Math.sin(this.floatAngle) * 16;
 
     // Boss patrol anchored to the advancing viewport:
-    // Keeps Kiloburner hovering on the right side of the active screen
-    this.minX = cameraX + 150;
-    this.maxX = cameraX + 218;
+    // Keeps Kiloburner 100% completely visible on screen (never cut in half by right screen boundary)
+    const bossHalfW = Math.round(this.logicalW * 0.55); // ~66px margin
+    this.maxX = cameraX + 240 - bossHalfW - 8;  // ~cameraX + 166 (8px safety margin from right edge)
+    this.minX = cameraX + 240 - bossHalfW - 38; // ~cameraX + 136 (smooth hover swing zone)
 
     if (this.x < this.minX) {
       this.x = this.minX;

@@ -503,7 +503,7 @@ class BurgerPanicGame {
     // Initialize Stage Boss if defined for this level
     if (this.levelData && this.levelData.boss && this.levelData.boss.type === 'kiloburner' && window.KiloburnerBoss) {
       const initialBossX = (this.levelData.autoScrollDir === -1)
-        ? ((this.levelData.width || 1600) - 45) // ~1555 (starts on right behind Chef Pepe)
+        ? ((this.levelData.width || 2500) - 78) // ~2422 (fully visible on screen with right margin)
         : 275;
       this.kiloburnerBoss = new window.KiloburnerBoss(this.levelData.width || 1600, this.height, initialBossX);
       this.cryoProjectiles = [];
@@ -730,7 +730,7 @@ class BurgerPanicGame {
             if (this.levelData && this.levelData.autoScroll && this.levelData.autoScrollDir === -1) {
               this.cameraX = (this.levelData.width || 1600) - 240;
               if (this.kiloburnerBoss) {
-                this.kiloburnerBoss.x = (this.levelData.width || 1600) - 45;
+                this.kiloburnerBoss.x = (this.levelData.width || 2500) - 78;
                 this.kiloburnerBoss.state = 'idle';
               }
             }
