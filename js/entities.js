@@ -708,7 +708,7 @@ class Player {
       // Walking horizontally (symmetrical 4-frame run cycles)
       const runFramesRight = ['run_right_1', 'run_right_2', 'run_right_3', 'run_right_4'];
       const runFramesLeft = ['run_left_1', 'run_left_2', 'run_left_3', 'run_left_4'];
-      const rIdx = Math.floor(this.animTimer / 5) % 4;
+      const rIdx = Math.floor(this.animTimer / 4) % 4;
       if (this.dir === -1) {
         atlasName = runFramesLeft[rIdx];
         flip = false; // Already flipped in atlas
