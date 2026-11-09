@@ -1249,9 +1249,6 @@ class BurgerPanicGame {
       return;
     }
 
-    // Draw HUD (fixed overlay)
-    this.drawHUD();
-
     // World Rendering (translated by camera for wide maps + physical screen shake)
     this.ctx.save();
     let shakeX = 0;
@@ -1382,31 +1379,55 @@ class BurgerPanicGame {
 
     this.ctx.restore();
 
+    // Draw HUD in screen coordinates (fixed overlay)
+    this.drawHUD();
+
     // Render Boss Health Bar (Fixed screen coordinate overlay)
     if (this.kiloburnerBoss) {
       this.kiloburnerBoss.drawBossHealthBar(this.ctx, this.canvas.width);
-    // Render Blowtorch Fuel Gauge (Level 3 Soplete HUD)
+    // Render Blowtorch Fuel Gauge (Level 3 Soplete Top HUD)
     if (this.levelData && this.levelData.blowtorches && this.levelData.blowtorches.length > 0 && this.player) {
       const fuelPct = Math.max(0, Math.min(1, this.player.blowtorchFuel / this.player.maxBlowtorchFuel));
-      const fuelBarW = 76;
-      const fuelBarH = 7;
-      const fuelBarX = 82;
-      const fuelBarY = 22;
+      const fuelBarW = 108;
+      const fuelBarH = 4;
+      const fuelBarX = Math.round((this.canvas.width - fuelBarW) / 2); // 66
+      const fuelBarY = 24;
 
       this.ctx.save();
-      this.ctx.fillStyle = '#ffffff';
-      this.ctx.font = 'bold 7px monospace';
-      this.ctx.textAlign = 'left';
-      this.ctx.fillText(this.player.hasBlowtorch ? `🔥 GAS: ${Math.round(this.player.blowtorchFuel)}%` : '🔍 BUSCA SOPLETE', fuelBarX, fuelBarY - 2);
+      this.ctx.font = 'bold 5.5px "Press Start 2P", monospace, sans-serif';
+      this.ctx.textBaseline = 'middle';
 
+      // Status text above the fuel bar (y = 20)
+      if (this.player.hasBlowtorch && fuelPct > 0) {
+        this.ctx.textAlign = 'left';
+        this.ctx.fillStyle = '#38bdf8';
+        this.ctx.fillText('🔥 SOPLETE', fuelBarX, 20);
+        this.ctx.textAlign = 'right';
+        this.ctx.fillStyle = '#fef08a';
+        this.ctx.fillText(`${Math.round(this.player.blowtorchFuel)}%`, fuelBarX + fuelBarW, 20);
+      } else {
+        this.ctx.textAlign = 'center';
+        const blink = Math.floor(Date.now() / 250) % 2 === 0;
+        this.ctx.fillStyle = blink ? '#ef4444' : '#f59e0b';
+        this.ctx.fillText('¡BUSCA UN SOPLETE!', fuelBarX + fuelBarW / 2, 20);
+      }
+
+      // Fuel Bar Housing
       this.ctx.fillStyle = '#0f172a';
+      this.ctx.fillRect(fuelBarX - 1, fuelBarY - 1, fuelBarW + 2, fuelBarH + 2);
+      this.ctx.strokeStyle = '#334155';
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeRect(fuelBarX - 1, fuelBarY - 1, fuelBarW + 2, fuelBarH + 2);
+
+      // Track
+      this.ctx.fillStyle = '#1e293b';
       this.ctx.fillRect(fuelBarX, fuelBarY, fuelBarW, fuelBarH);
 
       if (this.player.hasBlowtorch && fuelPct > 0) {
         const fillW = Math.round(fuelBarW * fuelPct);
         const grad = this.ctx.createLinearGradient(fuelBarX, fuelBarY, fuelBarX + fuelBarW, fuelBarY);
         grad.addColorStop(0, '#f97316');
-        grad.addColorStop(0.7, '#eab308');
+        grad.addColorStop(0.6, '#eab308');
         grad.addColorStop(1, '#38bdf8');
         this.ctx.fillStyle = grad;
         this.ctx.fillRect(fuelBarX, fuelBarY, fillW, fuelBarH);
@@ -1416,9 +1437,7 @@ class BurgerPanicGame {
           this.ctx.fillRect(fuelBarX, fuelBarY, fuelBarW, fuelBarH);
         }
       }
-      this.ctx.strokeStyle = '#ffffff';
-      this.ctx.lineWidth = 1;
-      this.ctx.strokeRect(fuelBarX, fuelBarY, fuelBarW, fuelBarH);
+
       this.ctx.restore();
     }
 
@@ -1447,19 +1466,21 @@ class BurgerPanicGame {
     // 1UP Score (Left)
     this.ctx.fillStyle = '#e40058';
     this.ctx.textAlign = 'left';
-    this.ctx.fillText('1UP', 14, 14);
+    this.ctx.fillText('1UP', 10, 11);
     this.ctx.fillStyle = '#fcfcfc';
-    this.ctx.fillText(this.score.toString().padStart(6, '0'), 14, 25);
+    this.ctx.fillText(this.score.toString().padStart(6, '0'), 10, 22);
 
-    // Current Stage / Level (Center)
+    // Current Stage / Level (Center - only shown in non-boss stages)
     const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
-    this.ctx.fillStyle = '#fcb400'; // Arcade gold
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('STAGE', 120, 14);
-    this.ctx.fillStyle = '#00f0ff'; // Retro cyan
-    this.ctx.fillText(stageNum.toString().padStart(2, '0'), 120, 25);
+    if (!this.kiloburnerBoss) {
+      this.ctx.fillStyle = '#fcb400'; // Arcade gold
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText('STAGE', 120, 11);
+      this.ctx.fillStyle = '#00f0ff'; // Retro cyan
+      this.ctx.fillText(stageNum.toString().padStart(2, '0'), 120, 22);
+    }
 
-    if (this.devMode) {
+    if (this.devMode && !this.kiloburnerBoss) {
       this.ctx.fillStyle = '#00e436';
       this.ctx.font = '6px "Press Start 2P", monospace';
       this.ctx.fillText('[DEV]', 120, 34);
@@ -1468,25 +1489,13 @@ class BurgerPanicGame {
 
     // High Score (Right)
     this.ctx.fillStyle = '#e40058';
-    this.ctx.textAlign = 'left';
-    this.ctx.fillText('HIGH', 170, 14);
+    this.ctx.textAlign = 'right';
+    this.ctx.fillText('HIGH', 230, 11);
     this.ctx.fillStyle = '#fcfcfc';
-    this.ctx.fillText(this.highScore.toString().padStart(6, '0'), 170, 25);
+    this.ctx.fillText(this.highScore.toString().padStart(6, '0'), 230, 22);
 
-    // Pepper shaker icons or Bio Ammo remaining (Matching Reference Art)
-    if (this.kiloburnerBoss) {
-      this.ctx.fillStyle = '#4ade80';
-      this.ctx.font = '6px "Press Start 2P", monospace';
-      this.ctx.textAlign = 'left';
-      this.ctx.fillText('PEPPER AMMO', 14, 34);
-      // Glowing green battery bars
-      for (let i = 0; i < 5; i++) {
-        this.ctx.fillStyle = '#22c55e';
-        this.ctx.fillRect(14 + i * 9, 37, 7, 5);
-        this.ctx.fillStyle = '#bbf7d0';
-        this.ctx.fillRect(14 + i * 9, 37, 7, 1);
-      }
-    } else {
+    // Pepper shaker icons remaining (in standard levels)
+    if (!this.kiloburnerBoss) {
       const pepperSpr = window.spriteManager.get('pepper_icon');
       if (pepperSpr && this.player) {
         for (let i = 0; i < this.player.peppers; i++) {

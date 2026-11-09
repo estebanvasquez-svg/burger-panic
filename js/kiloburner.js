@@ -919,88 +919,65 @@ class KiloburnerBoss {
   }
 
   /**
-   * Render Retro Arcade Boss Health Bar matching Reference Artwork
-   * Positioned cleanly at bottom center with angled metal bracket
+   * Render Retro Arcade Boss Health Bar in Top HUD
+   * Positioned cleanly at the top center so it does not obstruct the gameplay panorama
    */
   drawBossHealthBar(ctx, screenWidth) {
     if (this.defeatSequenceDone) return;
 
     ctx.save();
 
-    const barW = Math.min(200, screenWidth - 40);
-    const barH = 10;
-    const barX = Math.round((screenWidth - barW) / 2);
-    const barY = 286; // Clean bottom placement matching artwork
+    const barW = 108;
+    const barH = 5;
+    const barX = Math.round((screenWidth - barW) / 2); // 66
+    const barY = 12;
 
-    // 1. Angled Dark Armor Plate Bracket
-    const plateW = 100;
-    const plateH = 12;
-    const plateX = Math.round((screenWidth - plateW) / 2);
-    const plateY = barY - 11;
-
-    ctx.fillStyle = '#0f172a';
-    ctx.beginPath();
-    ctx.moveTo(plateX - 6, plateY + plateH);
-    ctx.lineTo(plateX + 4, plateY);
-    ctx.lineTo(plateX + plateW - 4, plateY);
-    ctx.lineTo(plateX + plateW + 6, plateY + plateH);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-
-    // Rivets on plate corners
-    ctx.fillStyle = '#94a3b8';
-    ctx.fillRect(plateX, plateY + 4, 2, 2);
-    ctx.fillRect(plateX + plateW - 2, plateY + 4, 2, 2);
-
-    // Boss Name: KILOBURNER in Crisp Pixel Font
-    ctx.font = 'bold 8px "Press Start 2P", monospace, sans-serif';
-    ctx.textAlign = 'center';
+    // 1. Sleek Compact Boss Header Label (y = 8)
+    ctx.font = 'bold 5.5px "Press Start 2P", monospace, sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#000000';
-    ctx.fillText('KILOBURNER', screenWidth / 2 + 1, plateY + plateH / 2 + 1);
+
+    // Left label: BOSS: KILOBURNER
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ef4444';
+    ctx.shadowColor = '#000000';
+    ctx.shadowBlur = 2;
+    ctx.fillText('KILOBURNER', barX, 8);
+
+    // Right label: Remaining HP
+    ctx.textAlign = 'right';
     ctx.fillStyle = '#f8fafc';
-    ctx.fillText('KILOBURNER', screenWidth / 2, plateY + plateH / 2);
+    ctx.fillText(`${Math.max(0, this.health)} HP`, barX + barW, 8);
+    ctx.shadowBlur = 0;
 
     // 2. Health Bar Outer Steel Housing
-    ctx.fillStyle = '#0b0f19';
-    ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
 
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(barX - 2, barY - 2, barW + 4, barH + 4);
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barX - 1, barY - 1, barW + 2, barH + 2);
 
     // Health Track (Dark Red background)
     ctx.fillStyle = '#3f0c0c';
     ctx.fillRect(barX, barY, barW, barH);
 
-    // Current HP Fill (Vivid Fiery Red matching Reference Art)
+    // Current HP Fill (Fiery Red to Gold Gradient)
     const healthRatio = Math.max(0, Math.min(1, this.health / this.maxHealth));
     const currentW = Math.round(barW * healthRatio);
 
     if (currentW > 0) {
-      const hpGrad = ctx.createLinearGradient(barX, barY, barX, barY + barH);
-      hpGrad.addColorStop(0, '#f87171');
-      hpGrad.addColorStop(0.35, '#ef4444');
-      hpGrad.addColorStop(1, '#b91c1c');
+      const hpGrad = ctx.createLinearGradient(barX, barY, barX + currentW, barY);
+      hpGrad.addColorStop(0, '#ef4444');
+      hpGrad.addColorStop(0.7, '#f97316');
+      hpGrad.addColorStop(1, '#fef08a');
 
       ctx.fillStyle = hpGrad;
       ctx.fillRect(barX, barY, currentW, barH);
 
       // Top gloss highlight
       ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-      ctx.fillRect(barX, barY, currentW, Math.floor(barH / 2));
+      ctx.fillRect(barX, barY, currentW, 1);
     }
-
-    // Health numbers / percentage overlay
-    ctx.font = '7px monospace';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(`${this.health} HP`, barX + barW - 4, barY + barH / 2);
 
     ctx.restore();
   }
