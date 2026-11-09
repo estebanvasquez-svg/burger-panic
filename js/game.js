@@ -420,10 +420,14 @@ class BurgerPanicGame {
     this.particles = [];
     this.screenShake = 0;
 
-    // Initialize player (always start on the bottom ground floor of the stage)
-    const bottomFloor = this.levelData.floors[this.levelData.floors.length - 1];
-    const groundY = bottomFloor ? bottomFloor.y : (this.levelData.playerStart ? this.levelData.playerStart.y : 288);
-    const groundX = this.levelData.playerStart ? this.levelData.playerStart.x : 112;
+    // Initialize player (prioritize playerStart if defined in levelData)
+    const bottomFloor = this.levelData.floors.find(f => f.y >= 280) || this.levelData.floors[this.levelData.floors.length - 1];
+    const groundY = (this.levelData.playerStart && this.levelData.playerStart.y !== undefined)
+      ? this.levelData.playerStart.y
+      : (bottomFloor ? bottomFloor.y : 288);
+    const groundX = (this.levelData.playerStart && this.levelData.playerStart.x !== undefined)
+      ? this.levelData.playerStart.x
+      : 112;
 
     if (!this.player) {
       this.player = new window.Player(groundX, groundY, this.levelData);
@@ -432,6 +436,12 @@ class BurgerPanicGame {
       this.player.startY = groundY;
       this.player.resetPosition();
       this.player.levelData = this.levelData;
+    }
+
+    if (this.levelData && this.levelData.autoScrollDir === -1 && this.player) {
+      this.player.dir = -1;
+      this.player.facingDir = 'left';
+      this.player.lastTossDir = 'left';
     }
 
     // Initialize burgers
@@ -473,7 +483,12 @@ class BurgerPanicGame {
     this.bonusItems = [];
     this.popups = [];
     this.bonusSpawnTimer = 350;
-    this.cameraX = 0;
+    const maxCamInitX = Math.max(0, (this.levelData.width || 240) - 240);
+    if (this.levelData && this.levelData.autoScroll && this.levelData.autoScrollDir === -1) {
+      this.cameraX = maxCamInitX;
+    } else {
+      this.cameraX = 0;
+    }
     this.blowtorches = [];
     this.flameProjectiles = [];
     this.stageBonusItemsSpawned = 0;
@@ -487,7 +502,10 @@ class BurgerPanicGame {
 
     // Initialize Stage Boss if defined for this level
     if (this.levelData && this.levelData.boss && this.levelData.boss.type === 'kiloburner' && window.KiloburnerBoss) {
-      this.kiloburnerBoss = new window.KiloburnerBoss(this.levelData.width || 1600, this.height);
+      const initialBossX = (this.levelData.autoScrollDir === -1)
+        ? ((this.levelData.width || 1600) - 45) // ~1555 (starts on right behind Chef Pepe)
+        : 275;
+      this.kiloburnerBoss = new window.KiloburnerBoss(this.levelData.width || 1600, this.height, initialBossX);
       this.cryoProjectiles = [];
       this.bossProjectiles = [];
     } else {
@@ -709,6 +727,13 @@ class BurgerPanicGame {
         if (this.stateTimer <= 0) {
           if (this.player.lives > 0) {
             this.player.resetPosition();
+            if (this.levelData && this.levelData.autoScroll && this.levelData.autoScrollDir === -1) {
+              this.cameraX = (this.levelData.width || 1600) - 240;
+              if (this.kiloburnerBoss) {
+                this.kiloburnerBoss.x = (this.levelData.width || 1600) - 45;
+                this.kiloburnerBoss.state = 'idle';
+              }
+            }
             // Reset enemies to starting corners (farthest from player)
             this.enemies.forEach((e) => e.respawn(this.player));
             this.state = 'READY';
@@ -896,14 +921,18 @@ class BurgerPanicGame {
     if (this.levelData && this.levelData.autoScroll && (!this.kiloburnerBoss || !this.kiloburnerBoss.isDead)) {
       const scrollSpeed = this.levelData.autoScrollSpeed || 0.45;
       const maxCamX = (this.levelData.width || 1600) - 240;
-      this.cameraX = Math.min(maxCamX, (this.cameraX || 0) + scrollSpeed);
+      if (this.levelData.autoScrollDir === -1) {
+        this.cameraX = Math.max(0, (this.cameraX !== undefined ? this.cameraX : maxCamX) - scrollSpeed);
+      } else {
+        this.cameraX = Math.min(maxCamX, (this.cameraX || 0) + scrollSpeed);
+      }
 
-      // Clamp player within visible scrolling bounds
+      // Clamp player within visible scrolling bounds in front of pursuing boss
       if (this.player && !this.player.isDead) {
-        if (this.player.x < this.cameraX + 4) {
-          this.player.x = this.cameraX + 4;
-        } else if (this.player.x > this.cameraX + 220) {
-          this.player.x = this.cameraX + 220;
+        if (this.player.x < this.cameraX + 6) {
+          this.player.x = this.cameraX + 6;
+        } else if (this.player.x > this.cameraX + 215) {
+          this.player.x = this.cameraX + 215;
         }
       }
     }

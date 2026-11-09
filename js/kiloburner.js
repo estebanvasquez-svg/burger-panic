@@ -263,7 +263,9 @@ class BlowtorchPickup {
 
   checkCollision(player) {
     if (this.collected) return false;
-    return Math.abs((player.x + 8) - this.x) < 14 && Math.abs((player.y + 14) - this.y) < 14;
+    const dx = Math.abs((player.x + 8) - this.x);
+    const dy = Math.abs(player.y - this.y);
+    return dx < 18 && dy <= 16;
   }
 }
 
@@ -370,13 +372,14 @@ class MeatballProjectile {
  * Kiloburner - Giant Boss Class
  */
 class KiloburnerBoss {
-  constructor(arenaWidth = 320, arenaHeight = 320) {
+  constructor(arenaWidth = 320, arenaHeight = 320, initialX = null) {
     this.arenaWidth = arenaWidth;
     this.arenaHeight = arenaHeight;
 
     // Anchor position (center-bottom reference)
-    this.x = 275; // Right-hand cybernetic pedestal
-    this.baseY = 150; // Hover level aligning with sniper platform
+    // Default to right side when in wide scrolling arena (e.g. 1555 in 1600px stage)
+    this.x = (initialX !== null) ? initialX : (arenaWidth > 320 ? arenaWidth - 45 : 275);
+    this.baseY = 205; // Hover level aligning with combat platforms (y = 200)
     this.y = this.baseY;
 
     // Scale ratio from original ~240px sprite down to game size (~96x68)
@@ -656,10 +659,10 @@ class KiloburnerBoss {
     if (this.health <= 0 || this.isDead) return false;
 
     // Body hitbox
-    const left = this.x - this.logicalW * 0.45;
-    const right = this.x + this.logicalW * 0.45;
+    const left = this.x - this.logicalW * 0.5;
+    const right = this.x + this.logicalW * 0.5;
     const top = this.y - this.logicalH;
-    const bottom = this.y;
+    const bottom = this.y + 16;
 
     if (projectile.x >= left && projectile.x <= right &&
         projectile.y >= top && projectile.y <= bottom) {
@@ -673,10 +676,10 @@ class KiloburnerBoss {
     if (this.health <= 0 || this.isDead) return false;
 
     // Body hitbox
-    const left = this.x - this.logicalW * 0.45;
-    const right = this.x + this.logicalW * 0.45;
+    const left = this.x - this.logicalW * 0.5;
+    const right = this.x + this.logicalW * 0.5;
     const top = this.y - this.logicalH;
-    const bottom = this.y;
+    const bottom = this.y + 16;
 
     if (projectile.x >= left && projectile.x <= right &&
         projectile.y >= top && projectile.y <= bottom) {

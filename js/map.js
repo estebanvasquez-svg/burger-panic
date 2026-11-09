@@ -180,22 +180,18 @@ class LevelMap {
         width: 1600,
         autoScroll: true,
         autoScrollSpeed: 0.45,
+        autoScrollDir: -1,
         bonusSpots: [
-          { x: 120, y: 120 },
-          { x: 390, y: 120 },
-          { x: 660, y: 120 },
-          { x: 930, y: 120 },
+          { x: 1460, y: 120 },
           { x: 1200, y: 120 },
-          { x: 1460, y: 120 }
+          { x: 930, y: 120 },
+          { x: 660, y: 120 },
+          { x: 390, y: 120 },
+          { x: 120, y: 120 }
         ],
         floors: [
-          // Ground floor segments (y = 288)
-          { y: 288, x1: 20, x2: 260 },
-          { y: 288, x1: 280, x2: 530 },
-          { y: 288, x1: 550, x2: 800 },
-          { y: 288, x1: 820, x2: 1070 },
-          { y: 288, x1: 1090, x2: 1340 },
-          { y: 288, x1: 1360, x2: 1590 },
+          // Continuous ground floor (y = 288)
+          { y: 288, x1: 20, x2: 1590 },
 
           // Blowtorch combat platforms (y = 200)
           { y: 200, x1: 90, x2: 190 },
@@ -249,19 +245,20 @@ class LevelMap {
 
           // Section 6 (x: 1340 - 1600)
           { x: 1440, y1: 200, y2: 288 },
-          { x: 1500, y1: 120, y2: 200 }
+          { x: 1500, y1: 120, y2: 200 },
+          { x: 1490, y1: 52, y2: 120 }
         ],
         blowtorches: [
-          { id: 1, x: 140, y: 200 },
-          { id: 2, x: 400, y: 200 },
-          { id: 3, x: 670, y: 200 },
-          { id: 4, x: 940, y: 200 },
+          { id: 6, x: 1470, y: 200 },
           { id: 5, x: 1210, y: 200 },
-          { id: 6, x: 1470, y: 200 }
+          { id: 4, x: 940, y: 200 },
+          { id: 3, x: 670, y: 200 },
+          { id: 2, x: 400, y: 200 },
+          { id: 1, x: 140, y: 200 }
         ],
         burgers: [],
         plates: [],
-        playerStart: { x: 40, y: 288 },
+        playerStart: { x: 1420, y: 288 },
         enemies: [],
         enemySpeed: 0.70
       },

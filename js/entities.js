@@ -112,9 +112,15 @@ class Player {
     this.y = this.startY;
     this.vx = 0;
     this.vy = 0;
-    this.dir = 1;
-    this.facingDir = 'right';
-    this.lastTossDir = 'right';
+    if (this.levelData && this.levelData.autoScrollDir === -1) {
+      this.dir = -1;
+      this.facingDir = 'left';
+      this.lastTossDir = 'left';
+    } else {
+      this.dir = 1;
+      this.facingDir = 'right';
+      this.lastTossDir = 'right';
+    }
     this.isClimbing = false;
     this.isJumping = false;
     this.isDead = false;
@@ -251,6 +257,8 @@ class Player {
     let dir = (this.facingDir === 'left' || this.dir === -1) ? -1 : 1;
     if (currentInput && currentInput.x !== 0) {
       dir = (currentInput.x < 0) ? -1 : 1;
+    } else if (this.levelData && this.levelData.autoScrollDir === -1 && this.facingDir === 'right') {
+      dir = 1; // Aim right at the pursuing boss behind chef
     }
     this.dir = dir;
     this.facingDir = (dir === -1) ? 'left' : 'right';
