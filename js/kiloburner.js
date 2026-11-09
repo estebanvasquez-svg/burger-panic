@@ -570,8 +570,9 @@ class KiloburnerBoss {
     return false;
   }
 
-  draw(ctx, spriteManager) {
-    if (!spriteManager) return;
+  draw(ctx, spriteManager = window.spriteManager) {
+    const sm = spriteManager || window.spriteManager;
+    if (!sm) return;
 
     // Select sprite name based on state
     let spriteName = 'move_idle';
@@ -691,7 +692,7 @@ class KiloburnerBoss {
       ctx.shadowBlur = 8 + Math.sin(Date.now() * 0.01) * 4;
     }
 
-    spriteManager.drawKiloburnerAtlas(ctx, spriteName, drawX, drawY, renderW, renderH, flip);
+    sm.drawKiloburnerAtlas(ctx, spriteName, drawX, drawY, renderW, renderH, flip);
     ctx.restore();
 
     // Draw active explosions during defeat

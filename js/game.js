@@ -3,6 +3,9 @@
  * Original Indie Retro Arcade Platformer
  */
 class BurgerPanicGame {
+  get sprites() {
+    return window.spriteManager ? window.spriteManager.sprites : {};
+  }
   constructor() {
     this.canvas = document.getElementById('gameCanvas');
     this.ctx = this.canvas.getContext('2d');
@@ -38,6 +41,7 @@ class BurgerPanicGame {
     this.devMode = localStorage.getItem('burgerpanic_dev_mode') === 'true';
     this.toastTimeout = null;
 
+    this.spriteManager = window.spriteManager;
     this.mapSelectedStage = 1;
     this.mapNavLock = false;
     this.mapScrollY = 600;
@@ -1131,8 +1135,9 @@ class BurgerPanicGame {
 
     // Render Cyber Furnace Environment Details for Stage 3 (matching reference artwork)
     if (stageNum === 3) {
-      if (this.sprites.bg_stage_3) {
-        this.ctx.drawImage(this.sprites.bg_stage_3, 0, 0, 360, 320);
+      const bg3 = window.spriteManager ? window.spriteManager.sprites.bg_stage_3 : null;
+      if (bg3) {
+        this.ctx.drawImage(bg3, 0, 0, 360, 320);
       }
 
       // Truss lattice support legs under the sniper platform (x: 60 to 140, y: 200 to 288)
@@ -1207,7 +1212,7 @@ class BurgerPanicGame {
 
     // Draw Kiloburner Giant Boss
     if (this.kiloburnerBoss) {
-      this.kiloburnerBoss.draw(this.ctx, this.sprites);
+      this.kiloburnerBoss.draw(this.ctx, window.spriteManager);
     }
 
     // Draw Pepper Clouds
