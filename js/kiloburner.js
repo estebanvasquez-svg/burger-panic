@@ -785,31 +785,35 @@ class KiloburnerBoss {
     const sm = spriteManager || window.spriteManager;
     if (!sm) return;
 
-    // Select sprite name with fluid multi-frame animation (100% consistent with original art)
-    let spriteName = 'idle_1';
+    // Select sprite name with 60 FPS ultra-fluid high-density frames (100% consistent with original art)
+    let spriteName = 'hover_00';
 
     if (this.state === 'dead') {
       spriteName = 'defeat_dead';
     } else if (this.state === 'explode') {
-      spriteName = (this.stateTimer % 6 < 3) ? 'defeat_explode' : 'hit_1';
+      spriteName = (this.stateTimer % 6 < 3) ? 'defeat_explode' : 'hit_01';
     } else if (this.hitFlashTimer > 0) {
-      spriteName = (this.hitFlashTimer % 4 < 2) ? 'hit_1' : 'hit_2';
+      const hitIdx = Math.min(3, Math.floor(this.hitFlashTimer / 2)) % 4;
+      spriteName = 'hit_' + String(hitIdx).padStart(2, '0');
     } else if (this.state === 'recoil') {
-      spriteName = (this.stateTimer % 8 < 4) ? 'recoil_1' : 'recoil_2';
+      const hitIdx = Math.min(3, Math.floor(this.stateTimer / 3)) % 4;
+      spriteName = 'hit_' + String(hitIdx).padStart(2, '0');
     } else if (this.state === 'claw') {
-      const clawIdx = Math.min(4, Math.floor(this.stateTimer / 6));
-      spriteName = ['claw_1', 'claw_2', 'claw_3', 'claw_4', 'claw_5'][clawIdx] || 'attack_claw';
+      // 8-frame ultra-fluid claw strike cycle (45 frames total, ~5.5 frames per in-between)
+      const clawIdx = Math.min(7, Math.floor(this.stateTimer / 5.5));
+      spriteName = 'claw_' + String(clawIdx).padStart(2, '0');
     } else if (this.state === 'flame') {
-      const flameIdx = Math.min(3, Math.floor(this.stateTimer / 7));
-      spriteName = ['flame_1', 'flame_2', 'flame_3', 'flame_4'][flameIdx] || 'attack_flame';
+      // 8-frame ultra-fluid flame stream cycle (65 frames total, ~8 frames per in-between)
+      const flameIdx = Math.min(7, Math.floor(this.stateTimer / 8));
+      spriteName = 'flame_' + String(flameIdx).padStart(2, '0');
     } else if (this.state === 'meatball') {
-      spriteName = (this.stateTimer % 10 < 5) ? 'attack_meatball' : 'idle_5';
+      spriteName = (this.stateTimer % 10 < 5) ? 'attack_meatball' : 'hover_08';
     } else if (this.state === 'lean') {
-      spriteName = 'idle_5';
+      spriteName = 'hover_08';
     } else {
-      // Continuous 6-frame fluid hover & mechanical breathing cycle
-      const hoverIdx = Math.floor(this.animTimer / 7) % 6;
-      spriteName = ['idle_1', 'idle_2', 'idle_3', 'idle_4', 'idle_5', 'idle_6'][hoverIdx];
+      // Ultra-fluid 16-frame hover & respiration cycle at 60 FPS (updates every 2.5 frames)
+      const hoverIdx = Math.floor(this.animTimer / 2.5) % 16;
+      spriteName = 'hover_' + String(hoverIdx).padStart(2, '0');
     }
 
     const info = spriteManager.getKiloburnerAtlasInfo(spriteName);
@@ -961,6 +965,19 @@ class KiloburnerBoss {
       }
     }
 
+    // 60 Hz Micro-Transforms for Organic 60 FPS Respiration & Tilting
+    ctx.save();
+    if (this.state !== 'dead') {
+      const breathY = 1.0 + Math.sin(this.animTimer * 0.08) * 0.022;
+      const breathX = 1.0 - Math.sin(this.animTimer * 0.08) * 0.012;
+      const tilt = Math.sin(this.floatAngle) * 0.032;
+
+      ctx.translate(this.x, this.y);
+      ctx.rotate(flip ? -tilt : tilt);
+      ctx.scale(breathX, breathY);
+      ctx.translate(-this.x, -this.y);
+    }
+
     // Damage flash effect (white / cyan silhouette flash)
     if (this.hitFlashTimer > 0 && Math.floor(this.hitFlashTimer / 2) % 2 === 0) {
       ctx.filter = 'brightness(2.2) drop-shadow(0 0 6px #4ade80)';
@@ -973,7 +990,34 @@ class KiloburnerBoss {
     }
 
     sm.drawKiloburnerAtlas(ctx, spriteName, drawX, drawY, renderW, renderH, flip);
-    ctx.restore();
+
+    // 60 Hz Pulsing Cybernetic Crimson Eye Flare
+    if (this.state !== 'dead' && this.hitFlashTimer <= 0) {
+      const eyeRelX = (info.w * 0.38) * this.scale;
+      const eyeRelY = (info.h * 0.40) * this.scale;
+      const eyeX = flip ? (drawX + renderW - eyeRelX) : (drawX + eyeRelX);
+      const eyeY = drawY + eyeRelY;
+      const eyePulse = 0.55 + Math.sin(this.animTimer * 0.16) * 0.35 + (Math.random() * 0.1);
+      
+      const glowGrad = ctx.createRadialGradient(eyeX, eyeY, 1, eyeX, eyeY, 8 * this.scale);
+      glowGrad.addColorStop(0, 'rgba(255, 50, 50, ' + (0.85 * eyePulse) + ')');
+      glowGrad.addColorStop(0.4, 'rgba(239, 68, 68, ' + (0.5 * eyePulse) + ')');
+      glowGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(eyeX, eyeY, 8 * this.scale, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sharp pupil pinpoint
+      ctx.fillStyle = 'rgba(255, 245, 245, ' + (0.9 * eyePulse) + ')';
+      ctx.beginPath();
+      ctx.arc(eyeX, eyeY, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore(); // restore boss body transform
+    ctx.restore(); // restore main draw context
 
     // Draw active explosions during defeat
     for (const ex of this.explosionList) {
