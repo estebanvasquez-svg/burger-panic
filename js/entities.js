@@ -105,6 +105,23 @@ class Player {
     this.blowtorchFuel = 0;
     this.maxBlowtorchFuel = 100;
     this.flameSoundTimer = 0;
+
+    // Sci-Fi Metroid Tactical Stats & Abilities
+    this.health = 100;
+    this.maxHealth = 100;
+    this.energy = 100;
+    this.maxEnergy = 100;
+    this.isFiringBeam = false;
+    this.beamTimer = 0;
+    this.beamMuzzleX = 0;
+    this.beamMuzzleY = 0;
+    this.beamHitX = 0;
+    this.beamHitY = 0;
+    this.beamHitTarget = null;
+    this.beamSparks = [];
+    this.isDashing = false;
+    this.dashTimer = 0;
+    this.dashCooldown = 0;
   }
 
   resetPosition() {
@@ -133,9 +150,14 @@ class Player {
     this.maxBlowtorchFuel = 100;
     this.flameSoundTimer = 0;
     this.invulnerableTimer = 120; // ~2 seconds of grace flicker
-    this.hasBlowtorch = false;
-    this.blowtorchFuel = 0;
-    this.flameSoundTimer = 0;
+
+    this.health = 100;
+    this.energy = 100;
+    this.isFiringBeam = false;
+    this.beamSparks = [];
+    this.isDashing = false;
+    this.dashTimer = 0;
+    this.dashCooldown = 0;
   }
 
   dropFromLadder(dir) {
@@ -625,6 +647,168 @@ class Player {
     window.soundManager.playDie();
   }
 
+
+  updatePlasmaBeam(enemies, boss) {
+    if (this.dashCooldown > 0) this.dashCooldown--;
+    if (this.dashTimer > 0) {
+      this.dashTimer--;
+      if (this.dashTimer <= 0) this.isDashing = false;
+    }
+
+    if (!this.isFiringBeam || this.isDead) {
+      this.beamHitTarget = null;
+      // Passive energy core recharge when idle
+      if (this.energy < this.maxEnergy && !this.isDashing) {
+        this.energy = Math.min(this.maxEnergy, this.energy + 0.35);
+      }
+      return;
+    }
+
+    // Drain energy core while firing continuous plasma beam
+    this.energy = Math.max(0, this.energy - 0.28);
+    if (this.energy <= 0) {
+      this.isFiringBeam = false;
+      this.beamHitTarget = null;
+      return;
+    }
+
+    this.beamTimer++;
+    const isFacingLeft = (this.dir === -1 || this.facingDir === 'left');
+    this.beamMuzzleX = isFacingLeft ? (this.x - 3) : (this.x + 21);
+    this.beamMuzzleY = this.y + 7;
+
+    const maxBeamLength = 340;
+    const dirSign = isFacingLeft ? -1 : 1;
+    let closestHitDist = maxBeamLength;
+    let hitObj = null;
+
+    // Check hit with Boss
+    if (boss && !boss.isDead) {
+      const bDist = (boss.x - this.beamMuzzleX) * dirSign;
+      if (bDist > 0 && bDist < closestHitDist) {
+        if (Math.abs(boss.y - this.beamMuzzleY) < 60) {
+          closestHitDist = bDist;
+          hitObj = boss;
+          boss.takeDamage(1.3);
+        }
+      }
+    }
+
+    // Check hit with regular enemies
+    if (enemies) {
+      for (const e of enemies) {
+        if (e.isDead || e.state === 'dead') continue;
+        const eDist = (e.x + 8 - this.beamMuzzleX) * dirSign;
+        if (eDist > 0 && eDist < closestHitDist) {
+          if (Math.abs(e.y + 8 - this.beamMuzzleY) < 18) {
+            closestHitDist = eDist;
+            hitObj = e;
+            if (e.takeDamage) {
+              e.takeDamage(1.5);
+            } else if (e.stun) {
+              e.stun();
+            }
+          }
+        }
+      }
+    }
+
+    this.beamHitX = this.beamMuzzleX + dirSign * closestHitDist;
+    this.beamHitY = this.beamMuzzleY;
+    this.beamHitTarget = hitObj;
+
+    // Spawn green/cyan incandescent plasma impact sparks
+    if (Math.random() < 0.85) {
+      this.beamSparks.push({
+        x: this.beamHitX,
+        y: this.beamHitY,
+        vx: -dirSign * (1.2 + Math.random() * 2.5) + (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 2.8,
+        color: Math.random() < 0.35 ? '#ffffff' : (Math.random() < 0.65 ? '#86efac' : '#22c55e'),
+        life: 8 + Math.random() * 6,
+        maxLife: 14,
+        size: 1.5 + Math.random() * 2
+      });
+    }
+
+    for (let i = this.beamSparks.length - 1; i >= 0; i--) {
+      const s = this.beamSparks[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life--;
+      if (s.life <= 0) this.beamSparks.splice(i, 1);
+    }
+  }
+
+  drawPlasmaBeam(ctx) {
+    if (!this.isFiringBeam && this.beamSparks.length === 0) return;
+
+    ctx.save();
+
+    if (this.isFiringBeam) {
+      const mX = this.beamMuzzleX;
+      const mY = this.beamMuzzleY;
+      const hX = this.beamHitX;
+      const hY = this.beamHitY;
+      const pulse = Math.sin(Date.now() * 0.05) * 1.5;
+
+      // 1. Outer Translucent Emerald Glow
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.40)';
+      ctx.lineWidth = 8 + pulse;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 2. High-energy Neon Beam Body
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 4 + pulse * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 3. Superheated White Core
+      ctx.strokeStyle = '#f0fdf4';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 4. Muzzle Burst Flash
+      const mGrad = ctx.createRadialGradient(mX, mY, 1, mX, mY, 8);
+      mGrad.addColorStop(0, '#ffffff');
+      mGrad.addColorStop(0.5, '#4ade80');
+      mGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = mGrad;
+      ctx.beginPath();
+      ctx.arc(mX, mY, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Impact Splash at Target
+      const hitGrad = ctx.createRadialGradient(hX, hY, 1, hX, hY, 10 + pulse);
+      hitGrad.addColorStop(0, '#ffffff');
+      hitGrad.addColorStop(0.4, '#86efac');
+      hitGrad.addColorStop(0.8, 'rgba(34, 197, 94, 0.6)');
+      hitGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = hitGrad;
+      ctx.beginPath();
+      ctx.arc(hX, hY, 10 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Impact Sparks
+    for (const spk of this.beamSparks) {
+      const alpha = Math.max(0, spk.life / spk.maxLife);
+      ctx.fillStyle = spk.color;
+      ctx.globalAlpha = alpha;
+      ctx.fillRect(Math.round(spk.x), Math.round(spk.y), Math.round(spk.size), Math.round(spk.size));
+    }
+
+    ctx.restore();
+  }
+
   draw(ctx) {
     if (this.isDead) {
       // Animated 2-sprite defeat sequence:
@@ -746,6 +930,37 @@ class Player {
       // Fallback
       const spr = window.spriteManager.get('player_walk1');
       if (spr) ctx.drawImage(spr, this.x, this.y, 16, 16);
+    }
+
+    // Render Continuous Plasma Laser Beam
+    this.drawPlasmaBeam(ctx);
+
+    // Twin Thruster Jets under Boots when dashing or leaping
+    if ((this.isDashing || (this.isJumping && this.vy < 0)) && !this.isDead) {
+      ctx.save();
+      const footY = this.y + 14;
+      const bLeft = this.x + 3;
+      const bRight = this.x + 11;
+      const flameH = (this.isDashing ? 12 : 6) + Math.random() * 4;
+
+      for (const fx of [bLeft, bRight]) {
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath();
+        ctx.moveTo(fx - 2, footY);
+        ctx.lineTo(fx + 2, footY);
+        ctx.lineTo(fx, footY + flameH);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath();
+        ctx.moveTo(fx - 1, footY);
+        ctx.lineTo(fx + 1, footY);
+        ctx.lineTo(fx, footY + flameH * 0.6);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
     }
 
     if (hasScale) {
@@ -1248,6 +1463,168 @@ class Enemy {
     this.x = Math.max(12, Math.min(this.x, mapW - this.width - 6));
   }
 
+
+  updatePlasmaBeam(enemies, boss) {
+    if (this.dashCooldown > 0) this.dashCooldown--;
+    if (this.dashTimer > 0) {
+      this.dashTimer--;
+      if (this.dashTimer <= 0) this.isDashing = false;
+    }
+
+    if (!this.isFiringBeam || this.isDead) {
+      this.beamHitTarget = null;
+      // Passive energy core recharge when idle
+      if (this.energy < this.maxEnergy && !this.isDashing) {
+        this.energy = Math.min(this.maxEnergy, this.energy + 0.35);
+      }
+      return;
+    }
+
+    // Drain energy core while firing continuous plasma beam
+    this.energy = Math.max(0, this.energy - 0.28);
+    if (this.energy <= 0) {
+      this.isFiringBeam = false;
+      this.beamHitTarget = null;
+      return;
+    }
+
+    this.beamTimer++;
+    const isFacingLeft = (this.dir === -1 || this.facingDir === 'left');
+    this.beamMuzzleX = isFacingLeft ? (this.x - 3) : (this.x + 21);
+    this.beamMuzzleY = this.y + 7;
+
+    const maxBeamLength = 340;
+    const dirSign = isFacingLeft ? -1 : 1;
+    let closestHitDist = maxBeamLength;
+    let hitObj = null;
+
+    // Check hit with Boss
+    if (boss && !boss.isDead) {
+      const bDist = (boss.x - this.beamMuzzleX) * dirSign;
+      if (bDist > 0 && bDist < closestHitDist) {
+        if (Math.abs(boss.y - this.beamMuzzleY) < 60) {
+          closestHitDist = bDist;
+          hitObj = boss;
+          boss.takeDamage(1.3);
+        }
+      }
+    }
+
+    // Check hit with regular enemies
+    if (enemies) {
+      for (const e of enemies) {
+        if (e.isDead || e.state === 'dead') continue;
+        const eDist = (e.x + 8 - this.beamMuzzleX) * dirSign;
+        if (eDist > 0 && eDist < closestHitDist) {
+          if (Math.abs(e.y + 8 - this.beamMuzzleY) < 18) {
+            closestHitDist = eDist;
+            hitObj = e;
+            if (e.takeDamage) {
+              e.takeDamage(1.5);
+            } else if (e.stun) {
+              e.stun();
+            }
+          }
+        }
+      }
+    }
+
+    this.beamHitX = this.beamMuzzleX + dirSign * closestHitDist;
+    this.beamHitY = this.beamMuzzleY;
+    this.beamHitTarget = hitObj;
+
+    // Spawn green/cyan incandescent plasma impact sparks
+    if (Math.random() < 0.85) {
+      this.beamSparks.push({
+        x: this.beamHitX,
+        y: this.beamHitY,
+        vx: -dirSign * (1.2 + Math.random() * 2.5) + (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 2.8,
+        color: Math.random() < 0.35 ? '#ffffff' : (Math.random() < 0.65 ? '#86efac' : '#22c55e'),
+        life: 8 + Math.random() * 6,
+        maxLife: 14,
+        size: 1.5 + Math.random() * 2
+      });
+    }
+
+    for (let i = this.beamSparks.length - 1; i >= 0; i--) {
+      const s = this.beamSparks[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life--;
+      if (s.life <= 0) this.beamSparks.splice(i, 1);
+    }
+  }
+
+  drawPlasmaBeam(ctx) {
+    if (!this.isFiringBeam && this.beamSparks.length === 0) return;
+
+    ctx.save();
+
+    if (this.isFiringBeam) {
+      const mX = this.beamMuzzleX;
+      const mY = this.beamMuzzleY;
+      const hX = this.beamHitX;
+      const hY = this.beamHitY;
+      const pulse = Math.sin(Date.now() * 0.05) * 1.5;
+
+      // 1. Outer Translucent Emerald Glow
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.40)';
+      ctx.lineWidth = 8 + pulse;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 2. High-energy Neon Beam Body
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 4 + pulse * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 3. Superheated White Core
+      ctx.strokeStyle = '#f0fdf4';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 4. Muzzle Burst Flash
+      const mGrad = ctx.createRadialGradient(mX, mY, 1, mX, mY, 8);
+      mGrad.addColorStop(0, '#ffffff');
+      mGrad.addColorStop(0.5, '#4ade80');
+      mGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = mGrad;
+      ctx.beginPath();
+      ctx.arc(mX, mY, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Impact Splash at Target
+      const hitGrad = ctx.createRadialGradient(hX, hY, 1, hX, hY, 10 + pulse);
+      hitGrad.addColorStop(0, '#ffffff');
+      hitGrad.addColorStop(0.4, '#86efac');
+      hitGrad.addColorStop(0.8, 'rgba(34, 197, 94, 0.6)');
+      hitGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = hitGrad;
+      ctx.beginPath();
+      ctx.arc(hX, hY, 10 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Impact Sparks
+    for (const spk of this.beamSparks) {
+      const alpha = Math.max(0, spk.life / spk.maxLife);
+      ctx.fillStyle = spk.color;
+      ctx.globalAlpha = alpha;
+      ctx.fillRect(Math.round(spk.x), Math.round(spk.y), Math.round(spk.size), Math.round(spk.size));
+    }
+
+    ctx.restore();
+  }
+
   draw(ctx) {
     if (this.state === 'spawning') {
       // High-visibility 3-second flashing warning
@@ -1419,6 +1796,168 @@ class PepperCloud {
     }
   }
 
+
+  updatePlasmaBeam(enemies, boss) {
+    if (this.dashCooldown > 0) this.dashCooldown--;
+    if (this.dashTimer > 0) {
+      this.dashTimer--;
+      if (this.dashTimer <= 0) this.isDashing = false;
+    }
+
+    if (!this.isFiringBeam || this.isDead) {
+      this.beamHitTarget = null;
+      // Passive energy core recharge when idle
+      if (this.energy < this.maxEnergy && !this.isDashing) {
+        this.energy = Math.min(this.maxEnergy, this.energy + 0.35);
+      }
+      return;
+    }
+
+    // Drain energy core while firing continuous plasma beam
+    this.energy = Math.max(0, this.energy - 0.28);
+    if (this.energy <= 0) {
+      this.isFiringBeam = false;
+      this.beamHitTarget = null;
+      return;
+    }
+
+    this.beamTimer++;
+    const isFacingLeft = (this.dir === -1 || this.facingDir === 'left');
+    this.beamMuzzleX = isFacingLeft ? (this.x - 3) : (this.x + 21);
+    this.beamMuzzleY = this.y + 7;
+
+    const maxBeamLength = 340;
+    const dirSign = isFacingLeft ? -1 : 1;
+    let closestHitDist = maxBeamLength;
+    let hitObj = null;
+
+    // Check hit with Boss
+    if (boss && !boss.isDead) {
+      const bDist = (boss.x - this.beamMuzzleX) * dirSign;
+      if (bDist > 0 && bDist < closestHitDist) {
+        if (Math.abs(boss.y - this.beamMuzzleY) < 60) {
+          closestHitDist = bDist;
+          hitObj = boss;
+          boss.takeDamage(1.3);
+        }
+      }
+    }
+
+    // Check hit with regular enemies
+    if (enemies) {
+      for (const e of enemies) {
+        if (e.isDead || e.state === 'dead') continue;
+        const eDist = (e.x + 8 - this.beamMuzzleX) * dirSign;
+        if (eDist > 0 && eDist < closestHitDist) {
+          if (Math.abs(e.y + 8 - this.beamMuzzleY) < 18) {
+            closestHitDist = eDist;
+            hitObj = e;
+            if (e.takeDamage) {
+              e.takeDamage(1.5);
+            } else if (e.stun) {
+              e.stun();
+            }
+          }
+        }
+      }
+    }
+
+    this.beamHitX = this.beamMuzzleX + dirSign * closestHitDist;
+    this.beamHitY = this.beamMuzzleY;
+    this.beamHitTarget = hitObj;
+
+    // Spawn green/cyan incandescent plasma impact sparks
+    if (Math.random() < 0.85) {
+      this.beamSparks.push({
+        x: this.beamHitX,
+        y: this.beamHitY,
+        vx: -dirSign * (1.2 + Math.random() * 2.5) + (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 2.8,
+        color: Math.random() < 0.35 ? '#ffffff' : (Math.random() < 0.65 ? '#86efac' : '#22c55e'),
+        life: 8 + Math.random() * 6,
+        maxLife: 14,
+        size: 1.5 + Math.random() * 2
+      });
+    }
+
+    for (let i = this.beamSparks.length - 1; i >= 0; i--) {
+      const s = this.beamSparks[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life--;
+      if (s.life <= 0) this.beamSparks.splice(i, 1);
+    }
+  }
+
+  drawPlasmaBeam(ctx) {
+    if (!this.isFiringBeam && this.beamSparks.length === 0) return;
+
+    ctx.save();
+
+    if (this.isFiringBeam) {
+      const mX = this.beamMuzzleX;
+      const mY = this.beamMuzzleY;
+      const hX = this.beamHitX;
+      const hY = this.beamHitY;
+      const pulse = Math.sin(Date.now() * 0.05) * 1.5;
+
+      // 1. Outer Translucent Emerald Glow
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.40)';
+      ctx.lineWidth = 8 + pulse;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 2. High-energy Neon Beam Body
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 4 + pulse * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 3. Superheated White Core
+      ctx.strokeStyle = '#f0fdf4';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 4. Muzzle Burst Flash
+      const mGrad = ctx.createRadialGradient(mX, mY, 1, mX, mY, 8);
+      mGrad.addColorStop(0, '#ffffff');
+      mGrad.addColorStop(0.5, '#4ade80');
+      mGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = mGrad;
+      ctx.beginPath();
+      ctx.arc(mX, mY, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Impact Splash at Target
+      const hitGrad = ctx.createRadialGradient(hX, hY, 1, hX, hY, 10 + pulse);
+      hitGrad.addColorStop(0, '#ffffff');
+      hitGrad.addColorStop(0.4, '#86efac');
+      hitGrad.addColorStop(0.8, 'rgba(34, 197, 94, 0.6)');
+      hitGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = hitGrad;
+      ctx.beginPath();
+      ctx.arc(hX, hY, 10 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Impact Sparks
+    for (const spk of this.beamSparks) {
+      const alpha = Math.max(0, spk.life / spk.maxLife);
+      ctx.fillStyle = spk.color;
+      ctx.globalAlpha = alpha;
+      ctx.fillRect(Math.round(spk.x), Math.round(spk.y), Math.round(spk.size), Math.round(spk.size));
+    }
+
+    ctx.restore();
+  }
+
   draw(ctx) {
     for (const p of this.particles) {
       ctx.fillStyle = p.color;
@@ -1463,6 +2002,168 @@ class BonusItem {
       this.x = Math.round(midX + this.relOffsetX);
       this.y = this.dynamicFloor.y;
     }
+  }
+
+
+  updatePlasmaBeam(enemies, boss) {
+    if (this.dashCooldown > 0) this.dashCooldown--;
+    if (this.dashTimer > 0) {
+      this.dashTimer--;
+      if (this.dashTimer <= 0) this.isDashing = false;
+    }
+
+    if (!this.isFiringBeam || this.isDead) {
+      this.beamHitTarget = null;
+      // Passive energy core recharge when idle
+      if (this.energy < this.maxEnergy && !this.isDashing) {
+        this.energy = Math.min(this.maxEnergy, this.energy + 0.35);
+      }
+      return;
+    }
+
+    // Drain energy core while firing continuous plasma beam
+    this.energy = Math.max(0, this.energy - 0.28);
+    if (this.energy <= 0) {
+      this.isFiringBeam = false;
+      this.beamHitTarget = null;
+      return;
+    }
+
+    this.beamTimer++;
+    const isFacingLeft = (this.dir === -1 || this.facingDir === 'left');
+    this.beamMuzzleX = isFacingLeft ? (this.x - 3) : (this.x + 21);
+    this.beamMuzzleY = this.y + 7;
+
+    const maxBeamLength = 340;
+    const dirSign = isFacingLeft ? -1 : 1;
+    let closestHitDist = maxBeamLength;
+    let hitObj = null;
+
+    // Check hit with Boss
+    if (boss && !boss.isDead) {
+      const bDist = (boss.x - this.beamMuzzleX) * dirSign;
+      if (bDist > 0 && bDist < closestHitDist) {
+        if (Math.abs(boss.y - this.beamMuzzleY) < 60) {
+          closestHitDist = bDist;
+          hitObj = boss;
+          boss.takeDamage(1.3);
+        }
+      }
+    }
+
+    // Check hit with regular enemies
+    if (enemies) {
+      for (const e of enemies) {
+        if (e.isDead || e.state === 'dead') continue;
+        const eDist = (e.x + 8 - this.beamMuzzleX) * dirSign;
+        if (eDist > 0 && eDist < closestHitDist) {
+          if (Math.abs(e.y + 8 - this.beamMuzzleY) < 18) {
+            closestHitDist = eDist;
+            hitObj = e;
+            if (e.takeDamage) {
+              e.takeDamage(1.5);
+            } else if (e.stun) {
+              e.stun();
+            }
+          }
+        }
+      }
+    }
+
+    this.beamHitX = this.beamMuzzleX + dirSign * closestHitDist;
+    this.beamHitY = this.beamMuzzleY;
+    this.beamHitTarget = hitObj;
+
+    // Spawn green/cyan incandescent plasma impact sparks
+    if (Math.random() < 0.85) {
+      this.beamSparks.push({
+        x: this.beamHitX,
+        y: this.beamHitY,
+        vx: -dirSign * (1.2 + Math.random() * 2.5) + (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 2.8,
+        color: Math.random() < 0.35 ? '#ffffff' : (Math.random() < 0.65 ? '#86efac' : '#22c55e'),
+        life: 8 + Math.random() * 6,
+        maxLife: 14,
+        size: 1.5 + Math.random() * 2
+      });
+    }
+
+    for (let i = this.beamSparks.length - 1; i >= 0; i--) {
+      const s = this.beamSparks[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life--;
+      if (s.life <= 0) this.beamSparks.splice(i, 1);
+    }
+  }
+
+  drawPlasmaBeam(ctx) {
+    if (!this.isFiringBeam && this.beamSparks.length === 0) return;
+
+    ctx.save();
+
+    if (this.isFiringBeam) {
+      const mX = this.beamMuzzleX;
+      const mY = this.beamMuzzleY;
+      const hX = this.beamHitX;
+      const hY = this.beamHitY;
+      const pulse = Math.sin(Date.now() * 0.05) * 1.5;
+
+      // 1. Outer Translucent Emerald Glow
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.40)';
+      ctx.lineWidth = 8 + pulse;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 2. High-energy Neon Beam Body
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 4 + pulse * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 3. Superheated White Core
+      ctx.strokeStyle = '#f0fdf4';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 4. Muzzle Burst Flash
+      const mGrad = ctx.createRadialGradient(mX, mY, 1, mX, mY, 8);
+      mGrad.addColorStop(0, '#ffffff');
+      mGrad.addColorStop(0.5, '#4ade80');
+      mGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = mGrad;
+      ctx.beginPath();
+      ctx.arc(mX, mY, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Impact Splash at Target
+      const hitGrad = ctx.createRadialGradient(hX, hY, 1, hX, hY, 10 + pulse);
+      hitGrad.addColorStop(0, '#ffffff');
+      hitGrad.addColorStop(0.4, '#86efac');
+      hitGrad.addColorStop(0.8, 'rgba(34, 197, 94, 0.6)');
+      hitGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = hitGrad;
+      ctx.beginPath();
+      ctx.arc(hX, hY, 10 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Impact Sparks
+    for (const spk of this.beamSparks) {
+      const alpha = Math.max(0, spk.life / spk.maxLife);
+      ctx.fillStyle = spk.color;
+      ctx.globalAlpha = alpha;
+      ctx.fillRect(Math.round(spk.x), Math.round(spk.y), Math.round(spk.size), Math.round(spk.size));
+    }
+
+    ctx.restore();
   }
 
   draw(ctx) {
@@ -1577,6 +2278,168 @@ class ArcadeParticle {
     }
   }
 
+
+  updatePlasmaBeam(enemies, boss) {
+    if (this.dashCooldown > 0) this.dashCooldown--;
+    if (this.dashTimer > 0) {
+      this.dashTimer--;
+      if (this.dashTimer <= 0) this.isDashing = false;
+    }
+
+    if (!this.isFiringBeam || this.isDead) {
+      this.beamHitTarget = null;
+      // Passive energy core recharge when idle
+      if (this.energy < this.maxEnergy && !this.isDashing) {
+        this.energy = Math.min(this.maxEnergy, this.energy + 0.35);
+      }
+      return;
+    }
+
+    // Drain energy core while firing continuous plasma beam
+    this.energy = Math.max(0, this.energy - 0.28);
+    if (this.energy <= 0) {
+      this.isFiringBeam = false;
+      this.beamHitTarget = null;
+      return;
+    }
+
+    this.beamTimer++;
+    const isFacingLeft = (this.dir === -1 || this.facingDir === 'left');
+    this.beamMuzzleX = isFacingLeft ? (this.x - 3) : (this.x + 21);
+    this.beamMuzzleY = this.y + 7;
+
+    const maxBeamLength = 340;
+    const dirSign = isFacingLeft ? -1 : 1;
+    let closestHitDist = maxBeamLength;
+    let hitObj = null;
+
+    // Check hit with Boss
+    if (boss && !boss.isDead) {
+      const bDist = (boss.x - this.beamMuzzleX) * dirSign;
+      if (bDist > 0 && bDist < closestHitDist) {
+        if (Math.abs(boss.y - this.beamMuzzleY) < 60) {
+          closestHitDist = bDist;
+          hitObj = boss;
+          boss.takeDamage(1.3);
+        }
+      }
+    }
+
+    // Check hit with regular enemies
+    if (enemies) {
+      for (const e of enemies) {
+        if (e.isDead || e.state === 'dead') continue;
+        const eDist = (e.x + 8 - this.beamMuzzleX) * dirSign;
+        if (eDist > 0 && eDist < closestHitDist) {
+          if (Math.abs(e.y + 8 - this.beamMuzzleY) < 18) {
+            closestHitDist = eDist;
+            hitObj = e;
+            if (e.takeDamage) {
+              e.takeDamage(1.5);
+            } else if (e.stun) {
+              e.stun();
+            }
+          }
+        }
+      }
+    }
+
+    this.beamHitX = this.beamMuzzleX + dirSign * closestHitDist;
+    this.beamHitY = this.beamMuzzleY;
+    this.beamHitTarget = hitObj;
+
+    // Spawn green/cyan incandescent plasma impact sparks
+    if (Math.random() < 0.85) {
+      this.beamSparks.push({
+        x: this.beamHitX,
+        y: this.beamHitY,
+        vx: -dirSign * (1.2 + Math.random() * 2.5) + (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 2.8,
+        color: Math.random() < 0.35 ? '#ffffff' : (Math.random() < 0.65 ? '#86efac' : '#22c55e'),
+        life: 8 + Math.random() * 6,
+        maxLife: 14,
+        size: 1.5 + Math.random() * 2
+      });
+    }
+
+    for (let i = this.beamSparks.length - 1; i >= 0; i--) {
+      const s = this.beamSparks[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life--;
+      if (s.life <= 0) this.beamSparks.splice(i, 1);
+    }
+  }
+
+  drawPlasmaBeam(ctx) {
+    if (!this.isFiringBeam && this.beamSparks.length === 0) return;
+
+    ctx.save();
+
+    if (this.isFiringBeam) {
+      const mX = this.beamMuzzleX;
+      const mY = this.beamMuzzleY;
+      const hX = this.beamHitX;
+      const hY = this.beamHitY;
+      const pulse = Math.sin(Date.now() * 0.05) * 1.5;
+
+      // 1. Outer Translucent Emerald Glow
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.40)';
+      ctx.lineWidth = 8 + pulse;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 2. High-energy Neon Beam Body
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 4 + pulse * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 3. Superheated White Core
+      ctx.strokeStyle = '#f0fdf4';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 4. Muzzle Burst Flash
+      const mGrad = ctx.createRadialGradient(mX, mY, 1, mX, mY, 8);
+      mGrad.addColorStop(0, '#ffffff');
+      mGrad.addColorStop(0.5, '#4ade80');
+      mGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = mGrad;
+      ctx.beginPath();
+      ctx.arc(mX, mY, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Impact Splash at Target
+      const hitGrad = ctx.createRadialGradient(hX, hY, 1, hX, hY, 10 + pulse);
+      hitGrad.addColorStop(0, '#ffffff');
+      hitGrad.addColorStop(0.4, '#86efac');
+      hitGrad.addColorStop(0.8, 'rgba(34, 197, 94, 0.6)');
+      hitGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = hitGrad;
+      ctx.beginPath();
+      ctx.arc(hX, hY, 10 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Impact Sparks
+    for (const spk of this.beamSparks) {
+      const alpha = Math.max(0, spk.life / spk.maxLife);
+      ctx.fillStyle = spk.color;
+      ctx.globalAlpha = alpha;
+      ctx.fillRect(Math.round(spk.x), Math.round(spk.y), Math.round(spk.size), Math.round(spk.size));
+    }
+
+    ctx.restore();
+  }
+
   draw(ctx) {
     const alpha = Math.max(0, this.life / this.initialLife);
     ctx.save();
@@ -1631,6 +2494,168 @@ class ScorePopup {
   update() {
     this.timer--;
     this.y -= 0.65;
+  }
+
+
+  updatePlasmaBeam(enemies, boss) {
+    if (this.dashCooldown > 0) this.dashCooldown--;
+    if (this.dashTimer > 0) {
+      this.dashTimer--;
+      if (this.dashTimer <= 0) this.isDashing = false;
+    }
+
+    if (!this.isFiringBeam || this.isDead) {
+      this.beamHitTarget = null;
+      // Passive energy core recharge when idle
+      if (this.energy < this.maxEnergy && !this.isDashing) {
+        this.energy = Math.min(this.maxEnergy, this.energy + 0.35);
+      }
+      return;
+    }
+
+    // Drain energy core while firing continuous plasma beam
+    this.energy = Math.max(0, this.energy - 0.28);
+    if (this.energy <= 0) {
+      this.isFiringBeam = false;
+      this.beamHitTarget = null;
+      return;
+    }
+
+    this.beamTimer++;
+    const isFacingLeft = (this.dir === -1 || this.facingDir === 'left');
+    this.beamMuzzleX = isFacingLeft ? (this.x - 3) : (this.x + 21);
+    this.beamMuzzleY = this.y + 7;
+
+    const maxBeamLength = 340;
+    const dirSign = isFacingLeft ? -1 : 1;
+    let closestHitDist = maxBeamLength;
+    let hitObj = null;
+
+    // Check hit with Boss
+    if (boss && !boss.isDead) {
+      const bDist = (boss.x - this.beamMuzzleX) * dirSign;
+      if (bDist > 0 && bDist < closestHitDist) {
+        if (Math.abs(boss.y - this.beamMuzzleY) < 60) {
+          closestHitDist = bDist;
+          hitObj = boss;
+          boss.takeDamage(1.3);
+        }
+      }
+    }
+
+    // Check hit with regular enemies
+    if (enemies) {
+      for (const e of enemies) {
+        if (e.isDead || e.state === 'dead') continue;
+        const eDist = (e.x + 8 - this.beamMuzzleX) * dirSign;
+        if (eDist > 0 && eDist < closestHitDist) {
+          if (Math.abs(e.y + 8 - this.beamMuzzleY) < 18) {
+            closestHitDist = eDist;
+            hitObj = e;
+            if (e.takeDamage) {
+              e.takeDamage(1.5);
+            } else if (e.stun) {
+              e.stun();
+            }
+          }
+        }
+      }
+    }
+
+    this.beamHitX = this.beamMuzzleX + dirSign * closestHitDist;
+    this.beamHitY = this.beamMuzzleY;
+    this.beamHitTarget = hitObj;
+
+    // Spawn green/cyan incandescent plasma impact sparks
+    if (Math.random() < 0.85) {
+      this.beamSparks.push({
+        x: this.beamHitX,
+        y: this.beamHitY,
+        vx: -dirSign * (1.2 + Math.random() * 2.5) + (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 2.8,
+        color: Math.random() < 0.35 ? '#ffffff' : (Math.random() < 0.65 ? '#86efac' : '#22c55e'),
+        life: 8 + Math.random() * 6,
+        maxLife: 14,
+        size: 1.5 + Math.random() * 2
+      });
+    }
+
+    for (let i = this.beamSparks.length - 1; i >= 0; i--) {
+      const s = this.beamSparks[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life--;
+      if (s.life <= 0) this.beamSparks.splice(i, 1);
+    }
+  }
+
+  drawPlasmaBeam(ctx) {
+    if (!this.isFiringBeam && this.beamSparks.length === 0) return;
+
+    ctx.save();
+
+    if (this.isFiringBeam) {
+      const mX = this.beamMuzzleX;
+      const mY = this.beamMuzzleY;
+      const hX = this.beamHitX;
+      const hY = this.beamHitY;
+      const pulse = Math.sin(Date.now() * 0.05) * 1.5;
+
+      // 1. Outer Translucent Emerald Glow
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.40)';
+      ctx.lineWidth = 8 + pulse;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 2. High-energy Neon Beam Body
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 4 + pulse * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 3. Superheated White Core
+      ctx.strokeStyle = '#f0fdf4';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 4. Muzzle Burst Flash
+      const mGrad = ctx.createRadialGradient(mX, mY, 1, mX, mY, 8);
+      mGrad.addColorStop(0, '#ffffff');
+      mGrad.addColorStop(0.5, '#4ade80');
+      mGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = mGrad;
+      ctx.beginPath();
+      ctx.arc(mX, mY, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Impact Splash at Target
+      const hitGrad = ctx.createRadialGradient(hX, hY, 1, hX, hY, 10 + pulse);
+      hitGrad.addColorStop(0, '#ffffff');
+      hitGrad.addColorStop(0.4, '#86efac');
+      hitGrad.addColorStop(0.8, 'rgba(34, 197, 94, 0.6)');
+      hitGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = hitGrad;
+      ctx.beginPath();
+      ctx.arc(hX, hY, 10 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Impact Sparks
+    for (const spk of this.beamSparks) {
+      const alpha = Math.max(0, spk.life / spk.maxLife);
+      ctx.fillStyle = spk.color;
+      ctx.globalAlpha = alpha;
+      ctx.fillRect(Math.round(spk.x), Math.round(spk.y), Math.round(spk.size), Math.round(spk.size));
+    }
+
+    ctx.restore();
   }
 
   draw(ctx) {
@@ -1860,6 +2885,168 @@ class Boss {
         });
       }
     }
+  }
+
+
+  updatePlasmaBeam(enemies, boss) {
+    if (this.dashCooldown > 0) this.dashCooldown--;
+    if (this.dashTimer > 0) {
+      this.dashTimer--;
+      if (this.dashTimer <= 0) this.isDashing = false;
+    }
+
+    if (!this.isFiringBeam || this.isDead) {
+      this.beamHitTarget = null;
+      // Passive energy core recharge when idle
+      if (this.energy < this.maxEnergy && !this.isDashing) {
+        this.energy = Math.min(this.maxEnergy, this.energy + 0.35);
+      }
+      return;
+    }
+
+    // Drain energy core while firing continuous plasma beam
+    this.energy = Math.max(0, this.energy - 0.28);
+    if (this.energy <= 0) {
+      this.isFiringBeam = false;
+      this.beamHitTarget = null;
+      return;
+    }
+
+    this.beamTimer++;
+    const isFacingLeft = (this.dir === -1 || this.facingDir === 'left');
+    this.beamMuzzleX = isFacingLeft ? (this.x - 3) : (this.x + 21);
+    this.beamMuzzleY = this.y + 7;
+
+    const maxBeamLength = 340;
+    const dirSign = isFacingLeft ? -1 : 1;
+    let closestHitDist = maxBeamLength;
+    let hitObj = null;
+
+    // Check hit with Boss
+    if (boss && !boss.isDead) {
+      const bDist = (boss.x - this.beamMuzzleX) * dirSign;
+      if (bDist > 0 && bDist < closestHitDist) {
+        if (Math.abs(boss.y - this.beamMuzzleY) < 60) {
+          closestHitDist = bDist;
+          hitObj = boss;
+          boss.takeDamage(1.3);
+        }
+      }
+    }
+
+    // Check hit with regular enemies
+    if (enemies) {
+      for (const e of enemies) {
+        if (e.isDead || e.state === 'dead') continue;
+        const eDist = (e.x + 8 - this.beamMuzzleX) * dirSign;
+        if (eDist > 0 && eDist < closestHitDist) {
+          if (Math.abs(e.y + 8 - this.beamMuzzleY) < 18) {
+            closestHitDist = eDist;
+            hitObj = e;
+            if (e.takeDamage) {
+              e.takeDamage(1.5);
+            } else if (e.stun) {
+              e.stun();
+            }
+          }
+        }
+      }
+    }
+
+    this.beamHitX = this.beamMuzzleX + dirSign * closestHitDist;
+    this.beamHitY = this.beamMuzzleY;
+    this.beamHitTarget = hitObj;
+
+    // Spawn green/cyan incandescent plasma impact sparks
+    if (Math.random() < 0.85) {
+      this.beamSparks.push({
+        x: this.beamHitX,
+        y: this.beamHitY,
+        vx: -dirSign * (1.2 + Math.random() * 2.5) + (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 2.8,
+        color: Math.random() < 0.35 ? '#ffffff' : (Math.random() < 0.65 ? '#86efac' : '#22c55e'),
+        life: 8 + Math.random() * 6,
+        maxLife: 14,
+        size: 1.5 + Math.random() * 2
+      });
+    }
+
+    for (let i = this.beamSparks.length - 1; i >= 0; i--) {
+      const s = this.beamSparks[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life--;
+      if (s.life <= 0) this.beamSparks.splice(i, 1);
+    }
+  }
+
+  drawPlasmaBeam(ctx) {
+    if (!this.isFiringBeam && this.beamSparks.length === 0) return;
+
+    ctx.save();
+
+    if (this.isFiringBeam) {
+      const mX = this.beamMuzzleX;
+      const mY = this.beamMuzzleY;
+      const hX = this.beamHitX;
+      const hY = this.beamHitY;
+      const pulse = Math.sin(Date.now() * 0.05) * 1.5;
+
+      // 1. Outer Translucent Emerald Glow
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.40)';
+      ctx.lineWidth = 8 + pulse;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 2. High-energy Neon Beam Body
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 4 + pulse * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 3. Superheated White Core
+      ctx.strokeStyle = '#f0fdf4';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(hX, hY);
+      ctx.stroke();
+
+      // 4. Muzzle Burst Flash
+      const mGrad = ctx.createRadialGradient(mX, mY, 1, mX, mY, 8);
+      mGrad.addColorStop(0, '#ffffff');
+      mGrad.addColorStop(0.5, '#4ade80');
+      mGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = mGrad;
+      ctx.beginPath();
+      ctx.arc(mX, mY, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Impact Splash at Target
+      const hitGrad = ctx.createRadialGradient(hX, hY, 1, hX, hY, 10 + pulse);
+      hitGrad.addColorStop(0, '#ffffff');
+      hitGrad.addColorStop(0.4, '#86efac');
+      hitGrad.addColorStop(0.8, 'rgba(34, 197, 94, 0.6)');
+      hitGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = hitGrad;
+      ctx.beginPath();
+      ctx.arc(hX, hY, 10 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Impact Sparks
+    for (const spk of this.beamSparks) {
+      const alpha = Math.max(0, spk.life / spk.maxLife);
+      ctx.fillStyle = spk.color;
+      ctx.globalAlpha = alpha;
+      ctx.fillRect(Math.round(spk.x), Math.round(spk.y), Math.round(spk.size), Math.round(spk.size));
+    }
+
+    ctx.restore();
   }
 
   draw(ctx) {

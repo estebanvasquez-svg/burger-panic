@@ -839,8 +839,14 @@ class BurgerPanicGame {
     // 0. Update Dynamic Platforms (Elevators, Swaying, Swing platforms)
     this.updateDynamicPlatforms();
 
-    // 1. Update Player
+    // 1. Update Player & Continuous Plasma Laser Beam
+    if (this.controls.input && this.controls.input.pepper && !this.player.isDead) {
+      this.player.isFiringBeam = true;
+    } else {
+      this.player.isFiringBeam = false;
+    }
     this.player.update(this.controls.input, this.levelData.ladders, this.levelData.floors);
+    this.player.updatePlasmaBeam(this.enemies, this.kiloburnerBoss);
 
     // 2. Check Player stepping on burger pieces
     for (const b of this.burgers) {
@@ -1493,70 +1499,178 @@ class BurgerPanicGame {
   }
 
   drawHUD() {
-    this.ctx.fillStyle = '#fcfcfc';
-    this.ctx.font = '7px "Press Start 2P", monospace';
+    this.ctx.save();
 
-    // 1UP Score (Left)
-    this.ctx.fillStyle = '#e40058';
+    // 1. TOP-LEFT: Space Marine Cybernetic Status Panel (arte_niveles.jpg)
+    const hX = 10;
+    const hY = 8;
+
+    // A. Helmet Portrait Bracket (22x22 px)
+    this.ctx.fillStyle = '#0f172a'; // Deep slate metal
+    this.ctx.fillRect(hX, hY, 22, 22);
+    this.ctx.strokeStyle = '#38bdf8'; // Glowing cyan frame
+    this.ctx.lineWidth = 1.2;
+    this.ctx.strokeRect(hX, hY, 22, 22);
+
+    // Inner bevel
+    this.ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+    this.ctx.strokeRect(hX + 1.5, hY + 1.5, 19, 19);
+
+    // Draw Space Marine Helmet Portrait inside bracket
+    const info = window.spriteManager ? window.spriteManager.getAtlasInfo('detenido_1') : null;
+    if (info && window.spriteManager.atlasLoaded) {
+      this.ctx.drawImage(
+        window.spriteManager.atlasImg,
+        info.x, info.y, info.w, 15,
+        hX + 3, hY + 3, 16, 16
+      );
+    }
+
+    // B. Health Bar (Red/Pink Energy Segment)
+    const barX = hX + 27;
+    const hpY = hY + 1;
+    const hpW = 90;
+    const hpH = 7;
+
+    // Heart Icon
+    this.ctx.fillStyle = '#ef4444';
+    this.ctx.font = 'bold 8px monospace';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText('♥', barX - 5, hpY + 6);
+
+    // Health Housing
+    this.ctx.fillStyle = '#1e1b2e';
+    this.ctx.fillRect(barX, hpY, hpW, hpH);
+    this.ctx.strokeStyle = '#64748b';
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeRect(barX, hpY, hpW, hpH);
+
+    // Health Fill (Segmented Gradient)
+    const pHealth = this.player ? (this.player.health / this.player.maxHealth) : 1;
+    const curHpW = Math.max(0, Math.min(hpW, Math.round(hpW * pHealth)));
+    if (curHpW > 0) {
+      const hpGrad = this.ctx.createLinearGradient(barX, hpY, barX + curHpW, hpY);
+      hpGrad.addColorStop(0, '#f43f5e');
+      hpGrad.addColorStop(1, '#ef4444');
+      this.ctx.fillStyle = hpGrad;
+      this.ctx.fillRect(barX + 0.5, hpY + 0.5, curHpW - 1, hpH - 1);
+
+      // Segment dividers
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      for (let sx = barX + 15; sx < barX + curHpW; sx += 15) {
+        this.ctx.fillRect(sx, hpY, 1, hpH);
+      }
+    }
+
+    // C. Energy Bar (Cyan Battery Core)
+    const enY = hpY + 10;
+    const enW = 76;
+    const enH = 6;
+
+    // Lightning Icon
+    this.ctx.fillStyle = '#38bdf8';
+    this.ctx.fillText('⚡', barX - 5, enY + 6);
+
+    // Energy Housing
+    this.ctx.fillStyle = '#082f49';
+    this.ctx.fillRect(barX, enY, enW, enH);
+    this.ctx.strokeStyle = '#0284c7';
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeRect(barX, enY, enW, enH);
+
+    // Energy Fill
+    const pEnergy = this.player ? (this.player.energy / this.player.maxEnergy) : 1;
+    const curEnW = Math.max(0, Math.min(enW, Math.round(enW * pEnergy)));
+    if (curEnW > 0) {
+      const enGrad = this.ctx.createLinearGradient(barX, enY, barX + curEnW, enY);
+      enGrad.addColorStop(0, '#38bdf8');
+      enGrad.addColorStop(1, '#0284c7');
+      this.ctx.fillStyle = enGrad;
+      this.ctx.fillRect(barX + 0.5, enY + 0.5, curEnW - 1, enH - 1);
+
+      // Micro battery cell dividers
+      this.ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
+      for (let ex = barX + 11; ex < barX + curEnW; ex += 11) {
+        this.ctx.fillRect(ex, enY, 1, enH);
+      }
+    }
+
+    // "ENERGY" label
+    this.ctx.font = 'bold 5px "Press Start 2P", monospace';
     this.ctx.textAlign = 'left';
-    this.ctx.fillText('1UP', 10, 11);
-    this.ctx.fillStyle = '#fcfcfc';
-    this.ctx.fillText(this.score.toString().padStart(6, '0'), 10, 22);
+    this.ctx.fillStyle = '#38bdf8';
+    this.ctx.shadowColor = '#0284c7';
+    this.ctx.shadowBlur = 3;
+    this.ctx.fillText('ENERGY', barX, enY + 13);
+    this.ctx.shadowBlur = 0;
 
-    // Current Stage / Level (Center - only shown in non-boss stages)
-    const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
-    if (!this.kiloburnerBoss) {
-      this.ctx.fillStyle = '#fcb400'; // Arcade gold
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText('STAGE', 120, 11);
-      this.ctx.fillStyle = '#00f0ff'; // Retro cyan
-      this.ctx.fillText(stageNum.toString().padStart(2, '0'), 120, 22);
+    // 2. TOP-RIGHT: Holographic Metroid Station Mini-Map (arte_niveles.jpg)
+    const mapBoxW = 68;
+    const mapBoxH = 38;
+    const mapBoxX = this.canvas.width - mapBoxW - 10;
+    const mapBoxY = 8;
+
+    // Translucent Blue Blueprint Glass
+    this.ctx.fillStyle = 'rgba(6, 15, 38, 0.88)';
+    this.ctx.fillRect(mapBoxX, mapBoxY, mapBoxW, mapBoxH);
+    this.ctx.strokeStyle = '#0284c7';
+    this.ctx.lineWidth = 1.2;
+    this.ctx.strokeRect(mapBoxX, mapBoxY, mapBoxW, mapBoxH);
+
+    // Blueprint Grid Lines
+    this.ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+    this.ctx.lineWidth = 0.5;
+    for (let gx = mapBoxX + 8; gx < mapBoxX + mapBoxW; gx += 8) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(gx, mapBoxY);
+      this.ctx.lineTo(gx, mapBoxY + mapBoxH);
+      this.ctx.stroke();
+    }
+    for (let gy = mapBoxY + 8; gy < mapBoxY + mapBoxH; gy += 8) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(mapBoxX, gy);
+      this.ctx.lineTo(mapBoxX + mapBoxW, gy);
+      this.ctx.stroke();
     }
 
-    if (this.devMode && !this.kiloburnerBoss) {
-      this.ctx.fillStyle = '#00e436';
-      this.ctx.font = '6px "Press Start 2P", monospace';
-      this.ctx.fillText('[DEV]', 120, 34);
-      this.ctx.font = '7px "Press Start 2P", monospace';
+    // Station Rooms Layout
+    const rooms = [
+      { x: 1, y: 1, w: 1, h: 2, unlocked: true },
+      { x: 2, y: 2, w: 2, h: 1, unlocked: true },
+      { x: 4, y: 1, w: 2, h: 2, unlocked: true },
+      { x: 3, y: 0, w: 1, h: 1, unlocked: false },
+      { x: 6, y: 2, w: 1, h: 1, unlocked: false }
+    ];
+
+    const cellScale = 7;
+    const gridOriginX = mapBoxX + 6;
+    const gridOriginY = mapBoxY + 6;
+
+    for (const r of rooms) {
+      const rx = gridOriginX + r.x * cellScale;
+      const ry = gridOriginY + r.y * cellScale;
+      const rw = r.w * cellScale - 1;
+      const rh = r.h * cellScale - 1;
+
+      this.ctx.fillStyle = r.unlocked ? 'rgba(56, 189, 248, 0.35)' : 'rgba(30, 41, 59, 0.6)';
+      this.ctx.fillRect(rx, ry, rw, rh);
+      this.ctx.strokeStyle = r.unlocked ? '#38bdf8' : '#475569';
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeRect(rx, ry, rw, rh);
     }
 
-    // High Score (Right)
-    this.ctx.fillStyle = '#e40058';
-    this.ctx.textAlign = 'right';
-    this.ctx.fillText('HIGH', 230, 11);
-    this.ctx.fillStyle = '#fcfcfc';
-    this.ctx.fillText(this.highScore.toString().padStart(6, '0'), 230, 22);
-
-    // Pepper shaker icons remaining (in standard levels)
-    if (!this.kiloburnerBoss) {
-      const pepperSpr = window.spriteManager.get('pepper_icon');
-      if (pepperSpr && this.player) {
-        for (let i = 0; i < this.player.peppers; i++) {
-          this.ctx.drawImage(pepperSpr, 14 + i * 11, 33, 10, 10);
-        }
-      }
+    // Current Room Blinking Dot
+    const dotPulse = Math.floor(Date.now() / 250) % 2 === 0;
+    if (dotPulse) {
+      const dotX = gridOriginX + 2 * cellScale + 3;
+      const dotY = gridOriginY + 2 * cellScale + 3;
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.beginPath();
+      this.ctx.arc(dotX, dotY, 2, 0, Math.PI * 2);
+      this.ctx.fill();
     }
 
-    // Lives icons remaining
-    const lifeSpr = window.spriteManager.get('player_walk1');
-    if (lifeSpr && this.player) {
-      if (this.player.lives <= 4) {
-        for (let i = 0; i < this.player.lives; i++) {
-          this.ctx.drawImage(lifeSpr, 180 + i * 12, 31, 11, 11);
-        }
-      } else {
-        this.ctx.drawImage(lifeSpr, 178, 31, 12, 12);
-        this.ctx.fillStyle = '#fcfcfc';
-        this.ctx.font = '7px "Press Start 2P", monospace';
-        this.ctx.textAlign = 'left';
-        this.ctx.fillText(`x${this.player.lives}`, 194, 40);
-      }
-    }
-
-    // Boss Health Bar in HUD (when on a Boss stage)
-    if (this.boss && !this.boss.isDead && this.boss.drawHUDHealthBar) {
-      this.boss.drawHUDHealthBar(this.ctx);
-    }
+    this.ctx.restore();
   }
 
   drawPlatforms() {
