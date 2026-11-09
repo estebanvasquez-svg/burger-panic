@@ -800,9 +800,9 @@ class KiloburnerBoss {
     const renderH = Math.round(info.h * this.scale);
 
     // Anchor: draw relative to center x and bottom y
-    // Facing: Kiloburner's original sprite faces left.
-    // If facing === 1 (right), flip horizontally.
-    const flip = (this.facing === 1);
+    // Facing: Kiloburner's atlas sprite natively faces right.
+    // If facing === -1 (looking left toward Chef), flip horizontally.
+    const flip = (this.facing === -1);
     const drawX = Math.round(this.x - renderW / 2);
     const drawY = Math.round(this.y - renderH);
 
@@ -811,46 +811,46 @@ class KiloburnerBoss {
     // 1. Draw Heavy Industrial Suspension Cables holding Boss from the Ceiling (ONLY cables support the boss)
     if (this.state !== 'dead') {
       const bossTopY = Math.round(this.y - this.logicalH * 0.85);
-      const isFlipped = (this.facing === 1);
+      const isFlipped = flip;
       const sway = Math.sin(this.floatAngle) * 5;
 
       // 4 heavy power & coolant conduits plugged into cranial sockets at top-rear of cyber skull
       const cables = [
         {
-          anchorX: Math.round(this.x - 38 + sway * 0.6),
+          anchorX: Math.round(this.x + (isFlipped ? 36 : -36) + sway * 0.6),
           socketX: Math.round(this.x + (isFlipped ? 26 : -26)),
           socketY: bossTopY + 8,
-          curveOffset: -12 + sway,
+          curveOffset: (isFlipped ? 12 : -12) + sway,
           color: '#1e293b',
           hiColor: '#475569',
           width: 3.5,
           pulseSpeed: 0.003
         },
         {
-          anchorX: Math.round(this.x - 14 + sway * 0.4),
+          anchorX: Math.round(this.x + (isFlipped ? 18 : -18) + sway * 0.4),
           socketX: Math.round(this.x + (isFlipped ? 14 : -14)),
           socketY: bossTopY + 2,
-          curveOffset: -6 + sway * 0.8,
+          curveOffset: (isFlipped ? 6 : -6) + sway * 0.8,
           color: '#0f172a',
           hiColor: '#334155',
           width: 4,
           pulseSpeed: 0.004
         },
         {
-          anchorX: Math.round(this.x + 12 + sway * 0.3),
-          socketX: Math.round(this.x + (isFlipped ? -4 : 4)),
+          anchorX: Math.round(this.x + (isFlipped ? 2 : -2) + sway * 0.3),
+          socketX: Math.round(this.x + (isFlipped ? 4 : -4)),
           socketY: bossTopY + 4,
-          curveOffset: 8 + sway * 0.7,
+          curveOffset: (isFlipped ? -6 : 6) + sway * 0.7,
           color: '#1e293b',
           hiColor: '#475569',
           width: 3.5,
           pulseSpeed: 0.005
         },
         {
-          anchorX: Math.round(this.x + 36 + sway * 0.5),
-          socketX: Math.round(this.x + (isFlipped ? -22 : 22)),
+          anchorX: Math.round(this.x + (isFlipped ? -16 : 16) + sway * 0.5),
+          socketX: Math.round(this.x + (isFlipped ? -8 : 8)),
           socketY: bossTopY + 12,
-          curveOffset: 16 + sway * 1.1,
+          curveOffset: (isFlipped ? -14 : 14) + sway * 1.1,
           color: '#0f172a',
           hiColor: '#38bdf8',
           width: 3,
