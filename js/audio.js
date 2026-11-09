@@ -130,6 +130,107 @@ class SoundManager {
     }
   }
 
+  // Blowtorch sustained flame roar
+  playFlame() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.12);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(800, now);
+      filter.frequency.linearRampToValueAtTime(1400, now + 0.06);
+      filter.frequency.exponentialRampToValueAtTime(400, now + 0.12);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.20, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      noise.start(now);
+    } catch (e) {
+      console.warn('Audio playFlame warning:', e);
+    }
+  }
+
+  // Blowtorch pickup & pilot ignition click
+  playIgnition() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      // 1. Piezo spark click
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1600, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.04);
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.04);
+
+      // 2. Flare ignition whoosh
+      this.playFlame();
+    } catch (e) {
+      console.warn('Audio playIgnition warning:', e);
+    }
+  }
+
+  // Blowtorch fuel exhausted hiss and valve snap
+  playGasEmpty() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      // High hiss
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.08);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(2400, now);
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      noise.start(now);
+
+      // Valve click
+      const osc = this.ctx.createOscillator();
+      const oscGain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(320, now + 0.06);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.09);
+      oscGain.gain.setValueAtTime(0.18, now + 0.06);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      osc.connect(oscGain);
+      oscGain.connect(this.ctx.destination);
+      osc.start(now + 0.06);
+      osc.stop(now + 0.09);
+    } catch (e) {
+      console.warn('Audio playGasEmpty warning:', e);
+    }
+  }
+
   // Authentic mechanical arcade microswitch click
   playArcadeClick() {
     if (this.muted || !this.ctx) return;

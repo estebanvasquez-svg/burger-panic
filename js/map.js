@@ -165,7 +165,7 @@ class LevelMap {
 
       // ==========================================
       // STAGE 3: 💥 BOSS STAGE - EL COLOSO KILOBURNER
-      // Industrial Cyber-Furnace Arena matching reference artwork
+      // Auto-scrolling Cyber-Furnace Arena with Soplete Weapons
       // ==========================================
       {
         stageNumber: 3,
@@ -173,69 +173,96 @@ class LevelMap {
         isBossStage: true,
         boss: {
           type: 'kiloburner',
-          health: 300,
+          health: 400,
           name: 'KILOBURNER'
         },
-        exclusivePower: 'BIO_SPRAY',
-        width: 360,
+        exclusivePower: 'SOPLETE',
+        width: 1600,
+        autoScroll: true,
+        autoScrollSpeed: 0.45,
         bonusSpots: [
-          { x: 35, y: 104 },
-          { x: 135, y: 104 },
-          { x: 265, y: 104 },
-          { x: 95, y: 200 }
+          { x: 120, y: 120 },
+          { x: 390, y: 120 },
+          { x: 660, y: 120 },
+          { x: 930, y: 120 },
+          { x: 1200, y: 120 },
+          { x: 1460, y: 120 }
         ],
         floors: [
-          // Y = 52 (High ceiling gantries)
-          { y: 52, x1: 24, x2: 90 },
-          { y: 52, x1: 260, x2: 340 },
+          // Ground floor segments (y = 288)
+          { y: 288, x1: 20, x2: 260 },
+          { y: 288, x1: 280, x2: 530 },
+          { y: 288, x1: 550, x2: 800 },
+          { y: 288, x1: 820, x2: 1070 },
+          { y: 288, x1: 1090, x2: 1340 },
+          { y: 288, x1: 1360, x2: 1590 },
 
-          // Y = 104 (Catwalk with spectator silhouettes & upper drop burger)
-          { y: 104, x1: 24, x2: 160 },
-          { y: 104, x1: 200, x2: 340 },
+          // Blowtorch combat platforms (y = 200)
+          { y: 200, x1: 90, x2: 190 },
+          { y: 200, x1: 350, x2: 450 },
+          { y: 200, x1: 620, x2: 720 },
+          { y: 200, x1: 890, x2: 990 },
+          { y: 200, x1: 1160, x2: 1260 },
+          { y: 200, x1: 1420, x2: 1520 },
 
-          // Y = 200 (Elevated sniper girder platform where Chef aims at the boss)
-          { y: 200, x1: 60, x2: 140 },
-          { y: 200, x1: 215, x2: 295 },
+          // High platforms (y = 120)
+          { y: 120, x1: 70, x2: 160 },
+          { y: 120, x1: 340, x2: 430 },
+          { y: 120, x1: 610, x2: 700 },
+          { y: 120, x1: 880, x2: 970 },
+          { y: 120, x1: 1150, x2: 1240 },
+          { y: 120, x1: 1480, x2: 1570 },
 
-          // Y = 288 (Arena floor, cheese pipe drop & hydraulic boss base)
-          { y: 288, x1: 24, x2: 45 },
-          { y: 288, x1: 70, x2: 195 },
-          { y: 288, x1: 210, x2: 346 }
+          // Ceiling rails (y = 52)
+          { y: 52, x1: 50, x2: 140 },
+          { y: 52, x1: 320, x2: 410 },
+          { y: 52, x1: 590, x2: 680 },
+          { y: 52, x1: 860, x2: 950 },
+          { y: 52, x1: 1130, x2: 1220 },
+          { y: 52, x1: 1400, x2: 1490 }
         ],
         ladders: [
-          // Left vertical gantry ladder
-          { x: 34, y1: 52, y2: 104 },
-          // Mid ladder from catwalk to sniper platform
-          { x: 95, y1: 104, y2: 200 },
-          // Ladder from sniper platform down to central floor
-          { x: 125, y1: 200, y2: 288 },
-          // Right intermediate ladder
-          { x: 225, y1: 104, y2: 200 },
-          // Right perimeter safety ladder
-          { x: 320, y1: 52, y2: 288 }
-        ],
-        burgers: [
-          // Stack 0 (Catwalk Left Burger)
-          { col: 0, x: 95, y: 104, type: 'bun_top' },
-          { col: 0, x: 95, y: 148, type: 'cheese' },
-          { col: 0, x: 95, y: 196, type: 'patty' },
-          { col: 0, x: 95, y: 244, type: 'bun_bottom' },
+          // Section 1 (x: 0 - 260)
+          { x: 100, y1: 200, y2: 288 },
+          { x: 150, y1: 120, y2: 200 },
+          { x: 90, y1: 52, y2: 120 },
 
-          // Stack 1 (Boss Crush Burger directly above Kiloburner!)
-          { col: 1, x: 255, y: 104, type: 'bun_top' },
-          { col: 1, x: 255, y: 148, type: 'tomato' },
-          { col: 1, x: 255, y: 196, type: 'patty' },
-          { col: 1, x: 255, y: 244, type: 'bun_bottom' }
+          // Section 2 (x: 260 - 530)
+          { x: 360, y1: 200, y2: 288 },
+          { x: 410, y1: 120, y2: 200 },
+          { x: 350, y1: 52, y2: 120 },
+
+          // Section 3 (x: 530 - 800)
+          { x: 630, y1: 200, y2: 288 },
+          { x: 680, y1: 120, y2: 200 },
+          { x: 620, y1: 52, y2: 120 },
+
+          // Section 4 (x: 800 - 1070)
+          { x: 900, y1: 200, y2: 288 },
+          { x: 950, y1: 120, y2: 200 },
+          { x: 890, y1: 52, y2: 120 },
+
+          // Section 5 (x: 1070 - 1340)
+          { x: 1170, y1: 200, y2: 288 },
+          { x: 1220, y1: 120, y2: 200 },
+          { x: 1160, y1: 52, y2: 120 },
+
+          // Section 6 (x: 1340 - 1600)
+          { x: 1440, y1: 200, y2: 288 },
+          { x: 1500, y1: 120, y2: 200 }
         ],
-        plates: [
-          { x: 93, y: 288 },
-          { x: 253, y: 288 }
+        blowtorches: [
+          { id: 1, x: 140, y: 200 },
+          { id: 2, x: 400, y: 200 },
+          { id: 3, x: 670, y: 200 },
+          { id: 4, x: 940, y: 200 },
+          { id: 5, x: 1210, y: 200 },
+          { id: 6, x: 1470, y: 200 }
         ],
-        playerStart: { x: 75, y: 200 },
-        enemies: [
-          // Drone hotdog patrolling upper gantry
-          { type: 'hotdog', x: 280, y: 52 }
-        ],
+        burgers: [],
+        plates: [],
+        playerStart: { x: 40, y: 288 },
+        enemies: [],
         enemySpeed: 0.70
       },
 

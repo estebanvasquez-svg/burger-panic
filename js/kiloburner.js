@@ -91,6 +91,184 @@ class CryoProjectile {
 }
 
 /**
+ * Flame Projectile fired by Chef Pepe's Blowtorch in Level 3
+ * Incandescent jet of flame and sparks directed at Boss Kiloburner
+ */
+class FlameProjectile {
+  constructor(x, y, dir = 1) {
+    this.x = x;
+    this.y = y;
+    this.dir = dir; // 1 = right, -1 = left
+    this.speed = 5.8;
+    this.vx = this.dir * this.speed;
+    this.vy = (Math.random() - 0.5) * 0.9; // Conical flame spread
+    this.radius = 5.5;
+    this.life = 42; // frames
+    this.maxLife = 42;
+    this.damage = 8;
+    this.particles = [];
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life--;
+
+    // Spawn expanding fiery embers and smoke particles
+    if (Math.random() < 0.9) {
+      const colors = ['#fef08a', '#f59e0b', '#f97316', '#ef4444', '#78350f'];
+      this.particles.push({
+        x: this.x + (Math.random() - 0.5) * 6,
+        y: this.y + (Math.random() - 0.5) * 6,
+        vx: -this.vx * 0.12 + (Math.random() - 0.5) * 0.8,
+        vy: (Math.random() - 0.5) * 0.8 - 0.2, // heat rises slightly
+        life: 14 + Math.random() * 8,
+        maxLife: 22,
+        size: 2.2 + Math.random() * 2.8,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      });
+    }
+
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life--;
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
+      }
+    }
+  }
+
+  draw(ctx) {
+    // Draw outer embers and smoke trail
+    for (const p of this.particles) {
+      const alpha = Math.max(0, p.life / p.maxLife);
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(p.size), Math.round(p.size));
+      ctx.restore();
+    }
+
+    // Draw main incandescent plasma flame core
+    ctx.save();
+    const pulse = Math.sin(Date.now() * 0.04) * 1.5;
+    const r = Math.max(2, this.radius + pulse * 0.6);
+
+    const grad = ctx.createRadialGradient(this.x, this.y, 1, this.x, this.y, r + 5);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.3, '#fef08a');
+    grad.addColorStop(0.65, '#f97316');
+    grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r + 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Hot molten core
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+}
+
+/**
+ * Blowtorch Pickup Station (Soplete)
+ * Placed on platforms in Level 3. Chef collects it to get a full fuel tank of flames.
+ */
+class BlowtorchPickup {
+  constructor(id, x, y) {
+    this.id = id;
+    this.x = x;
+    this.y = y; // platform floor level
+    this.w = 16;
+    this.h = 18;
+    this.collected = false;
+    this.animTimer = Math.random() * 60;
+  }
+
+  update() {
+    this.animTimer += 0.08;
+  }
+
+  draw(ctx) {
+    if (this.collected) {
+      // Empty spent station bracket
+      ctx.save();
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(Math.round(this.x - 7), Math.round(this.y - 4), 14, 4);
+      ctx.fillStyle = '#64748b';
+      ctx.font = '6px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('USADO', Math.round(this.x), Math.round(this.y - 6));
+      ctx.restore();
+      return;
+    }
+
+    const bob = Math.sin(this.animTimer) * 2;
+    const drawY = this.y - 18 + bob;
+
+    ctx.save();
+
+    // Bouncing overhead prompt
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 7px monospace';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#f97316';
+    ctx.shadowBlur = 4;
+    ctx.fillText('▼ SOPLETE ▼', Math.round(this.x), Math.round(drawY - 6));
+    ctx.shadowBlur = 0;
+
+    // Glowing aura
+    const glowR = 12 + Math.sin(this.animTimer * 2) * 2;
+    const aura = ctx.createRadialGradient(this.x, drawY + 8, 2, this.x, drawY + 8, glowR);
+    aura.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+    aura.addColorStop(1, 'rgba(56, 189, 248, 0)');
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(this.x, drawY + 8, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Gas Canister body (vivid blue industrial cylinder)
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(Math.round(this.x - 5), Math.round(drawY + 5), 10, 11);
+    // Canister highlight
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(Math.round(this.x - 4), Math.round(drawY + 6), 2, 9);
+    // Metal base ring
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(Math.round(this.x - 6), Math.round(drawY + 15), 12, 2);
+
+    // Brass valve / regulator
+    ctx.fillStyle = '#eab308';
+    ctx.fillRect(Math.round(this.x - 3), Math.round(drawY + 2), 6, 3);
+    // Angled burner nozzle
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(Math.round(this.x + 2), Math.round(drawY - 1), 6, 3);
+
+    // Animated pilot flame at the tip
+    const flameSize = 2 + Math.random() * 2;
+    ctx.fillStyle = Math.random() < 0.5 ? '#38bdf8' : '#f59e0b';
+    ctx.beginPath();
+    ctx.arc(this.x + 9, drawY, flameSize, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  checkCollision(player) {
+    if (this.collected) return false;
+    return Math.abs((player.x + 8) - this.x) < 14 && Math.abs((player.y + 14) - this.y) < 14;
+  }
+}
+
+
+/**
  * Fiery Meatball Projectile fired by Kiloburner Boss
  */
 class MeatballProjectile {
@@ -206,8 +384,8 @@ class KiloburnerBoss {
     this.logicalW = 86;
     this.logicalH = 64;
 
-    this.maxHealth = 300;
-    this.health = 300;
+    this.maxHealth = 400;
+    this.health = 400;
     this.facing = -1; // -1 = looking left toward Chef Pepe
 
     // States: 'idle', 'lean', 'recoil', 'flame', 'meatball', 'claw', 'hit', 'explode', 'dead'
@@ -237,7 +415,7 @@ class KiloburnerBoss {
     this.clawHitbox = { x: 0, y: 0, w: 0, h: 0 };
   }
 
-  update(player, gameFloors, spawnProjectileCallback) {
+  update(player, gameFloors, spawnProjectileCallback, cameraX = 0) {
     if (this.hitFlashTimer > 0) this.hitFlashTimer--;
 
     // ----------------------------------------------------
@@ -426,15 +604,21 @@ class KiloburnerBoss {
     this.floatAngle += 0.05;
     this.y = this.baseY + Math.sin(this.floatAngle) * 16;
 
-    // Horizontal patrol oscillation
-    this.x += this.hoverSpeedX;
-    if (this.x > this.maxX) {
-      this.x = this.maxX;
-      this.hoverSpeedX = -Math.abs(this.hoverSpeedX);
-    } else if (this.x < this.minX) {
+    // Boss patrol anchored to the advancing viewport:
+    // Keeps Kiloburner hovering on the right side of the active screen
+    this.minX = cameraX + 150;
+    this.maxX = cameraX + 218;
+
+    if (this.x < this.minX) {
       this.x = this.minX;
       this.hoverSpeedX = Math.abs(this.hoverSpeedX);
+    } else if (this.x > this.maxX) {
+      this.x = this.maxX;
+      this.hoverSpeedX = -Math.abs(this.hoverSpeedX);
     }
+
+    // Horizontal patrol oscillation
+    this.x += this.hoverSpeedX;
 
     // Attack cooldown management
     if (this.attackCooldown > 0) {
@@ -465,6 +649,26 @@ class KiloburnerBoss {
   /**
    * Check collision with player's cryogenic projectile
    */
+  /**
+   * Check collision with player's blowtorch flame projectile
+   */
+  checkHitByFlame(projectile) {
+    if (this.health <= 0 || this.isDead) return false;
+
+    // Body hitbox
+    const left = this.x - this.logicalW * 0.45;
+    const right = this.x + this.logicalW * 0.45;
+    const top = this.y - this.logicalH;
+    const bottom = this.y;
+
+    if (projectile.x >= left && projectile.x <= right &&
+        projectile.y >= top && projectile.y <= bottom) {
+      this.takeDamage(projectile.damage || 8, 'flame');
+      return true;
+    }
+    return false;
+  }
+
   checkHitByCryo(projectile) {
     if (this.health <= 0 || this.isDead) return false;
 
@@ -805,4 +1009,6 @@ class KiloburnerBoss {
 window.KiloburnerBoss = KiloburnerBoss;
 window.CryoProjectile = CryoProjectile;
 window.MeatballProjectile = MeatballProjectile;
+window.FlameProjectile = FlameProjectile;
+window.BlowtorchPickup = BlowtorchPickup;
 

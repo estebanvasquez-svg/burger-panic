@@ -101,6 +101,10 @@ class Player {
     this.pepperTimer = 0;
     this.landSquashTimer = 0;
     this.cryoCooldown = 0;
+    this.hasBlowtorch = false;
+    this.blowtorchFuel = 0;
+    this.maxBlowtorchFuel = 100;
+    this.flameSoundTimer = 0;
   }
 
   resetPosition() {
@@ -118,7 +122,14 @@ class Player {
     this.isTossingPepper = false;
     this.landSquashTimer = 0;
     this.cryoCooldown = 0;
+    this.hasBlowtorch = false;
+    this.blowtorchFuel = 0;
+    this.maxBlowtorchFuel = 100;
+    this.flameSoundTimer = 0;
     this.invulnerableTimer = 120; // ~2 seconds of grace flicker
+    this.hasBlowtorch = false;
+    this.blowtorchFuel = 0;
+    this.flameSoundTimer = 0;
   }
 
   dropFromLadder(dir) {
@@ -226,6 +237,48 @@ class Player {
 
     pepperClouds.push(new PepperCloud(px, py, dir));
     return true;
+  }
+
+  fireBlowtorch(flameProjectiles, currentInput = null) {
+    if (!this.hasBlowtorch || this.blowtorchFuel <= 0 || this.isDead) return 'empty';
+
+    this.isTossingPepper = true;
+    this.pepperTimer = 4; // Brief pose so Chef can keep running while firing
+
+    // Fuel drain: ~133 continuous frames of flame (~2.2 seconds) per tank
+    this.blowtorchFuel = Math.max(0, this.blowtorchFuel - 0.75);
+
+    let dir = (this.facingDir === 'left' || this.dir === -1) ? -1 : 1;
+    if (currentInput && currentInput.x !== 0) {
+      dir = (currentInput.x < 0) ? -1 : 1;
+    }
+    this.dir = dir;
+    this.facingDir = (dir === -1) ? 'left' : 'right';
+
+    const spawnX = (dir === -1) ? (this.x - 4) : (this.x + 20);
+    const spawnY = this.y + 7;
+
+    if (window.FlameProjectile && flameProjectiles) {
+      flameProjectiles.push(new window.FlameProjectile(spawnX, spawnY, dir));
+    }
+
+    if (this.flameSoundTimer <= 0) {
+      if (window.soundManager && window.soundManager.playFlame) {
+        window.soundManager.playFlame();
+      }
+      this.flameSoundTimer = 6;
+    }
+
+    if (this.blowtorchFuel <= 0) {
+      this.hasBlowtorch = false;
+      this.blowtorchFuel = 0;
+      if (window.soundManager && window.soundManager.playGasEmpty) {
+        window.soundManager.playGasEmpty();
+      }
+      return 'exhausted';
+    }
+
+    return 'fired';
   }
 
   fireCryoExtinguisher(cryoProjectiles, currentInput = null) {
@@ -703,6 +756,80 @@ class Player {
     }
 
     if (hasScale) {
+      ctx.restore();
+      // Render Blowtorch on Chef and overhead mini fuel bar
+    if (this.hasBlowtorch && !this.isDead) {
+      ctx.save();
+      const flip = (this.dir === -1 || this.facingDir === 'left');
+      const bX = flip ? (this.x + 13) : (this.x - 3);
+      const bY = this.y + 4;
+
+      // Strapped Blue Canister
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(Math.round(bX), Math.round(bY), 5, 8);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(Math.round(bX + 1), Math.round(bY + 1), 1, 6);
+
+      // Brass valve
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(Math.round(bX + (flip ? -1 : 4)), Math.round(bY - 1), 3, 2);
+
+      // Flickering pilot light at the nozzle
+      const nozX = flip ? (this.x - 4) : (this.x + 19);
+      const nozY = this.y + 8;
+      ctx.fillStyle = Math.random() < 0.5 ? '#38bdf8' : '#f97316';
+      ctx.fillRect(Math.round(nozX), Math.round(nozY), 2, 2);
+
+      // Mini overhead fuel meter
+      const pct = Math.max(0, Math.min(1, this.blowtorchFuel / this.maxBlowtorchFuel));
+      const mw = 18;
+      const mh = 3;
+      const mx = Math.round(this.x + 8 - mw / 2);
+      const my = Math.round(drawY - 6);
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+      ctx.fillRect(mx - 1, my - 1, mw + 2, mh + 2);
+      ctx.fillStyle = pct > 0.5 ? '#22c55e' : (pct > 0.25 ? '#eab308' : '#ef4444');
+      ctx.fillRect(mx, my, Math.round(mw * pct), mh);
+
+      ctx.restore();
+    }
+  }
+    // Render Blowtorch on Chef and overhead mini fuel bar
+    if (this.hasBlowtorch && !this.isDead) {
+      ctx.save();
+      const flip = (this.dir === -1 || this.facingDir === 'left');
+      const bX = flip ? (this.x + 13) : (this.x - 3);
+      const bY = this.y + 4;
+
+      // Strapped Blue Canister
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(Math.round(bX), Math.round(bY), 5, 8);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(Math.round(bX + 1), Math.round(bY + 1), 1, 6);
+
+      // Brass valve
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(Math.round(bX + (flip ? -1 : 4)), Math.round(bY - 1), 3, 2);
+
+      // Flickering pilot light at the nozzle
+      const nozX = flip ? (this.x - 4) : (this.x + 19);
+      const nozY = this.y + 8;
+      ctx.fillStyle = Math.random() < 0.5 ? '#38bdf8' : '#f97316';
+      ctx.fillRect(Math.round(nozX), Math.round(nozY), 2, 2);
+
+      // Mini overhead fuel meter
+      const pct = Math.max(0, Math.min(1, this.blowtorchFuel / this.maxBlowtorchFuel));
+      const mw = 18;
+      const mh = 3;
+      const mx = Math.round(this.x + 8 - mw / 2);
+      const my = Math.round(drawY - 6);
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+      ctx.fillRect(mx - 1, my - 1, mw + 2, mh + 2);
+      ctx.fillStyle = pct > 0.5 ? '#22c55e' : (pct > 0.25 ? '#eab308' : '#ef4444');
+      ctx.fillRect(mx, my, Math.round(mw * pct), mh);
+
       ctx.restore();
     }
   }

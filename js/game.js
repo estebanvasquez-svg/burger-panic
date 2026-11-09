@@ -30,6 +30,8 @@ class BurgerPanicGame {
     this.particles = [];
     this.screenShake = 0;
     this.cameraX = 0;
+    this.blowtorches = [];
+    this.flameProjectiles = [];
 
     this.bonusSpawnTimer = 350;
     this.stageBonusItemsSpawned = 0;
@@ -103,6 +105,18 @@ class BurgerPanicGame {
         this.openMap(lostStage);
       } else if (this.state === 'PLAYING') {
         if (this.player) {
+          if (this.levelData && this.levelData.blowtorches && this.levelData.blowtorches.length > 0) {
+            if (!this.player.hasBlowtorch || this.player.blowtorchFuel <= 0) {
+              this.popups.push(new window.ScorePopup('¡SUBE POR UN SOPLETE!', this.player.x - 30, this.player.y - 14));
+              if (window.soundManager && window.soundManager.playGasEmpty) {
+                window.soundManager.playGasEmpty();
+              }
+              return;
+            }
+            this.player.fireBlowtorch(this.flameProjectiles, this.controls.input);
+            this.updatePepperUI();
+            return;
+          }
           if (this.kiloburnerBoss) {
             this.player.fireCryoExtinguisher(this.cryoProjectiles, this.controls.input);
           } else {
@@ -460,6 +474,8 @@ class BurgerPanicGame {
     this.popups = [];
     this.bonusSpawnTimer = 350;
     this.cameraX = 0;
+    this.blowtorches = [];
+    this.flameProjectiles = [];
     this.stageBonusItemsSpawned = 0;
     this.stageBonusItemsCollected = 0;
     this.stageLifeItemSpawned = false;
@@ -471,13 +487,25 @@ class BurgerPanicGame {
 
     // Initialize Stage Boss if defined for this level
     if (this.levelData && this.levelData.boss && this.levelData.boss.type === 'kiloburner' && window.KiloburnerBoss) {
-      this.kiloburnerBoss = new window.KiloburnerBoss(this.levelData.width || 300, this.height);
+      this.kiloburnerBoss = new window.KiloburnerBoss(this.levelData.width || 1600, this.height);
       this.cryoProjectiles = [];
       this.bossProjectiles = [];
     } else {
       this.kiloburnerBoss = null;
       this.cryoProjectiles = [];
       this.bossProjectiles = [];
+    }
+
+    // Initialize Blowtorch stations for Level 3
+    if (this.levelData && this.levelData.blowtorches && window.BlowtorchPickup) {
+      this.blowtorches = this.levelData.blowtorches.map(b => new window.BlowtorchPickup(b.id, b.x, b.y));
+    } else {
+      this.blowtorches = [];
+    }
+    this.flameProjectiles = [];
+    if (this.player) {
+      this.player.hasBlowtorch = false;
+      this.player.blowtorchFuel = 0;
     }
     this.boss = null;
     this.updatePepperUI();
@@ -491,7 +519,19 @@ class BurgerPanicGame {
     const wrap = pepperBtn ? pepperBtn.closest('.arcade-button-wrapper') : null;
     const subLabel = wrap ? wrap.querySelector('.button-cpo-sublabel') : null;
 
-    if (this.kiloburnerBoss) {
+    if (this.levelData && this.levelData.blowtorches && this.levelData.blowtorches.length > 0) {
+      if (this.player && this.player.hasBlowtorch) {
+        if (badge) badge.textContent = Math.round(this.player.blowtorchFuel) + '%';
+        if (labelSpan) labelSpan.textContent = 'FUEGO';
+        if (iconSpan) iconSpan.textContent = '🔥';
+        if (subLabel) subLabel.textContent = 'SOPLETE';
+      } else {
+        if (badge) badge.textContent = '0%';
+        if (labelSpan) labelSpan.textContent = 'BUSCA';
+        if (iconSpan) iconSpan.textContent = '🔍';
+        if (subLabel) subLabel.textContent = 'SOPLETE';
+      }
+    } else if (this.kiloburnerBoss) {
       if (badge) badge.textContent = '∞';
       if (labelSpan) labelSpan.textContent = 'SPRAY';
       if (iconSpan) iconSpan.textContent = '🧪';
@@ -634,9 +674,11 @@ class BurgerPanicGame {
       this.updateControlsVisibility();
     }
 
-    // Keep camera focused on player for wider stages
+    // Keep camera focused on player for wider stages (unless stage is auto-scrolling)
     const mapW = (this.levelData && this.levelData.width) ? this.levelData.width : 240;
-    if (mapW > 240 && this.player) {
+    if (this.levelData && this.levelData.autoScroll) {
+      // Handled continuously by auto-scroller
+    } else if (mapW > 240 && this.player) {
       const targetCamX = this.player.x + 8 - 120;
       this.cameraX = Math.max(0, Math.min(targetCamX, mapW - 240));
     } else {
@@ -850,12 +892,68 @@ class BurgerPanicGame {
       }
     }
 
+    // 5.4. Auto-scrolling for Level 3 & Blowtorch mechanics
+    if (this.levelData && this.levelData.autoScroll && (!this.kiloburnerBoss || !this.kiloburnerBoss.isDead)) {
+      const scrollSpeed = this.levelData.autoScrollSpeed || 0.45;
+      const maxCamX = (this.levelData.width || 1600) - 240;
+      this.cameraX = Math.min(maxCamX, (this.cameraX || 0) + scrollSpeed);
+
+      // Clamp player within visible scrolling bounds
+      if (this.player && !this.player.isDead) {
+        if (this.player.x < this.cameraX + 4) {
+          this.player.x = this.cameraX + 4;
+        } else if (this.player.x > this.cameraX + 220) {
+          this.player.x = this.cameraX + 220;
+        }
+      }
+    }
+
+    // Check Blowtorch pickup collisions
+    if (this.blowtorches && this.player && !this.player.isDead) {
+      for (const bt of this.blowtorches) {
+        bt.update();
+        if (bt.checkCollision(this.player)) {
+          bt.collected = true;
+          this.player.hasBlowtorch = true;
+          this.player.blowtorchFuel = 100;
+          this.addScore(100, bt.x, bt.y - 10);
+          this.popups.push(new window.ScorePopup('¡SOPLETE LISTO! 🔥', this.player.x - 20, this.player.y - 16));
+          if (window.soundManager && window.soundManager.playIgnition) {
+            window.soundManager.playIgnition();
+          }
+          for (let s = 0; s < 12; s++) {
+            this.particles.push(new window.ArcadeParticle(
+              bt.x, bt.y - 8,
+              (Math.random() - 0.5) * 3,
+              (Math.random() - 0.5) * 3,
+              Math.random() < 0.5 ? '#f97316' : '#38bdf8',
+              3, 20, 'star'
+            ));
+          }
+          this.updatePepperUI();
+        }
+      }
+    }
+
+    // Continuous Blowtorch Firing while Pepper/Attack button is held down
+    if (this.player && this.player.hasBlowtorch && !this.player.isDead) {
+      const isFiring = (this.controls && this.controls.input && this.controls.input.pepper);
+      if (isFiring) {
+        const result = this.player.fireBlowtorch(this.flameProjectiles, this.controls.input);
+        this.updatePepperUI();
+        if (result === 'exhausted') {
+          this.popups.push(new window.ScorePopup('¡SIN GAS! BUSCA OTRO', this.player.x - 30, this.player.y - 18));
+          this.addScreenShake(2.0);
+        }
+      }
+    }
+
     // 5.5. Update Kiloburner Giant Boss & Combat
     if (this.kiloburnerBoss) {
       this.kiloburnerBoss.update(this.player, this.levelData.floors, (proj) => {
         if (!this.bossProjectiles) this.bossProjectiles = [];
         this.bossProjectiles.push(proj);
-      });
+      }, this.cameraX || 0);
 
       // Update Player Cryo Projectiles
       if (this.cryoProjectiles) {
@@ -885,6 +983,38 @@ class BurgerPanicGame {
 
           if (cp.life <= 0 || cp.x < 0 || cp.x > (this.levelData.width || 300) + 20) {
             this.cryoProjectiles.splice(i, 1);
+          }
+        }
+      }
+
+      // Update Player Flame Projectiles (Level 3 Soplete)
+      if (this.flameProjectiles) {
+        for (let i = this.flameProjectiles.length - 1; i >= 0; i--) {
+          const fp = this.flameProjectiles[i];
+          fp.update();
+
+          // Hit check on Boss
+          if (this.kiloburnerBoss && this.kiloburnerBoss.checkHitByFlame(fp)) {
+            this.addScore(40, fp.x, fp.y);
+            this.popups.push(new window.ScorePopup('+40', fp.x, fp.y - 8));
+            for (let s = 0; s < 6; s++) {
+              this.particles.push(new window.ArcadeParticle(
+                fp.x, fp.y,
+                (Math.random() - 0.5) * 3.5,
+                (Math.random() - 0.5) * 3.5,
+                Math.random() < 0.5 ? '#f97316' : (Math.random() < 0.8 ? '#fef08a' : '#ef4444'),
+                2.5, 18, 'spark'
+              ));
+            }
+            if (window.soundManager && window.soundManager.playBlip) {
+              window.soundManager.playBlip();
+            }
+            this.flameProjectiles.splice(i, 1);
+            continue;
+          }
+
+          if (fp.life <= 0 || fp.x < 0 || fp.x > (this.levelData.width || 1600) + 40) {
+            this.flameProjectiles.splice(i, 1);
           }
         }
       }
@@ -1070,9 +1200,11 @@ class BurgerPanicGame {
       this.stateTimer = 360;
     }
 
-    // 9. Camera Tracking for wide levels
+    // 9. Camera Tracking for wide levels (unless stage is auto-scrolling)
     const mapW = (this.levelData && this.levelData.width) ? this.levelData.width : 240;
-    if (mapW > 240 && this.player) {
+    if (this.levelData && this.levelData.autoScroll) {
+      // Auto-scrolling handled in 5.4 during playing state
+    } else if (mapW > 240 && this.player) {
       const targetCamX = this.player.x + 8 - 120;
       this.cameraX = Math.max(0, Math.min(targetCamX, mapW - 240));
     } else {
@@ -1137,7 +1269,10 @@ class BurgerPanicGame {
     if (stageNum === 3) {
       const bg3 = window.spriteManager ? window.spriteManager.sprites.bg_stage_3 : null;
       if (bg3) {
-        this.ctx.drawImage(bg3, 0, 0, 360, 320);
+        const fullW = (this.levelData && this.levelData.width) ? this.levelData.width : 1600;
+        for (let bx = 0; bx < fullW; bx += 360) {
+          this.ctx.drawImage(bg3, bx, 0, 360, 320);
+        }
       }
 
       // Truss lattice support legs under the sniper platform (x: 60 to 140, y: 200 to 288)
@@ -1200,6 +1335,16 @@ class BurgerPanicGame {
       enemy.draw(this.ctx);
     }
 
+    // Draw Blowtorch pickup stations
+    if (this.blowtorches) {
+      for (const bt of this.blowtorches) bt.draw(this.ctx);
+    }
+
+    // Draw Flame Projectiles
+    if (this.flameProjectiles) {
+      for (const fp of this.flameProjectiles) fp.draw(this.ctx);
+    }
+
     // Draw Cryo Projectiles (Player Exclusive Weapon)
     if (this.cryoProjectiles) {
       for (const cp of this.cryoProjectiles) cp.draw(this.ctx);
@@ -1240,6 +1385,43 @@ class BurgerPanicGame {
     // Render Boss Health Bar (Fixed screen coordinate overlay)
     if (this.kiloburnerBoss) {
       this.kiloburnerBoss.drawBossHealthBar(this.ctx, this.canvas.width);
+    // Render Blowtorch Fuel Gauge (Level 3 Soplete HUD)
+    if (this.levelData && this.levelData.blowtorches && this.levelData.blowtorches.length > 0 && this.player) {
+      const fuelPct = Math.max(0, Math.min(1, this.player.blowtorchFuel / this.player.maxBlowtorchFuel));
+      const fuelBarW = 76;
+      const fuelBarH = 7;
+      const fuelBarX = 82;
+      const fuelBarY = 22;
+
+      this.ctx.save();
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.font = 'bold 7px monospace';
+      this.ctx.textAlign = 'left';
+      this.ctx.fillText(this.player.hasBlowtorch ? `🔥 GAS: ${Math.round(this.player.blowtorchFuel)}%` : '🔍 BUSCA SOPLETE', fuelBarX, fuelBarY - 2);
+
+      this.ctx.fillStyle = '#0f172a';
+      this.ctx.fillRect(fuelBarX, fuelBarY, fuelBarW, fuelBarH);
+
+      if (this.player.hasBlowtorch && fuelPct > 0) {
+        const fillW = Math.round(fuelBarW * fuelPct);
+        const grad = this.ctx.createLinearGradient(fuelBarX, fuelBarY, fuelBarX + fuelBarW, fuelBarY);
+        grad.addColorStop(0, '#f97316');
+        grad.addColorStop(0.7, '#eab308');
+        grad.addColorStop(1, '#38bdf8');
+        this.ctx.fillStyle = grad;
+        this.ctx.fillRect(fuelBarX, fuelBarY, fillW, fuelBarH);
+      } else {
+        if (Math.floor(Date.now() / 250) % 2 === 0) {
+          this.ctx.fillStyle = '#ef4444';
+          this.ctx.fillRect(fuelBarX, fuelBarY, fuelBarW, fuelBarH);
+        }
+      }
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeRect(fuelBarX, fuelBarY, fuelBarW, fuelBarH);
+      this.ctx.restore();
+    }
+
     }
 
     // Overlays for specific states
