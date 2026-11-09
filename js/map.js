@@ -166,6 +166,7 @@ class LevelMap {
       // ==========================================
       // STAGE 3: 💥 BOSS STAGE - EL COLOSO KILOBURNER
       // Auto-scrolling Cyber-Furnace Arena with Soplete Weapons
+      // Massive 2500px Extended Arena Edition
       // ==========================================
       {
         stageNumber: 3,
@@ -173,15 +174,18 @@ class LevelMap {
         isBossStage: true,
         boss: {
           type: 'kiloburner',
-          health: 400,
+          health: 750,
           name: 'KILOBURNER'
         },
         exclusivePower: 'SOPLETE',
-        width: 1600,
+        width: 2500,
         autoScroll: true,
         autoScrollSpeed: 0.45,
         autoScrollDir: -1,
         bonusSpots: [
+          { x: 2360, y: 120 },
+          { x: 2090, y: 120 },
+          { x: 1820, y: 120 },
           { x: 1460, y: 120 },
           { x: 1200, y: 120 },
           { x: 930, y: 120 },
@@ -191,7 +195,7 @@ class LevelMap {
         ],
         floors: [
           // Continuous ground floor (y = 288)
-          { y: 288, x1: 20, x2: 1590 },
+          { y: 288, x1: 20, x2: 2490 },
 
           // Blowtorch combat platforms (y = 200)
           { y: 200, x1: 90, x2: 190 },
@@ -200,6 +204,9 @@ class LevelMap {
           { y: 200, x1: 890, x2: 990 },
           { y: 200, x1: 1160, x2: 1260 },
           { y: 200, x1: 1420, x2: 1520 },
+          { y: 200, x1: 1690, x2: 1790 },
+          { y: 200, x1: 1960, x2: 2060 },
+          { y: 200, x1: 2230, x2: 2330 },
 
           // High platforms (y = 120)
           { y: 120, x1: 70, x2: 160 },
@@ -207,7 +214,10 @@ class LevelMap {
           { y: 120, x1: 610, x2: 700 },
           { y: 120, x1: 880, x2: 970 },
           { y: 120, x1: 1150, x2: 1240 },
-          { y: 120, x1: 1480, x2: 1570 },
+          { y: 120, x1: 1410, x2: 1500 },
+          { y: 120, x1: 1680, x2: 1770 },
+          { y: 120, x1: 1950, x2: 2040 },
+          { y: 120, x1: 2220, x2: 2310 },
 
           // Ceiling rails (y = 52)
           { y: 52, x1: 50, x2: 140 },
@@ -215,7 +225,10 @@ class LevelMap {
           { y: 52, x1: 590, x2: 680 },
           { y: 52, x1: 860, x2: 950 },
           { y: 52, x1: 1130, x2: 1220 },
-          { y: 52, x1: 1400, x2: 1490 }
+          { y: 52, x1: 1390, x2: 1480 },
+          { y: 52, x1: 1660, x2: 1750 },
+          { y: 52, x1: 1930, x2: 2020 },
+          { y: 52, x1: 2200, x2: 2290 }
         ],
         ladders: [
           // Section 1 (x: 0 - 260)
@@ -243,12 +256,30 @@ class LevelMap {
           { x: 1220, y1: 120, y2: 200 },
           { x: 1160, y1: 52, y2: 120 },
 
-          // Section 6 (x: 1340 - 1600)
-          { x: 1440, y1: 200, y2: 288 },
-          { x: 1500, y1: 120, y2: 200 },
-          { x: 1490, y1: 52, y2: 120 }
+          // Section 6 (x: 1340 - 1610)
+          { x: 1430, y1: 200, y2: 288 },
+          { x: 1480, y1: 120, y2: 200 },
+          { x: 1420, y1: 52, y2: 120 },
+
+          // Section 7 (x: 1610 - 1880)
+          { x: 1700, y1: 200, y2: 288 },
+          { x: 1750, y1: 120, y2: 200 },
+          { x: 1690, y1: 52, y2: 120 },
+
+          // Section 8 (x: 1880 - 2150)
+          { x: 1970, y1: 200, y2: 288 },
+          { x: 2020, y1: 120, y2: 200 },
+          { x: 1960, y1: 52, y2: 120 },
+
+          // Section 9 (x: 2150 - 2450)
+          { x: 2240, y1: 200, y2: 288 },
+          { x: 2290, y1: 120, y2: 200 },
+          { x: 2230, y1: 52, y2: 120 }
         ],
         blowtorches: [
+          { id: 9, x: 2280, y: 200 },
+          { id: 8, x: 2010, y: 200 },
+          { id: 7, x: 1740, y: 200 },
           { id: 6, x: 1470, y: 200 },
           { id: 5, x: 1210, y: 200 },
           { id: 4, x: 940, y: 200 },
@@ -258,7 +289,7 @@ class LevelMap {
         ],
         burgers: [],
         plates: [],
-        playerStart: { x: 1420, y: 288 },
+        playerStart: { x: 2210, y: 288 },
         enemies: [],
         enemySpeed: 0.70
       },

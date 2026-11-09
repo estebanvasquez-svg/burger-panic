@@ -383,12 +383,14 @@ class KiloburnerBoss {
     this.y = this.baseY;
 
     // Scale ratio from original ~240px sprite down to game size (~96x68)
-    this.scale = 0.42;
-    this.logicalW = 86;
-    this.logicalH = 64;
+    this.scale = 0.58; // Expanded formidable boss size
+    this.logicalW = 120;
+    this.logicalH = 88;
+    this.baseY = 215;
 
-    this.maxHealth = 400;
-    this.health = 400;
+    this.maxHealth = 750; // Increased stamina & epic boss durability
+    this.health = 750;
+    this.animTimer = 0;
     this.facing = -1; // -1 = looking left toward Chef Pepe
 
     // States: 'idle', 'lean', 'recoil', 'flame', 'meatball', 'claw', 'hit', 'explode', 'dead'
@@ -419,6 +421,7 @@ class KiloburnerBoss {
   }
 
   update(player, gameFloors, spawnProjectileCallback, cameraX = 0) {
+    this.animTimer++;
     if (this.hitFlashTimer > 0) this.hitFlashTimer--;
 
     // ----------------------------------------------------
@@ -781,17 +784,32 @@ class KiloburnerBoss {
     const sm = spriteManager || window.spriteManager;
     if (!sm) return;
 
-    // Select sprite name based on state
-    let spriteName = 'move_idle';
+    // Select sprite name with fluid multi-frame animation (100% consistent with original art)
+    let spriteName = 'idle_1';
 
-    if (this.state === 'recoil') spriteName = 'move_recoil';
-    else if (this.state === 'lean') spriteName = 'move_lean';
-    else if (this.state === 'flame') spriteName = 'attack_flame';
-    else if (this.state === 'meatball') spriteName = 'attack_meatball';
-    else if (this.state === 'claw') spriteName = 'attack_claw';
-    else if (this.state === 'hit') spriteName = 'defeat_hit';
-    else if (this.state === 'explode') spriteName = 'defeat_explode';
-    else if (this.state === 'dead') spriteName = 'defeat_dead';
+    if (this.state === 'dead') {
+      spriteName = 'defeat_dead';
+    } else if (this.state === 'explode') {
+      spriteName = (this.stateTimer % 6 < 3) ? 'defeat_explode' : 'hit_1';
+    } else if (this.hitFlashTimer > 0) {
+      spriteName = (this.hitFlashTimer % 4 < 2) ? 'hit_1' : 'hit_2';
+    } else if (this.state === 'recoil') {
+      spriteName = (this.stateTimer % 8 < 4) ? 'recoil_1' : 'recoil_2';
+    } else if (this.state === 'claw') {
+      const clawIdx = Math.min(4, Math.floor(this.stateTimer / 6));
+      spriteName = ['claw_1', 'claw_2', 'claw_3', 'claw_4', 'claw_5'][clawIdx] || 'attack_claw';
+    } else if (this.state === 'flame') {
+      const flameIdx = Math.min(3, Math.floor(this.stateTimer / 7));
+      spriteName = ['flame_1', 'flame_2', 'flame_3', 'flame_4'][flameIdx] || 'attack_flame';
+    } else if (this.state === 'meatball') {
+      spriteName = (this.stateTimer % 10 < 5) ? 'attack_meatball' : 'idle_5';
+    } else if (this.state === 'lean') {
+      spriteName = 'idle_5';
+    } else {
+      // Continuous 6-frame fluid hover & mechanical breathing cycle
+      const hoverIdx = Math.floor(this.animTimer / 7) % 6;
+      spriteName = ['idle_1', 'idle_2', 'idle_3', 'idle_4', 'idle_5', 'idle_6'][hoverIdx];
+    }
 
     const info = spriteManager.getKiloburnerAtlasInfo(spriteName);
     if (!info) return;
@@ -814,46 +832,46 @@ class KiloburnerBoss {
       const isFlipped = flip;
       const sway = Math.sin(this.floatAngle) * 5;
 
-      // 4 heavy power & coolant conduits plugged into cranial sockets at top-rear of cyber skull
+      // 4 heavy power & coolant conduits plugged into cranial sockets across expanded cyber skull
       const cables = [
         {
-          anchorX: Math.round(this.x + (isFlipped ? 36 : -36) + sway * 0.6),
-          socketX: Math.round(this.x + (isFlipped ? 26 : -26)),
-          socketY: bossTopY + 8,
-          curveOffset: (isFlipped ? 12 : -12) + sway,
+          anchorX: Math.round(this.x + (isFlipped ? 54 : -54) + sway * 0.6),
+          socketX: Math.round(this.x + (isFlipped ? 42 : -42)),
+          socketY: bossTopY + 12,
+          curveOffset: (isFlipped ? 16 : -16) + sway,
           color: '#1e293b',
           hiColor: '#475569',
-          width: 3.5,
+          width: 4,
           pulseSpeed: 0.003
         },
         {
-          anchorX: Math.round(this.x + (isFlipped ? 18 : -18) + sway * 0.4),
-          socketX: Math.round(this.x + (isFlipped ? 14 : -14)),
-          socketY: bossTopY + 2,
-          curveOffset: (isFlipped ? 6 : -6) + sway * 0.8,
+          anchorX: Math.round(this.x + (isFlipped ? 28 : -28) + sway * 0.4),
+          socketX: Math.round(this.x + (isFlipped ? 22 : -22)),
+          socketY: bossTopY + 4,
+          curveOffset: (isFlipped ? 8 : -8) + sway * 0.8,
           color: '#0f172a',
           hiColor: '#334155',
-          width: 4,
+          width: 4.5,
           pulseSpeed: 0.004
         },
         {
-          anchorX: Math.round(this.x + (isFlipped ? 2 : -2) + sway * 0.3),
-          socketX: Math.round(this.x + (isFlipped ? 4 : -4)),
-          socketY: bossTopY + 4,
-          curveOffset: (isFlipped ? -6 : 6) + sway * 0.7,
+          anchorX: Math.round(this.x + (isFlipped ? 6 : -6) + sway * 0.3),
+          socketX: Math.round(this.x + (isFlipped ? 6 : -6)),
+          socketY: bossTopY + 6,
+          curveOffset: (isFlipped ? -8 : 8) + sway * 0.7,
           color: '#1e293b',
           hiColor: '#475569',
-          width: 3.5,
+          width: 4,
           pulseSpeed: 0.005
         },
         {
-          anchorX: Math.round(this.x + (isFlipped ? -16 : 16) + sway * 0.5),
-          socketX: Math.round(this.x + (isFlipped ? -8 : 8)),
-          socketY: bossTopY + 12,
-          curveOffset: (isFlipped ? -14 : 14) + sway * 1.1,
+          anchorX: Math.round(this.x + (isFlipped ? -24 : 24) + sway * 0.5),
+          socketX: Math.round(this.x + (isFlipped ? -14 : 14)),
+          socketY: bossTopY + 18,
+          curveOffset: (isFlipped ? -18 : 18) + sway * 1.1,
           color: '#0f172a',
           hiColor: '#38bdf8',
-          width: 3,
+          width: 3.5,
           pulseSpeed: 0.0035
         }
       ];
