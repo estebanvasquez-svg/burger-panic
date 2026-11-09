@@ -676,19 +676,10 @@ class Player {
     let flip = false;
 
     if (this.isTossingPepper) {
-      if (this.lastTossDir === 'left') {
-        atlasName = this.pepperTimer > 8 ? 'pepper_left_1' : 'pepper_left_2';
-        flip = false;
-      } else if (this.lastTossDir === 'right') {
-        atlasName = this.pepperTimer > 8 ? 'pepper_right_1' : 'pepper_right_2';
-        flip = false;
-      } else if (this.lastTossDir === 'up') {
-        atlasName = 'subiendo_3';
-      } else {
-        atlasName = 'bajando_2';
-      }
+      atlasName = (this.dir === -1 || this.lastTossDir === 'left') ? 'run_left_00' : 'run_right_00';
+      flip = false;
     } else if (this.isJumping) {
-      atlasName = 'victory_2';
+      atlasName = 'jump';
       flip = this.dir === -1;
     } else if (this.isClimbing) {
       // 8-frame isolated back-view ladder climbing sequence
@@ -705,19 +696,13 @@ class Player {
         atlasName = 'climb_1';
       }
     } else if (this.vx !== 0) {
-      // Walking horizontally (symmetrical 4-frame run cycles)
-      const runFramesRight = ['run_right_1', 'run_right_2', 'run_right_3', 'run_right_4'];
-      const runFramesLeft = ['run_left_1', 'run_left_2', 'run_left_3', 'run_left_4'];
-      const rIdx = Math.floor(this.animTimer / 4) % 4;
-      if (this.dir === -1) {
-        atlasName = runFramesLeft[rIdx];
-        flip = false; // Already flipped in atlas
-      } else {
-        atlasName = runFramesRight[rIdx];
-        flip = false;
-      }
+      // 12-frame ultra-fluid 60 FPS running cycle (advances every 2.2 ticks)
+      const rIdx = Math.floor(this.animTimer / 2.2) % 12;
+      const frameStr = String(rIdx).padStart(2, '0');
+      atlasName = (this.dir === -1) ? ('run_left_' + frameStr) : ('run_right_' + frameStr);
+      flip = false;
     } else {
-      // Idle on platform
+      // Idle on platform (tactical combat ready stance)
       const idleBlink = Math.floor(Date.now() / 400) % 8 === 0;
       atlasName = idleBlink ? 'detenido_2' : 'detenido_1';
       flip = this.facingDir === 'left';
