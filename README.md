@@ -46,8 +46,8 @@ python server.py
 ```
 
 El servidor te mostrará dos enlaces:
-1. **Para jugar en PC:** `http://localhost:8000`
-2. **Para jugar en tu Celular (Android / iOS):** `http://TU_IP_LOCAL:8000` *(por ejemplo: `http://192.9.0.223:8000`)*
+1. **Para jugar en PC:** `http://localhost:9090`
+2. **Para jugar en tu Celular (Android / iOS):** `http://TU_IP_LOCAL:9090` *(por ejemplo: `http://192.9.0.223:9090`)*
 
 > **Nota:** El celular y la computadora deben estar conectados a la misma red Wi-Fi local.
 
@@ -56,7 +56,7 @@ El servidor te mostrará dos enlaces:
 ## 📲 Cómo Instalarlo como App en tu Celular
 
 ### En iPhone / iPad (iOS):
-1. Abre Safari y entra a la dirección de tu servidor (ej. `http://192.9.0.223:8000`).
+1. Abre Safari y entra a la dirección de tu servidor (ej. `http://192.9.0.223:9090`).
 2. Toca el botón de **Compartir** (ícono del cuadrado con flecha hacia arriba).
 3. Selecciona **"Agregar a pantalla de inicio"** (*Add to Home Screen*).
 4. Se abrirá como app independiente a pantalla completa.
