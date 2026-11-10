@@ -641,8 +641,8 @@ class Player {
       const flip = this.dir === -1;
 
       const info = window.spriteManager.getAtlasInfo(atlasName);
-      const h = info ? info.h : 22;
-      const w = info ? info.w : 20;
+      const h = info ? info.h : 30;
+      const w = info ? info.w : 22;
       const drawY = (this.y + 14) - h;
       const drawX = Math.round(this.x + 8 - w / 2);
 
@@ -730,8 +730,8 @@ class Player {
     }
 
     const info = window.spriteManager.getAtlasInfo(atlasName);
-    const h = info ? info.h : 28;
-    const w = info ? info.w : 16;
+    const h = info ? info.h : 30;
+    const w = info ? info.w : 22;
     const drawY = (this.y + 14) - h;
     const drawX = Math.round(this.x + 8 - w / 2);
 
@@ -771,49 +771,13 @@ class Player {
 
     if (hasScale) {
       ctx.restore();
-      // Render Blowtorch on Chef and overhead mini fuel bar
-    if (this.hasBlowtorch && !this.isDead) {
-      ctx.save();
-      const flip = (this.dir === -1 || this.facingDir === 'left');
-      const bX = flip ? (this.x + 13) : (this.x - 3);
-      const bY = this.y + 4;
-
-      // Strapped Blue Canister
-      ctx.fillStyle = '#0284c7';
-      ctx.fillRect(Math.round(bX), Math.round(bY), 5, 8);
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(Math.round(bX + 1), Math.round(bY + 1), 1, 6);
-
-      // Brass valve
-      ctx.fillStyle = '#eab308';
-      ctx.fillRect(Math.round(bX + (flip ? -1 : 4)), Math.round(bY - 1), 3, 2);
-
-      // Flickering pilot light at the nozzle
-      const nozX = flip ? (this.x - 4) : (this.x + 19);
-      const nozY = this.y + 8;
-      ctx.fillStyle = Math.random() < 0.5 ? '#38bdf8' : '#f97316';
-      ctx.fillRect(Math.round(nozX), Math.round(nozY), 2, 2);
-
-      // Mini overhead fuel meter
-      const pct = Math.max(0, Math.min(1, this.blowtorchFuel / this.maxBlowtorchFuel));
-      const mw = 18;
-      const mh = 3;
-      const mx = Math.round(this.x + 8 - mw / 2);
-      const my = Math.round(drawY - 6);
-
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-      ctx.fillRect(mx - 1, my - 1, mw + 2, mh + 2);
-      ctx.fillStyle = pct > 0.5 ? '#22c55e' : (pct > 0.25 ? '#eab308' : '#ef4444');
-      ctx.fillRect(mx, my, Math.round(mw * pct), mh);
-
-      ctx.restore();
     }
-  }
+
     // Render Blowtorch on Chef and overhead mini fuel bar
     if (this.hasBlowtorch && !this.isDead) {
       ctx.save();
-      const flip = (this.dir === -1 || this.facingDir === 'left');
-      const bX = flip ? (this.x + 13) : (this.x - 3);
+      const flipTorch = (this.dir === -1 || this.facingDir === 'left');
+      const bX = flipTorch ? (this.x + 13) : (this.x - 3);
       const bY = this.y + 4;
 
       // Strapped Blue Canister
@@ -824,10 +788,10 @@ class Player {
 
       // Brass valve
       ctx.fillStyle = '#eab308';
-      ctx.fillRect(Math.round(bX + (flip ? -1 : 4)), Math.round(bY - 1), 3, 2);
+      ctx.fillRect(Math.round(bX + (flipTorch ? -1 : 4)), Math.round(bY - 1), 3, 2);
 
       // Flickering pilot light at the nozzle
-      const nozX = flip ? (this.x - 4) : (this.x + 19);
+      const nozX = flipTorch ? (this.x - 4) : (this.x + 19);
       const nozY = this.y + 8;
       ctx.fillStyle = Math.random() < 0.5 ? '#38bdf8' : '#f97316';
       ctx.fillRect(Math.round(nozX), Math.round(nozY), 2, 2);

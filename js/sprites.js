@@ -37,13 +37,13 @@ class SpriteManager {
 
   initAtlas() {
     this.atlasImg = new Image();
-    this.atlasImg.src = 'assets/chef_atlas.png?v=98';
+    this.atlasImg.src = 'assets/chef_atlas.png?v=99';
     this.atlasLoaded = false;
     this.atlasImg.onload = () => {
       this.atlasLoaded = true;
     };
     this.atlasImg.onerror = () => {
-      this.atlasImg.src = 'assets/peter_atlas.png?v=98';
+      this.atlasImg.src = 'assets/peter_atlas.png?v=99';
     };
   }
 
