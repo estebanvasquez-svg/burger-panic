@@ -15,7 +15,7 @@
   <link rel="icon" type="image/png" href="icons/icon-192.png">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=72">
+  <link rel="stylesheet" href="css/style.css?v=77">
 </head>
 <body>
   <div id="app-container">
@@ -62,24 +62,7 @@
     <!-- Game Screen (Clean HD Display without CRT scanlines) -->
     <main class="screen-wrapper">
       <div class="bezel">
-        <canvas id="gameCanvas" width="480" height="270"></canvas>
-        <!-- Translucent On-Screen Mobile Touch Overlay (Matching Reference Art) -->
-        <div id="touch-controls-overlay" class="touch-controls-overlay">
-          <!-- Left: Glassmorphic D-Pad -->
-          <div class="touch-dpad" id="touch-dpad">
-            <button class="touch-btn touch-up" id="touch-up" aria-label="Arriba">▲</button>
-            <button class="touch-btn touch-left" id="touch-left" aria-label="Izquierda">◀</button>
-            <button class="touch-btn touch-right" id="touch-right" aria-label="Derecha">▶</button>
-            <button class="touch-btn touch-down" id="touch-down" aria-label="Abajo">▼</button>
-            <div class="touch-dpad-center"></div>
-          </div>
-
-          <!-- Right: Glassmorphic Action Buttons J & F -->
-          <div class="touch-actions" id="touch-actions">
-            <button class="touch-action-btn touch-btn-jump" id="touch-btn-jump" aria-label="Jump / Thrusters">J</button>
-            <button class="touch-action-btn touch-btn-fire" id="touch-btn-fire" aria-label="Fire Plasma Beam">F</button>
-          </div>
-        </div>
+        <canvas id="gameCanvas" width="240" height="320"></canvas>
       </div>
     </main>
 
@@ -202,21 +185,19 @@
   </div>
 
   <!-- Game Scripts -->
-  <script src="js/chef_atlas.js?v=76"></script>
-  <script src="js/enemies_atlas.js?v=76"></script>
-  <script src="js/items_atlas.js?v=76"></script>
-  <script src="js/kiloburner_atlas.js?v=76"></script>
-  <script src="js/audio.js?v=76"></script>
-  <script src="js/sprites.js?v=76"></script>
-  <script src="js/kiloburner.js?v=76"></script>
-  <script src="js/scifi_cargo_bay.js?v=76"></script>
-  <script src="js/scifi_enemies.js?v=76"></script>
-  <script src="js/map.js?v=76"></script>
-  <script src="js/burger.js?v=76"></script>
-  <script src="js/entities.js?v=76"></script>
-  <script src="js/stage_themes.js?v=76"></script>
-  <script src="js/controls.js?v=76"></script>
-  <script src="js/game.js?v=76"></script>
+  <script src="js/chef_atlas.js?v=77"></script>
+  <script src="js/enemies_atlas.js?v=77"></script>
+  <script src="js/items_atlas.js?v=77"></script>
+  <script src="js/kiloburner_atlas.js?v=77"></script>
+  <script src="js/audio.js?v=77"></script>
+  <script src="js/sprites.js?v=77"></script>
+  <script src="js/kiloburner.js?v=77"></script>
+  <script src="js/map.js?v=77"></script>
+  <script src="js/burger.js?v=77"></script>
+  <script src="js/entities.js?v=77"></script>
+  <script src="js/stage_themes.js?v=77"></script>
+  <script src="js/controls.js?v=77"></script>
+  <script src="js/game.js?v=77"></script>
 
   <!-- Service Worker Registration for Offline Play & PWA -->
   <script>

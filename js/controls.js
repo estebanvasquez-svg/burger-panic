@@ -53,12 +53,12 @@ class ControlsManager {
         if (this.onPausePress) this.onPausePress();
       }
 
-      if (e.code === 'KeyX' || e.code === 'KeyK' || e.code === 'KeyC' || e.code === 'KeyJ') {
+      if (e.code === 'KeyX' || e.code === 'KeyK' || e.code === 'KeyC') {
         if (this.onJumpPress) this.onJumpPress();
       }
 
-      // Pepper / Fire Plasma Beam keys: F (Fire), P (Pepper), Spacebar, Z
-      if (e.code === 'KeyF' || e.code === 'KeyP' || e.code === 'Space' || e.code === 'KeyZ') {
+      // Pepper / Pimienta keys: P (Pimienta/Pepper), Spacebar, Z, J
+      if (e.code === 'KeyP' || e.code === 'Space' || e.code === 'KeyZ' || e.code === 'KeyJ') {
         if (!this.input.pepper) {
           this.input.pepper = true;
           if (this.onPepperPress) this.onPepperPress();
@@ -68,7 +68,7 @@ class ControlsManager {
 
     window.addEventListener('keyup', (e) => {
       keys[e.code] = false;
-      if (e.code === 'KeyF' || e.code === 'KeyP' || e.code === 'Space' || e.code === 'KeyZ') {
+      if (e.code === 'KeyP' || e.code === 'Space' || e.code === 'KeyZ' || e.code === 'KeyJ') {
         this.input.pepper = false;
       }
       this.updateDirectionFromKeys(keys);
