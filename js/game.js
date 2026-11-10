@@ -1293,7 +1293,8 @@ class BurgerPanicGame {
     const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
 
     if (theme && this.state !== 'TITLE' && this.state !== 'MAP') {
-      this.ctx.drawImage(this.getStageBgCache(stageNum, theme), 0, 0);
+      this.ctx.fillStyle = theme.wallColor || '#050508';
+      this.ctx.fillRect(0, 0, 240, 320);
     } else {
       this.ctx.fillStyle = '#050508';
       this.ctx.fillRect(0, 0, 240, 320);
@@ -1326,6 +1327,14 @@ class BurgerPanicGame {
     const viewR = camX + 280;
     const camRenderX = (camX !== 0) ? -Math.round(camX) : 0;
     this.ctx.translate(camRenderX + Math.round(shakeX), Math.round(shakeY));
+
+    // Dynamic High-Fidelity Kitchen Architecture & Live Animated Props
+    const fullWorldW = (this.levelData && this.levelData.width) ? this.levelData.width : 240;
+    const nowAnimTime = performance.now();
+    if (theme && window.stageThemesManager) {
+      window.stageThemesManager.drawStageBackdrop(this.ctx, stageNum, theme, fullWorldW, camX, nowAnimTime);
+      window.stageThemesManager.drawAnimatedMapProps(this.ctx, stageNum, theme, fullWorldW, camX, nowAnimTime);
+    }
 
     // Render Cyber Furnace Environment Details for Stage 3 (culled to camera viewport)
     if (stageNum === 3) {

@@ -389,6 +389,10 @@ class Godot2DGraphicsEngine {
         this.addPointLight(item.x + 8, item.y + 8, 50, 0.78, 1.0, 0.75, 0.25);
       }
     }
+
+    // 6. Ambient Neon Sign Warm Light (Stage Map Neon)
+    const neonPulse = (Math.sin(t * 1.2) * 0.12 + 0.88);
+    this.addPointLight(120, 78, 65, 0.38 * neonPulse, 1.0, 0.35, 0.45);
   }
 
   // ==========================================================

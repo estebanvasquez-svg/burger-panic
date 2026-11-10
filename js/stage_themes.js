@@ -480,7 +480,469 @@ class StageThemesManager {
   }
 
   // Draw customized culinary platform matching the stage theme
-  drawPlatform(ctx, f, theme) {
+  // =========================================================================
+  // DYNAMIC HIGH-FIDELITY MAP BACKDROPS & ARCHITECTURE
+  // =========================================================================
+
+  drawStageBackdrop(ctx, stageNum, theme, fullWidth, camX, time) {
+    const w = fullWidth || 240;
+    const viewL = Math.max(0, (camX || 0) - 40);
+    const viewR = Math.min(w, (camX || 0) + 280);
+
+    ctx.save();
+
+    // 1. Base Wall Paint
+    ctx.fillStyle = theme.wallColor || '#0a0d14';
+    ctx.fillRect(viewL, 0, viewR - viewL, 320);
+
+    // 2. Gourmet Beveled Subway Tile Pattern (Running Bond 24x12)
+    const tileW = 24;
+    const tileH = 12;
+    const tileColor = theme.wallTileColor || 'rgba(255, 255, 255, 0.04)';
+
+    ctx.fillStyle = tileColor;
+    for (let ty = 36; ty < 296; ty += tileH) {
+      const rowIdx = Math.floor((ty - 36) / tileH);
+      const rowOffset = (rowIdx % 2 === 1) ? Math.floor(tileW / 2) : 0;
+      const startX = Math.floor(viewL / tileW) * tileW - tileW + rowOffset;
+
+      for (let tx = startX; tx < viewR + tileW; tx += tileW) {
+        // Main tile body
+        ctx.fillRect(tx, ty, tileW - 1, tileH - 1);
+
+        // Subtle 3D bevel top-edge gleam on every tile
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
+        ctx.fillRect(tx, ty, tileW - 1, 1);
+        ctx.fillStyle = tileColor;
+      }
+    }
+
+    // 3. Wall Baseboard / Tile Skirting along bottom (y: 296 to 320)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(viewL, 296, viewR - viewL, 24);
+    ctx.fillStyle = theme.platform.trimColor || '#2f3542';
+    ctx.fillRect(viewL, 296, viewR - viewL, 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.fillRect(viewL, 297, viewR - viewL, 1);
+
+    // 4. Overhead Industrial Kitchen Exhaust Hood & Ducts (y: 34 to 48)
+    const hoodL = viewL;
+    const hoodR = viewR;
+    // Hood canopy body
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(hoodL, 34, hoodR - hoodL, 14);
+    // Lower stainless steel trim lip
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(hoodL, 46, hoodR - hoodL, 2);
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(hoodL, 46, hoodR - hoodL, 1);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(hoodL, 48, hoodR - hoodL, 1);
+
+    // Stainless rivets & grease filter louvers along the hood
+    for (let hx = Math.floor(viewL / 32) * 32; hx < viewR + 32; hx += 32) {
+      // Rivet bolt
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(hx + 2, 44, 2, 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(hx + 3, 45, 1, 1);
+      // Grease filter vent slot
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(hx + 10, 36, 14, 7);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(hx + 12, 38, 10, 1);
+      ctx.fillRect(hx + 12, 40, 10, 1);
+    }
+
+    // 5. Overhead Chrome Duct Pipe running vertically into ceiling (at x: 120 and x: 280)
+    for (const pipeX of [120, 360, 600, 840]) {
+      if (pipeX + 24 < viewL || pipeX - 24 > viewR) continue;
+      // Shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillRect(pipeX - 12, 0, 24, 34);
+      // Pipe cylinder body
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(pipeX - 10, 0, 20, 34);
+      // Highlight core
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(pipeX - 6, 0, 4, 34);
+      // Rim highlight
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(pipeX - 5, 0, 1, 34);
+      // Flange ring
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(pipeX - 12, 30, 24, 4);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(pipeX - 12, 30, 24, 1);
+    }
+
+    // 6. Themed Wall Props & Culinary Equipment
+    // A. Magnetic Chef Knife Strip (x: 70..106, y: 66)
+    if (70 + 40 >= viewL && 70 <= viewR) {
+      // Magnetic Bar
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(70, 66, 36, 5);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(71, 67, 34, 3);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(71, 67, 34, 1);
+
+      // Meat Cleaver (x: 74)
+      ctx.fillStyle = '#78350f'; // Wood handle
+      ctx.fillRect(74, 62, 3, 5);
+      ctx.fillStyle = '#e2e8f0'; // Steel blade
+      ctx.fillRect(73, 67, 6, 8);
+      ctx.fillStyle = '#ffffff'; // Blade edge
+      ctx.fillRect(73, 74, 6, 1);
+
+      // Chef Knife (x: 84)
+      ctx.fillStyle = '#0f172a'; // Black handle
+      ctx.fillRect(84, 61, 2, 6);
+      ctx.fillStyle = '#cbd5e1'; // Blade
+      ctx.fillRect(83, 67, 3, 10);
+      ctx.fillRect(84, 77, 2, 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(83, 67, 1, 11);
+
+      // Santoku Knife (x: 94)
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(94, 62, 2, 5);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(93, 67, 4, 8);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(93, 74, 4, 1);
+    }
+
+    // B. Hanging Copper Pans & Skillets (x: 146..188, y: 64)
+    if (146 + 48 >= viewL && 146 <= viewR) {
+      // Hanging rod
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(146, 64, 42, 2);
+
+      // Pan 1 (Copper Saute Pan at x: 154)
+      ctx.fillStyle = '#475569'; // Hook & handle
+      ctx.fillRect(154, 66, 2, 7);
+      ctx.fillStyle = '#b45309'; // Copper pan rim
+      ctx.beginPath();
+      ctx.arc(155, 78, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#d97706'; // Pan interior
+      ctx.beginPath();
+      ctx.arc(155, 78, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fef3c7'; // Specular gleam
+      ctx.fillRect(153, 75, 2, 2);
+
+      // Pan 2 (Cast Iron Skillet at x: 174)
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(174, 66, 2, 7);
+      ctx.fillStyle = '#1e293b'; // Cast iron
+      ctx.beginPath();
+      ctx.arc(175, 79, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.arc(175, 79, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(173, 76, 2, 2);
+    }
+
+    // C. Double Wooden Spice Rack Shelf (x: 16..54, y: 110)
+    if (16 + 42 >= viewL && 16 <= viewR) {
+      // Wooden shelf
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(16, 118, 38, 3);
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(16, 120, 38, 1);
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(16, 118, 38, 1);
+
+      // Glass Spice Jars
+      const spices = [
+        { color: '#dc2626', name: 'paprika' },
+        { color: '#16a34a', name: 'oregano' },
+        { color: '#eab308', name: 'curry' },
+        { color: '#f8fafc', name: 'salt' }
+      ];
+      spices.forEach((sp, idx) => {
+        const jx = 19 + idx * 9;
+        // Cork stopper
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(jx + 1, 109, 4, 2);
+        // Glass jar body
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.fillRect(jx, 111, 6, 7);
+        // Spice powder contents
+        ctx.fillStyle = sp.color;
+        ctx.fillRect(jx + 1, 113, 4, 5);
+        // Glass highlight
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(jx, 111, 1, 6);
+      });
+    }
+
+    // D. Order Ticket Line wire (y: 49)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.fillRect(viewL, 49, viewR - viewL, 1);
+
+    ctx.restore();
+  }
+
+  // =========================================================================
+  // DYNAMIC MAP ANIMATIONS (LIVING ARCADE ENVIRONMENT)
+  // =========================================================================
+
+  drawAnimatedMapProps(ctx, stageNum, theme, fullWidth, camX, time) {
+    const w = fullWidth || 240;
+    const viewL = Math.max(0, (camX || 0) - 40);
+    const viewR = Math.min(w, (camX || 0) + 280);
+    const t = time || performance.now();
+
+    ctx.save();
+
+    // 1. ANIMATED SPANNING VENTILATION EXHAUST FAN (at x: 34, y: 42)
+    // High-speed rotating 4-blade industrial kitchen extractor
+    for (const fanX of [34, 274, 514, 754]) {
+      if (fanX + 24 < viewL || fanX - 24 > viewR) continue;
+      const fanY = 41;
+
+      // Dark circular recess
+      ctx.fillStyle = '#050810';
+      ctx.beginPath();
+      ctx.arc(fanX, fanY, 11, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Outer metal bezel
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      // 4 Rapidly Rotating Blades (15 rad/s)
+      const fanAngle = t * 0.015;
+      ctx.save();
+      ctx.translate(fanX, fanY);
+      ctx.rotate(fanAngle);
+
+      for (let b = 0; b < 4; b++) {
+        ctx.rotate(Math.PI / 2);
+        // Blade shadow/body
+        ctx.fillStyle = '#334155';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-3, 9);
+        ctx.lineTo(3, 9);
+        ctx.closePath();
+        ctx.fill();
+
+        // Blade metallic leading edge highlight
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(-1, 2, 2, 7);
+      }
+      ctx.restore();
+
+      // Center motor axle cap
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(fanX, fanY, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(fanX - 1, fanY - 1, 2, 2);
+
+      // Protective wire grille crossbars
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(fanX - 11, fanY); ctx.lineTo(fanX + 11, fanY);
+      ctx.moveTo(fanX, fanY - 11); ctx.lineTo(fanX, fanY + 11);
+      ctx.stroke();
+    }
+
+    // 2. ANIMATED TICKING RESTAURANT WALL CLOCK (at x: 120, y: 40)
+    for (const clockX of [120, 360, 600, 840]) {
+      if (clockX + 20 < viewL || clockX - 20 > viewR) continue;
+      const clockY = 41;
+
+      // Drop shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.arc(clockX + 1, clockY + 2, 11, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Brass outer rim
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.arc(clockX, clockY, 11, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Clock face
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(clockX, clockY, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4 Cardinal Hour Ticks
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(clockX - 0.5, clockY - 7.5, 1, 2); // 12
+      ctx.fillRect(clockX + 5.5, clockY - 0.5, 2, 1); // 3
+      ctx.fillRect(clockX - 0.5, clockY + 5.5, 1, 2); // 6
+      ctx.fillRect(clockX - 7.5, clockY - 0.5, 2, 1); // 9
+
+      // Minute hand (smooth rotation)
+      const minAngle = (t * 0.0001) % (Math.PI * 2);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(clockX, clockY);
+      ctx.lineTo(clockX + Math.sin(minAngle) * 5.5, clockY - Math.cos(minAngle) * 5.5);
+      ctx.stroke();
+
+      // Hour hand
+      const hourAngle = (minAngle / 12) + Math.PI / 4;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(clockX, clockY);
+      ctx.lineTo(clockX + Math.sin(hourAngle) * 3.8, clockY - Math.cos(hourAngle) * 3.8);
+      ctx.stroke();
+
+      // Red Second Hand (Real-time stepping tick!)
+      const secAngle = (Math.floor(t / 1000) % 60) * (Math.PI * 2 / 60);
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(clockX - Math.sin(secAngle) * 2, clockY + Math.cos(secAngle) * 2);
+      ctx.lineTo(clockX + Math.sin(secAngle) * 6.5, clockY - Math.cos(secAngle) * 6.5);
+      ctx.stroke();
+
+      // Center red pin
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(clockX - 1, clockY - 1, 2, 2);
+    }
+
+    // 3. ANIMATED SWAYING ORDER TICKETS (Clips on line at y: 49)
+    const ticketPositions = [62, 86, 150, 178, 202];
+    ticketPositions.forEach((tx, idx) => {
+      if (tx + 16 < viewL || tx - 16 > viewR) return;
+      // Gentle sway back and forth from fan wind
+      const sway = Math.sin(t * 0.0032 + idx * 1.4) * 0.08;
+
+      ctx.save();
+      ctx.translate(tx, 49);
+      ctx.rotate(sway);
+
+      // Metal clip
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(-2, -2, 4, 3);
+
+      // Paper ticket body
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.fillRect(-4.5, 2, 11, 14); // Shadow
+      ctx.fillStyle = '#fefce8'; // Pale yellow ticket paper
+      ctx.fillRect(-5, 1, 10, 13);
+
+      // Red header line
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(-4, 3, 8, 1);
+
+      // Order items pencil scribbles
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(-4, 6, 6, 1);
+      ctx.fillRect(-4, 8, 7, 1);
+      ctx.fillRect(-4, 10, 5, 1);
+
+      ctx.restore();
+    });
+
+    // 4. ANIMATED VOLUMETRIC KITCHEN STEAM PUFFS (Rising from vents and grills)
+    const steamVents = [
+      { x: 56, baseY: 146 },
+      { x: 182, baseY: 146 },
+      { x: 114, baseY: 98 }
+    ];
+    steamVents.forEach((vent, vIdx) => {
+      if (vent.x + 24 < viewL || vent.x - 24 > viewR) return;
+
+      for (let p = 0; p < 4; p++) {
+        const progress = ((t * 0.00075 + vIdx * 0.33 + p * 0.25) % 1);
+        const sy = vent.baseY - progress * 42;
+        const sx = vent.x + Math.sin(t * 0.004 + progress * 6 + p) * (progress * 8);
+        const radius = 2.5 + progress * 6.5;
+        const alpha = Math.sin(progress * Math.PI) * 0.26;
+
+        ctx.fillStyle = `rgba(241, 245, 249, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    // 5. ANIMATED NEON RESTAURANT SIGN ("BURGER PANIC" / "HOT GRILL")
+    // Mounted in central background (x: 120, y: 78)
+    const signX = 120;
+    const signY = 78;
+    if (signX + 60 >= viewL && signX - 60 <= viewR) {
+      // Realistic Neon Breathing Pulse + Subtle Arc Flicker
+      const neonFlicker = (Math.sin(t * 0.004) * 0.12 + 0.88) * (Math.random() < 0.008 ? 0.45 : 1.0);
+
+      // Sign backing metal plate
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(signX - 44, signY - 8, 88, 16);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(signX - 44, signY - 8, 88, 16);
+
+      // Neon outer glow
+      ctx.shadowColor = `rgba(239, 68, 68, ${0.45 * neonFlicker})`;
+      ctx.shadowBlur = 6;
+
+      // Neon Lettering: BURGER PANIC
+      ctx.fillStyle = `rgba(254, 202, 202, ${neonFlicker})`;
+      ctx.font = '7px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('★ BURGER PANIC ★', signX, signY + 3);
+
+      // Neon Sub-text / Open 24h
+      ctx.shadowColor = `rgba(56, 189, 248, ${0.40 * neonFlicker})`;
+      ctx.fillStyle = `rgba(186, 230, 253, ${neonFlicker})`;
+      ctx.font = '4px "Press Start 2P", monospace';
+      ctx.fillText('HOT & FRESH • 24/7', signX, signY + 11);
+
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
+    }
+
+    // 6. ANIMATED SPECULAR STAR GLINTS (Twinkling on pans and knife blades)
+    const glintLocations = [
+      { x: 74, y: 74, phase: 0.0 },  // Cleaver edge
+      { x: 154, y: 77, phase: 1.5 }, // Copper pan
+      { x: 84, y: 76, phase: 2.8 }   // Chef knife
+    ];
+    glintLocations.forEach(gl => {
+      if (gl.x + 8 < viewL || gl.x - 8 > viewR) return;
+      const gCycle = ((t * 0.0009 + gl.phase) % 3.0);
+      if (gCycle < 0.6) {
+        const gProg = gCycle / 0.6;
+        const gSize = Math.sin(gProg * Math.PI) * 3.5;
+        ctx.fillStyle = '#ffffff';
+        // 4-point diamond star glint
+        ctx.beginPath();
+        ctx.moveTo(gl.x, gl.y - gSize);
+        ctx.lineTo(gl.x + gSize * 0.3, gl.y);
+        ctx.lineTo(gl.x + gSize, gl.y);
+        ctx.lineTo(gl.x + gSize * 0.3, gl.y);
+        ctx.lineTo(gl.x, gl.y + gSize);
+        ctx.lineTo(gl.x - gSize * 0.3, gl.y);
+        ctx.lineTo(gl.x - gSize, gl.y);
+        ctx.lineTo(gl.x - gSize * 0.3, gl.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+    });
+
+    ctx.restore();
+  }
+
+drawPlatform(ctx, f, theme) {
     const p = theme.platform;
     const w = f.x2 - f.x1;
     const x = f.x1;
@@ -488,17 +950,41 @@ class StageThemesManager {
 
     ctx.save();
 
-    // 1. Solid underbody girder/shelf
+    // 1. Soft Under-Shelf Wall Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.40)';
+    ctx.fillRect(x, y + 8, w, 4);
+
+    // 2. Triangular Wall Support Brackets with Hex Rivets (Every 36px)
+    ctx.fillStyle = p.trimColor || '#1e293b';
+    for (let bx = x + 12; bx + 8 <= f.x2; bx += 36) {
+      ctx.beginPath();
+      ctx.moveTo(bx, y + 7);
+      ctx.lineTo(bx + 8, y + 7);
+      ctx.lineTo(bx, y + 16);
+      ctx.closePath();
+      ctx.fill();
+
+      // Steel Hex Bolt head
+      ctx.fillStyle = p.highlightColor || '#94a3b8';
+      ctx.fillRect(bx + 2, y + 9, 2, 2);
+      ctx.fillStyle = p.trimColor || '#1e293b';
+    }
+
+    // 3. Solid Underbody Shelf Girder
     ctx.fillStyle = p.bodyColor;
     ctx.fillRect(x, y + 2, w, 6);
 
-    // 2. Walkable countertop surface
+    // 4. Walkable Countertop Surface
     ctx.fillStyle = p.topColor;
     ctx.fillRect(x, y, w, 3);
 
-    // 3. Top edge gleam / highlight
+    // 5. Top Edge Specular Gleam / Highlight
     ctx.fillStyle = p.highlightColor;
     ctx.fillRect(x, y, w, 1);
+
+    // 6. Front Bevel Sub-trim Line
+    ctx.fillStyle = p.subColor || p.highlightColor;
+    ctx.fillRect(x, y + 2, w, 1);
 
     // 4. Stylized Kitchen Patterns according to Theme Style
     if (p.style === 'stainless_steel') {
@@ -632,7 +1118,7 @@ class StageThemesManager {
   }
 
   // Draw customized ladders matching the stage theme
-  drawLadder(ctx, l, theme) {
+drawLadder(ctx, l, theme) {
     const ld = theme.ladder;
     const x = l.x;
     const y1 = l.y1 + 4;
@@ -640,19 +1126,32 @@ class StageThemesManager {
 
     ctx.save();
 
-    // 1. Side Rails (left and right poles)
+    // 0. Wall Mount Flange Brackets with Hex Anchor Bolts (Top, Mid, Bottom)
+    ctx.fillStyle = ld.shadowColor || '#1e293b';
+    for (const my of [y1 + 2, Math.floor((y1 + y2) / 2), y2 - 4]) {
+      ctx.fillRect(x - 2, my - 2, 20, 4);
+      // Anchor bolts
+      ctx.fillStyle = ld.highlightColor || '#ffffff';
+      ctx.fillRect(x - 1, my - 1, 1, 2);
+      ctx.fillRect(x + 16, my - 1, 1, 2);
+      ctx.fillStyle = ld.shadowColor || '#1e293b';
+    }
+
+    // 1. 3D Cylindrical Chrome Side Rails (Left and Right Pipes)
+    // Left Rail (x + 1 .. x + 4)
     ctx.fillStyle = ld.railColor;
     ctx.fillRect(x + 1, y1, 3, y2 - y1);
-    ctx.fillRect(x + 12, y1, 3, y2 - y1);
-
-    // Rail highlights
-    ctx.fillStyle = ld.highlightColor;
+    ctx.fillStyle = ld.highlightColor; // Left specular gleam
     ctx.fillRect(x + 1, y1, 1, y2 - y1);
-    ctx.fillRect(x + 12, y1, 1, y2 - y1);
-
-    // Rail shadow
-    ctx.fillStyle = ld.shadowColor;
+    ctx.fillStyle = ld.shadowColor;    // Right edge shadow
     ctx.fillRect(x + 3, y1, 1, y2 - y1);
+
+    // Right Rail (x + 12 .. x + 15)
+    ctx.fillStyle = ld.railColor;
+    ctx.fillRect(x + 12, y1, 3, y2 - y1);
+    ctx.fillStyle = ld.highlightColor;
+    ctx.fillRect(x + 12, y1, 1, y2 - y1);
+    ctx.fillStyle = ld.shadowColor;
     ctx.fillRect(x + 14, y1, 1, y2 - y1);
 
     // 2. Ladder Rungs (Every 8 pixels)
@@ -698,22 +1197,33 @@ class StageThemesManager {
 
     ctx.save();
 
-    // Plate rim shadow
-    ctx.fillStyle = pl.shadowColor;
-    ctx.fillRect(x + 1, y + 2, 34, 4);
+    // 1. Soft Ceramic Table Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.beginPath();
+    ctx.ellipse(x + 18, y + 4, 18, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Plate body
-    ctx.fillStyle = pl.bodyColor;
-    ctx.fillRect(x + 2, y, 32, 4);
+    // 2. Porcelain Plate Base (Crisp ceramic oval)
+    ctx.fillStyle = pl.bodyColor || '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(x + 18, y + 2, 17, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Plate ceramic rim
-    ctx.fillStyle = pl.rimColor;
-    ctx.fillRect(x, y + 1, 36, 2);
-    ctx.fillRect(x + 2, y, 32, 1);
+    // 3. Royal Blue / Gold Bistro Rim Ring
+    ctx.strokeStyle = pl.rimColor || '#0984e3';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
 
-    // Gloss gleam
+    // 4. Inner Concentric Ring
+    ctx.strokeStyle = pl.shadowColor || '#74b9ff';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.ellipse(x + 18, y + 2, 13, 2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 5. Specular Porcelain Luster Highlight
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(x + 6, y, 12, 1);
+    ctx.fillRect(x + 10, y, 14, 1);
 
     ctx.restore();
   }
