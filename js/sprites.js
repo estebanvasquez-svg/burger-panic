@@ -37,7 +37,7 @@ class SpriteManager {
 
   initAtlas() {
     this.atlasImg = new Image();
-    this.atlasImg.src = 'assets/chef_atlas.png?v=102';
+    this.atlasImg.src = 'assets/chef_atlas.png?v=103';
     this.atlasLoaded = false;
     this.atlasImg.onload = () => {
       this.atlasLoaded = true;
