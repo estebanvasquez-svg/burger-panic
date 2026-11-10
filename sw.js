@@ -1,4 +1,4 @@
-const CACHE_NAME = 'burgerpanic-mobile-v92';
+const CACHE_NAME = 'burgerpanic-mobile-v93';
 const ASSETS = [
   './',
   './index.html',
@@ -35,6 +35,7 @@ const ASSETS = [
   './js/entities.js',
   './js/stage_themes.js',
   './js/controls.js',
+  './js/godot_gfx_engine.js',
   './js/game.js'
 ];
 

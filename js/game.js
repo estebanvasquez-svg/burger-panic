@@ -10,6 +10,7 @@ class BurgerPanicGame {
     this.canvas = document.getElementById('gameCanvas');
     this.ctx = this.canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = false;
+    this.gfxEngine = window.Godot2DGraphicsEngine ? new window.Godot2DGraphicsEngine(this) : null;
 
     this.levelMap = new window.LevelMap();
     this.stageIndex = 0;
@@ -359,7 +360,17 @@ class BurgerPanicGame {
 
   applyDevModeUI() {
     const devToolbar = document.getElementById('dev-toolbar');
-    const devBtn = document.getElementById('btn-dev');
+    const gfxBtn = document.getElementById('btn-gfx');
+  if (gfxBtn) {
+    gfxBtn.addEventListener('click', () => {
+      if (window.burgerPanicGame && window.burgerPanicGame.gfxEngine) {
+        const label = window.burgerPanicGame.gfxEngine.cycleGraphicsMode();
+        window.burgerPanicGame.showDevToast(label);
+      }
+    });
+  }
+
+  const devBtn = document.getElementById('btn-dev');
     if (devToolbar) {
       devToolbar.classList.toggle('hidden', !this.devMode);
     }
@@ -605,6 +616,9 @@ class BurgerPanicGame {
   }
 
   spawnLandingDust(x, y, width = 32) {
+    if (this.gfxEngine) {
+      this.gfxEngine.spawnShockwave(x + width / 2, y, '#fef08a', 22);
+    }
     for (let i = 0; i < 6; i++) {
       const side = i % 2 === 0 ? -1 : 1;
       const px = side === -1 ? x + 2 : x + width - 2;
@@ -622,6 +636,10 @@ class BurgerPanicGame {
   }
 
   spawnSquashSparks(x, y) {
+    if (this.gfxEngine) {
+      this.gfxEngine.spawnShockwave(x, y, '#f97316', 28);
+      this.gfxEngine.spawnGlowingBurst(x, y, '#fef08a', 14);
+    }
     const colors = ['#ffd700', '#ff3b30', '#ff9500', '#00f0ff', '#ffffff'];
     for (let i = 0; i < 14; i++) {
       const angle = (i / 14) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
@@ -1274,11 +1292,13 @@ class BurgerPanicGame {
 
     if (this.state === 'TITLE') {
       this.drawTitleScreen();
+      if (this.gfxEngine) this.gfxEngine.renderWebGLPass();
       return;
     }
 
     if (this.state === 'MAP') {
       this.drawMapScreen();
+      if (this.gfxEngine) this.gfxEngine.renderWebGLPass();
       return;
     }
 
@@ -1341,18 +1361,35 @@ class BurgerPanicGame {
       }
     }
 
+    // Godot 2.5D Atmospheric Rays & Projected Wall Shadows
+    if (this.gfxEngine) {
+      this.gfxEngine.drawBackdropAtmosphere(this.ctx);
+      this.gfxEngine.drawWorldShadows25D(this.ctx);
+    }
+
     // Draw Ladders
     this.drawLadders();
 
     // Draw Platforms
     this.drawPlatforms();
+    if (this.gfxEngine) {
+      this.gfxEngine.drawPlatformSpecular25D(this.ctx);
+    }
 
     // Draw Plates
     this.drawPlates();
 
+    // Godot 2.5D Contact Ground Shadows under Chef, Enemies & Items
+    if (this.gfxEngine) {
+      this.gfxEngine.drawEntityShadows25D(this.ctx);
+    }
+
     // Draw Burgers
     for (const b of this.burgers) {
       b.draw(this.ctx);
+    }
+    if (this.gfxEngine) {
+      this.gfxEngine.drawBurgers25DEffects(this.ctx);
     }
 
     // Draw Bonus Items
@@ -1403,6 +1440,9 @@ class BurgerPanicGame {
     // Draw Dynamic Juice Particles
     for (const p of this.particles) {
       p.draw(this.ctx);
+    }
+    if (this.gfxEngine) {
+      this.gfxEngine.updateAndDrawParticles(this.ctx);
     }
 
     // Draw Popups
@@ -1485,6 +1525,11 @@ class BurgerPanicGame {
       this.drawBanner('GAME OVER', 'VOLVIENDO AL MAPA...');
     } else if (this.state === 'PAUSED') {
       this.drawBanner('PAUSED', 'TAP PAUSE TO RESUME');
+    }
+
+    // Execute Final Godot WebGL2 Shader Pass (xBR HD + PointLight2D + Bloom + ACES Tonemap)
+    if (this.gfxEngine) {
+      this.gfxEngine.renderWebGLPass();
     }
   }
 
