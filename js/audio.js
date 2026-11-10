@@ -465,144 +465,144 @@ class SoundManager {
   }
 
   // =========================================================================
-  // 8-BIT ENHANCED RETRO MERENGUE CHIPTUNE ENGINE
-  // Il Barbiere di Siviglia (Gioachino Rossini) + Arcade Punch & Arpeggios
+  // 16-BIT SEGA GENESIS / SNES RETRO ARCADE SPRINT & RUNNING THEME ENGINE
+  // "Turbo Sprint: High-Velocity Kitchen Dash" (~166 BPM, 512 Steps, 32 Bars)
   // =========================================================================
 
-  playLeadNote(freq, time, dur) {
-    if (!this.bgmMasterGain || !this.ctx) return;
+  play16BitLead(freq, time, dur) {
+    if (!this.bgmMasterGain || !this.ctx || !freq) return;
     try {
-      // Dual-oscillator arcade chorused square lead
+      // Dual-oscillator 16-bit chorused square + pulse lead (YM2612 style)
       const osc1 = this.ctx.createOscillator();
       const osc2 = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
       const gain = this.ctx.createGain();
 
-      osc1.type = 'square';
+      osc1.type = 'sawtooth';
       osc2.type = 'square';
       osc1.frequency.setValueAtTime(freq, time);
-      // Subtle detune for rich vintage synth chorus
-      osc2.frequency.setValueAtTime(freq * 1.003, time);
+      // Subtle +4 cents detune for lush 16-bit stereo chorus
+      osc2.frequency.setValueAtTime(freq * 1.004, time);
 
-      // Subtle vibrato LFO after initial attack for musicality
+      // Lowpass filter envelope for bright arcade attack
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(3600, time);
+      filter.frequency.exponentialRampToValueAtTime(1400, time + dur * 0.85);
+
+      // LFO vibrato on held notes (> 120ms)
       if (dur > 0.12) {
         const lfo = this.ctx.createOscillator();
         const lfoGain = this.ctx.createGain();
-        lfo.frequency.setValueAtTime(5.8, time);
+        lfo.frequency.setValueAtTime(6.0, time);
         lfoGain.gain.setValueAtTime(0, time);
-        lfoGain.gain.setValueAtTime(freq * 0.018, time + 0.08);
+        lfoGain.gain.setValueAtTime(freq * 0.016, time + 0.06);
 
         lfo.connect(lfoGain);
         lfoGain.connect(osc1.frequency);
         lfoGain.connect(osc2.frequency);
 
-        lfo.start(time + 0.06);
+        lfo.start(time + 0.05);
         lfo.stop(time + dur);
       }
 
-      const peakGain = 0.046;
+      const peakGain = 0.050;
       gain.gain.setValueAtTime(peakGain, time);
-      gain.gain.setValueAtTime(peakGain * 0.85, time + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.002, time + dur * 0.90);
+      gain.gain.setValueAtTime(peakGain * 0.90, time + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.002, time + dur * 0.92);
 
-      osc1.connect(gain);
-      osc2.connect(gain);
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gain);
       gain.connect(this.bgmMasterGain);
 
       osc1.start(time);
       osc2.start(time);
-      osc1.stop(time + dur * 0.92);
-      osc2.stop(time + dur * 0.92);
+      osc1.stop(time + dur * 0.94);
+      osc2.stop(time + dur * 0.94);
     } catch (e) {}
   }
 
-  playBrassNote(freq, time, dur) {
-    if (!this.bgmMasterGain || !this.ctx) return;
+  play16BitBass(freq, time, dur) {
+    if (!this.bgmMasterGain || !this.ctx || !freq) return;
     try {
-      const osc = this.ctx.createOscillator();
-      const filter = this.ctx.createBiquadFilter();
-      const gain = this.ctx.createGain();
-
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(freq, time);
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(2600, time);
-      filter.frequency.exponentialRampToValueAtTime(800, time + dur * 0.85);
-
-      gain.gain.setValueAtTime(0.028, time);
-      gain.gain.exponentialRampToValueAtTime(0.002, time + dur * 0.82);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.bgmMasterGain);
-
-      osc.start(time);
-      osc.stop(time + dur * 0.85);
-    } catch (e) {}
-  }
-
-  playBassNote(freq, time, dur) {
-    if (!this.bgmMasterGain || !this.ctx) return;
-    try {
-      // Slap Bass: Sub-triangle body + snappy sawtooth pluck
+      // 16-Bit Slap Bass: Sub-triangle fundamental + snappy lowpass sawtooth bite
       const oscSub = this.ctx.createOscillator();
-      const oscBite = this.ctx.createOscillator();
+      const oscPluck = this.ctx.createOscillator();
       const filter = this.ctx.createBiquadFilter();
       const gain = this.ctx.createGain();
 
       oscSub.type = 'triangle';
+      oscPluck.type = 'sawtooth';
+
       oscSub.frequency.setValueAtTime(freq, time);
+      oscPluck.frequency.setValueAtTime(freq, time);
 
-      oscBite.type = 'sawtooth';
-      oscBite.frequency.setValueAtTime(freq, time);
-
+      // Fast FM lowpass sweep for punchy slap pluck
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1100, time);
-      filter.frequency.exponentialRampToValueAtTime(220, time + dur * 0.6);
+      filter.frequency.setValueAtTime(1600, time);
+      filter.frequency.exponentialRampToValueAtTime(220, time + Math.min(dur * 0.7, 0.06));
 
-      const peakGain = 0.075;
+      const peakGain = 0.078;
       gain.gain.setValueAtTime(peakGain, time);
-      gain.gain.exponentialRampToValueAtTime(0.005, time + dur * 0.88);
+      gain.gain.exponentialRampToValueAtTime(0.004, time + dur * 0.88);
 
       oscSub.connect(gain);
-      oscBite.connect(filter);
+      oscPluck.connect(filter);
       filter.connect(gain);
       gain.connect(this.bgmMasterGain);
 
       oscSub.start(time);
-      oscBite.start(time);
+      oscPluck.start(time);
       oscSub.stop(time + dur * 0.90);
-      oscBite.stop(time + dur * 0.90);
+      oscPluck.stop(time + dur * 0.90);
     } catch (e) {}
   }
 
-  // Chiptune Shimmer Arpeggio (Addictive retro background sparkle)
-  playArpShimmer(bar, stepInBar, time, dur) {
-    if (!this.bgmMasterGain || !this.ctx) return;
+  play16BitBrassStabs(chordNotes, time, dur) {
+    if (!this.bgmMasterGain || !this.ctx || !chordNotes || chordNotes.length === 0) return;
     try {
-      // Determine harmony chord based on bar section
-      let chordNotes;
-      if ([1, 5, 9, 11, 13].includes(bar)) {
-        // G Major / G7
-        chordNotes = [392.00, 493.88, 587.33, 698.46, 783.99]; // G4, B4, D5, F5, G5
-      } else if ([3, 6, 14].includes(bar)) {
-        // F Major / Subdominant
-        chordNotes = [349.23, 440.00, 523.25, 698.46, 880.00]; // F4, A4, C5, F5, A5
-      } else {
-        // C Major (Tonic)
-        chordNotes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
-      }
+      chordNotes.forEach(freq => {
+        const osc = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
 
-      const noteFreq = chordNotes[stepInBar % chordNotes.length];
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, time);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2400, time);
+        filter.frequency.exponentialRampToValueAtTime(700, time + dur * 0.80);
+
+        const chordGain = 0.015;
+        gain.gain.setValueAtTime(chordGain, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + dur * 0.85);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.bgmMasterGain);
+
+        osc.start(time);
+        osc.stop(time + dur * 0.88);
+      });
+    } catch (e) {}
+  }
+
+  play16BitArp(chordNotes, stepInBar, time, dur) {
+    if (!this.bgmMasterGain || !this.ctx || !chordNotes) return;
+    try {
+      const noteIndex = stepInBar % chordNotes.length;
+      const octaveMult = (stepInBar % 4 >= 2) ? 1.5 : 1.0;
+      const freq = chordNotes[noteIndex] * octaveMult;
+
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 
       osc.type = 'square';
-      osc.frequency.setValueAtTime(noteFreq, time);
+      osc.frequency.setValueAtTime(freq, time);
 
-      const arpGain = 0.012; // Gentle, crystal-clear background sparkle
+      const arpGain = 0.012;
       gain.gain.setValueAtTime(arpGain, time);
-      gain.gain.exponentialRampToValueAtTime(0.0005, time + dur * 0.65);
+      gain.gain.exponentialRampToValueAtTime(0.0008, time + dur * 0.65);
 
       osc.connect(gain);
       gain.connect(this.bgmMasterGain);
@@ -612,7 +612,70 @@ class SoundManager {
     } catch (e) {}
   }
 
-  playGuiraScrape(time, isAccent, dur) {
+  play16BitKick(time) {
+    if (!this.bgmMasterGain || !this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(150, time);
+      osc.frequency.exponentialRampToValueAtTime(38, time + 0.065);
+
+      gain.gain.setValueAtTime(0.12, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.070);
+
+      osc.connect(gain);
+      gain.connect(this.bgmMasterGain);
+
+      osc.start(time);
+      osc.stop(time + 0.070);
+    } catch (e) {}
+  }
+
+  play16BitSnare(time, isAccent = false) {
+    if (!this.bgmMasterGain || !this.ctx) return;
+    try {
+      // 1. Tonal body
+      const osc = this.ctx.createOscillator();
+      const oscGain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(180, time);
+      osc.frequency.exponentialRampToValueAtTime(80, time + 0.05);
+
+      oscGain.gain.setValueAtTime(0.08, time);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.055);
+
+      osc.connect(oscGain);
+      oscGain.connect(this.bgmMasterGain);
+      osc.start(time);
+      osc.stop(time + 0.055);
+
+      // 2. Snare Wire Noise
+      if (this.noiseBuffer) {
+        const source = this.ctx.createBufferSource();
+        source.buffer = this.noiseBuffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(2600, time);
+        filter.Q.setValueAtTime(1.5, time);
+
+        const noiseGain = this.ctx.createGain();
+        const pGain = isAccent ? 0.075 : 0.055;
+        noiseGain.gain.setValueAtTime(pGain, time);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.11);
+
+        source.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(this.bgmMasterGain);
+
+        source.start(time);
+        source.stop(time + 0.11);
+      }
+    } catch (e) {}
+  }
+
+  play16BitHiHat(time, isOpen = false) {
     if (!this.noiseBuffer || !this.bgmMasterGain || !this.ctx) return;
     try {
       const source = this.ctx.createBufferSource();
@@ -620,11 +683,13 @@ class SoundManager {
 
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'highpass';
-      filter.frequency.setValueAtTime(isAccent ? 3200 : 4200, time);
+      filter.frequency.setValueAtTime(7500, time);
 
       const gain = this.ctx.createGain();
-      const peakGain = isAccent ? 0.040 : 0.018;
-      gain.gain.setValueAtTime(peakGain, time);
+      const dur = isOpen ? 0.085 : 0.030;
+      const peak = isOpen ? 0.045 : 0.022;
+
+      gain.gain.setValueAtTime(peak, time);
       gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
 
       source.connect(filter);
@@ -636,122 +701,86 @@ class SoundManager {
     } catch (e) {}
   }
 
-  // Tambora Rim / Snare with crisp arcade snap
-  playTamboraRim(time) {
-    if (!this.bgmMasterGain || !this.ctx) return;
+  play16BitCrash(time) {
+    if (!this.noiseBuffer || !this.bgmMasterGain || !this.ctx) return;
     try {
-      const osc = this.ctx.createOscillator();
+      const source = this.ctx.createBufferSource();
+      source.buffer = this.noiseBuffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(4500, time);
+      filter.Q.setValueAtTime(0.8, time);
+
       const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.070, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.45);
 
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(1400, time);
-      osc.frequency.exponentialRampToValueAtTime(320, time + 0.035);
-
-      gain.gain.setValueAtTime(0.052, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.035);
-
-      osc.connect(gain);
+      source.connect(filter);
+      filter.connect(gain);
       gain.connect(this.bgmMasterGain);
 
-      osc.start(time);
-      osc.stop(time + 0.035);
-
-      // Add small noise crack for snappy punch
-      if (this.noiseBuffer) {
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = this.noiseBuffer;
-        const nFilter = this.ctx.createBiquadFilter();
-        nFilter.type = 'bandpass';
-        nFilter.frequency.setValueAtTime(4500, time);
-        const nGain = this.ctx.createGain();
-        nGain.gain.setValueAtTime(0.032, time);
-        nGain.gain.exponentialRampToValueAtTime(0.001, time + 0.030);
-
-        noise.connect(nFilter);
-        nFilter.connect(nGain);
-        nGain.connect(this.bgmMasterGain);
-        noise.start(time);
-        noise.stop(time + 0.030);
-      }
+      source.start(time);
+      source.stop(time + 0.45);
     } catch (e) {}
   }
 
-  // Punchy Arcade Tambora Skin / Kick with solid low-end bounce
-  playTamboraSkin(time) {
-    if (!this.bgmMasterGain || !this.ctx) return;
-    try {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(240, time);
-      osc.frequency.exponentialRampToValueAtTime(46, time + 0.080);
-
-      gain.gain.setValueAtTime(0.125, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.085);
-
-      osc.connect(gain);
-      gain.connect(this.bgmMasterGain);
-
-      osc.start(time);
-      osc.stop(time + 0.085);
-    } catch (e) {}
-  }
-
-  scheduleMerengueStep(step, time, stepDur) {
+  schedule16BitSprintStep(step, time, stepDur) {
     if (!this.ctx || this.muted) return;
 
     const stepInBar = step % 16;
     const bar = Math.floor(step / 16);
 
-    // 1. Lead Melody: Rossini Figaro / Largo al Factotum
-    const leadFreq = MERENGUE_SCORE.lead[step];
+    // 1. Lead Melody
+    const leadFreq = SPRINT_SCORE.lead[step];
     if (leadFreq && leadFreq > 0) {
-      this.playLeadNote(leadFreq, time, stepDur * 1.5);
+      this.play16BitLead(leadFreq, time, stepDur * 1.55);
     }
 
-    // 2. Merengue Brass Stabs
-    const brassFreq = MERENGUE_SCORE.brass[step];
-    if (brassFreq && brassFreq > 0) {
-      this.playBrassNote(brassFreq, time, stepDur * 1.3);
-    }
-
-    // 3. Merengue Bass Tumbao with slap punch
-    const bassFreq = MERENGUE_SCORE.bass[step];
+    // 2. Galloping 16-Bit Bassline
+    const bassFreq = SPRINT_SCORE.bass[step];
     if (bassFreq && bassFreq > 0) {
-      this.playBassNote(bassFreq, time, stepDur * 1.7);
+      this.play16BitBass(bassFreq, time, stepDur * 1.70);
     }
 
-    // 4. Arpeggiator Shimmer (Addictive rhythmic drive)
-    this.playArpShimmer(bar, stepInBar, time, stepDur);
+    // 3. Brass Stabs on off-beats (Syncopated running drive)
+    const chord = SPRINT_CHORDS[bar] || SPRINT_CHORDS[0];
+    if ([2, 6, 10, 14].includes(stepInBar)) {
+      this.play16BitBrassStabs(chord, time, stepDur * 1.35);
+    }
 
-    // 5. Guira Scrapes (continuous 16th-note Dominican merengue groove)
-    const isGuiraAccent = (stepInBar % 4 === 2);
-    this.playGuiraScrape(time, isGuiraAccent, isGuiraAccent ? 0.048 : 0.026);
+    // 4. Fast 16th-note Crystal Arpeggio (Sense of velocity)
+    this.play16BitArp(chord, stepInBar, time, stepDur);
 
-    // 6. Tambora (Rim and Skin hits)
-    const isRepiqueBar = (bar === 10);
-    if (isRepiqueBar) {
-      // Merengue roll during the famous Figaro! Figaro! Figaro! line
-      if ([0, 2, 4, 6, 8, 10, 12, 14].includes(stepInBar)) {
-        this.playTamboraRim(time);
-      }
-      if ([1, 3, 5, 7, 9, 11, 13, 15].includes(stepInBar)) {
-        this.playTamboraSkin(time);
+    // 5. 16-Bit Drum Kit (Sprint Groove)
+    // Crash cymbal on downbeats of major sections
+    if (stepInBar === 0 && [0, 8, 16, 24].includes(bar)) {
+      this.play16BitCrash(time);
+    }
+
+    // Kick: Driving sprint beat with galloping ghost kicks
+    if (bar === 31) {
+      // Final turnaround roll
+      if (stepInBar % 2 === 0) {
+        this.play16BitKick(time);
       }
     } else {
-      // Standard Merengue Tambora pattern with punchy kick & rim
       if ([0, 6, 8, 12].includes(stepInBar)) {
-        this.playTamboraRim(time);
-      }
-      if ([4, 10, 14].includes(stepInBar)) {
-        this.playTamboraSkin(time);
-      }
-      // Accent kick on the downbeat of each measure
-      if (stepInBar === 0) {
-        this.playTamboraSkin(time);
+        this.play16BitKick(time);
       }
     }
+
+    // Snare: Backbeat on 4 and 12, plus rapid fills
+    if ([4, 12].includes(stepInBar)) {
+      this.play16BitSnare(time, stepInBar === 12);
+    }
+    if ((bar % 4 === 3) && [14, 15].includes(stepInBar)) {
+      this.play16BitSnare(time, true);
+    }
+
+    // Hi-Hats: 16th-note ticks with open upbeat sizzles
+    const isOpenHat = [2, 6, 10, 14].includes(stepInBar);
+    this.play16BitHiHat(time, isOpenHat);
   }
 
   startBGM() {
@@ -768,19 +797,21 @@ class SoundManager {
     this.bgmMasterGain.connect(this.ctx.destination);
 
     this.nextStepTime = this.ctx.currentTime + 0.05;
-    const stepDuration = 0.098; // ~153 BPM Merengue tempo
+    // ~166 BPM high-energy sprint tempo (16th-note step duration: 0.0903s)
+    const stepDuration = 0.09036;
 
     const scheduler = () => {
       if (!this.bgmPlaying || this.muted || !this.ctx) return;
       while (this.nextStepTime < this.ctx.currentTime + 0.16) {
-        this.scheduleMerengueStep(this.bgmStep, this.nextStepTime, stepDuration);
+        this.schedule16BitSprintStep(this.bgmStep, this.nextStepTime, stepDuration);
         this.nextStepTime += stepDuration;
-        this.bgmStep = (this.bgmStep + 1) % 256;
+        // 512 total steps = 32 full bars before seamless loop
+        this.bgmStep = (this.bgmStep + 1) % 512;
       }
     };
 
     scheduler();
-    this.bgmTimer = setInterval(scheduler, 35);
+    this.bgmTimer = setInterval(scheduler, 32);
   }
 
   stopBGM() {
@@ -799,124 +830,205 @@ class SoundManager {
   }
 }
 
-// Global score and note definitions for Il Barbiere di Siviglia Merengue
-const ROSSINI_FREQ = {
-  _: 0,
-  C2: 65.41, D2: 73.42, E2: 82.41, F2: 87.31, G2: 98.00, A2: 110.00, B2: 123.47,
-  C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
-  C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
-  C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, B5: 987.77,
-  C6: 1046.50, D6: 1174.66, E6: 1318.51
-};
-
-const MERENGUE_SCORE = {
-  lead: [
-    // Bar 0: Largo al factotum della citta
-    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.E4, 0,
-    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.G4, 0,
-    // Bar 1: Largo!
-    ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.F4, 0,
-    ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.B4, 0,
-    // Bar 2: La ran la lera la ran la la
-    ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.D5, 0,
-    ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.B4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.G4, 0,
-    // Bar 3: Cadence resolve
-    ROSSINI_FREQ.F4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.B4, 0,
-    ROSSINI_FREQ.C5, 0, 0, ROSSINI_FREQ.G4, 0, 0, ROSSINI_FREQ.C5, 0,
-
-    // Bar 4: Overture Theme A (Rossini gallop)
-    ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.C5, 0,
-    ROSSINI_FREQ.B4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.G4, 0,
-    // Bar 5: Overture Theme B
-    ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.D5, 0,
-    ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.G4, 0,
-    // Bar 6: Mambo Crescendo Gallop
-    ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0,
-    ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.D5, 0,
-    // Bar 7: Crescendo Resolve
-    ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.B4, 0, ROSSINI_FREQ.A4, 0, ROSSINI_FREQ.B4, 0,
-    ROSSINI_FREQ.C5, 0, 0, ROSSINI_FREQ.G4, 0, 0, ROSSINI_FREQ.C5, 0,
-
-    // Bar 8: Figaro! Figaro!
-    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0,
-    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0,
-    // Bar 9: Figaro! Figaro!
-    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.D5, 0,
-    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.D5, 0,
-    // Bar 10: Repique Figaro Figaro Figaro Figaro!
-    ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0,
-    ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.C5, 0,
-    // Bar 11: Bravo bravissimo!
-    ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.D5, 0,
-    ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.G5, 0, 0, 0,
-
-    // Bar 12: Merengue Mambo Horns Part 1
-    ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.E5, 0,
-    ROSSINI_FREQ.C6, 0, 0, ROSSINI_FREQ.G5, 0, 0, ROSSINI_FREQ.E5, 0,
-    // Bar 13: Mambo Horns Part 2
-    ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.A5, 0, ROSSINI_FREQ.F5, 0,
-    ROSSINI_FREQ.D6, 0, 0, ROSSINI_FREQ.B5, 0, 0, ROSSINI_FREQ.G5, 0,
-    // Bar 14: Gallop Descent
-    ROSSINI_FREQ.C6, 0, ROSSINI_FREQ.B5, 0, ROSSINI_FREQ.A5, 0, ROSSINI_FREQ.G5, 0,
-    ROSSINI_FREQ.F5, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.C5, 0,
-    // Bar 15: Loop Turnaround
-    ROSSINI_FREQ.B4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.D5, 0, ROSSINI_FREQ.B4, 0,
-    ROSSINI_FREQ.C5, 0, 0, ROSSINI_FREQ.G4, 0, 0, ROSSINI_FREQ.C5, 0
+// Global 16-Bit Sprint Score & Chords Data
+const SPRINT_CHORDS = [
+  [
+    293.66,
+    349.23,
+    440.0,
+    587.33
   ],
-
-  // Dominican Merengue Tumbao Bass (Syncopated leaps)
-  bass: [
-    // 0-3
-    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.E3, 0, 0, ROSSINI_FREQ.G2, 0,
-    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0, 0, ROSSINI_FREQ.D3, 0,
-    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.E3, 0, 0, ROSSINI_FREQ.G2, 0,
-    ROSSINI_FREQ.F2, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.C3, 0,
-
-    // 4-7
-    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.E3, 0, 0, ROSSINI_FREQ.G2, 0,
-    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0, 0, ROSSINI_FREQ.D3, 0,
-    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.F2, 0, 0, ROSSINI_FREQ.A2, 0, 0, ROSSINI_FREQ.D3, 0,
-    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.C3, 0,
-
-    // 8-11 (Figaro section)
-    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.E3, 0, 0, ROSSINI_FREQ.G2, 0,
-    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0, 0, ROSSINI_FREQ.D3, 0,
-    ROSSINI_FREQ.C3, 0, ROSSINI_FREQ.E3, 0, ROSSINI_FREQ.G3, 0, ROSSINI_FREQ.C3, 0, ROSSINI_FREQ.C3, 0, ROSSINI_FREQ.E3, 0, ROSSINI_FREQ.G3, 0, ROSSINI_FREQ.C3, 0,
-    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0, 0, ROSSINI_FREQ.D3, 0,
-
-    // 12-15 (Mambo & Outro)
-    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.E3, 0, 0, ROSSINI_FREQ.G2, 0,
-    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0, 0, ROSSINI_FREQ.D3, 0,
-    ROSSINI_FREQ.C3, 0, 0, 0, ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.F2, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.B2, 0,
-    ROSSINI_FREQ.G2, 0, 0, 0, ROSSINI_FREQ.D3, 0, 0, 0, ROSSINI_FREQ.C3, 0, 0, ROSSINI_FREQ.G2, 0, 0, ROSSINI_FREQ.C3, 0
+  [
+    293.66,
+    349.23,
+    440.0,
+    587.33
   ],
-
-  // Merengue Brass Stabs & Harmonies
-  brass: [
-    // 0-3
-    0, 0, ROSSINI_FREQ.E4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.E4, 0, ROSSINI_FREQ.G4, 0, 0, 0,
-    0, 0, ROSSINI_FREQ.D4, 0, 0, 0, ROSSINI_FREQ.F4, 0, 0, 0, ROSSINI_FREQ.D4, 0, ROSSINI_FREQ.F4, 0, 0, 0,
-    0, 0, ROSSINI_FREQ.E4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.E4, 0, ROSSINI_FREQ.G4, 0, 0, 0,
-    0, 0, ROSSINI_FREQ.F4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.E4, 0, ROSSINI_FREQ.G4, 0, 0, 0,
-
-    // 4-7
-    0, 0, ROSSINI_FREQ.E4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.E4, 0, ROSSINI_FREQ.G4, 0, 0, 0,
-    0, 0, ROSSINI_FREQ.D4, 0, 0, 0, ROSSINI_FREQ.F4, 0, 0, 0, ROSSINI_FREQ.D4, 0, ROSSINI_FREQ.F4, 0, 0, 0,
-    ROSSINI_FREQ.E5, 0, 0, 0, ROSSINI_FREQ.C5, 0, 0, 0, ROSSINI_FREQ.F5, 0, 0, 0, ROSSINI_FREQ.D5, 0, 0, 0,
-    0, 0, ROSSINI_FREQ.E4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.E4, 0, ROSSINI_FREQ.G4, 0, 0, 0,
-
-    // 8-11 (Figaro section)
-    0, 0, 0, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.E5, 0, 0, 0, 0, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.E5, 0,
-    0, 0, 0, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.F5, 0, 0, 0, 0, 0, ROSSINI_FREQ.G5, 0, ROSSINI_FREQ.F5, 0,
-    ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.C5, 0, ROSSINI_FREQ.G4, 0, ROSSINI_FREQ.C5, 0,
-    ROSSINI_FREQ.B4, 0, 0, 0, ROSSINI_FREQ.B4, 0, 0, 0, ROSSINI_FREQ.B4, 0, 0, 0, ROSSINI_FREQ.D5, 0, 0, 0,
-
-    // 12-15
-    ROSSINI_FREQ.E4, 0, 0, 0, ROSSINI_FREQ.G4, 0, 0, 0, ROSSINI_FREQ.C5, 0, 0, 0, ROSSINI_FREQ.E5, 0, 0, 0,
-    ROSSINI_FREQ.F4, 0, 0, 0, ROSSINI_FREQ.A4, 0, 0, 0, ROSSINI_FREQ.D5, 0, 0, 0, ROSSINI_FREQ.F5, 0, 0, 0,
-    ROSSINI_FREQ.G5, 0, 0, 0, ROSSINI_FREQ.E5, 0, 0, 0, ROSSINI_FREQ.D5, 0, 0, 0, ROSSINI_FREQ.B4, 0, 0, 0,
-    0, 0, ROSSINI_FREQ.D5, 0, 0, 0, ROSSINI_FREQ.D5, 0, 0, 0, ROSSINI_FREQ.E5, 0, ROSSINI_FREQ.E5, 0, 0, 0
+  [
+    293.66,
+    349.23,
+    440.0,
+    587.33
+  ],
+  [
+    277.18,
+    329.63,
+    392.0,
+    440.0
+  ],
+  [
+    293.66,
+    349.23,
+    440.0,
+    587.33
+  ],
+  [
+    293.66,
+    349.23,
+    440.0,
+    587.33
+  ],
+  [
+    293.66,
+    349.23,
+    440.0,
+    587.33
+  ],
+  [
+    277.18,
+    329.63,
+    392.0,
+    440.0
+  ],
+  [
+    293.66,
+    349.23,
+    466.16,
+    587.33
+  ],
+  [
+    329.63,
+    392.0,
+    523.25,
+    659.25
+  ],
+  [
+    349.23,
+    440.0,
+    587.33,
+    698.46
+  ],
+  [
+    329.63,
+    440.0,
+    523.25,
+    659.25
+  ],
+  [
+    293.66,
+    349.23,
+    466.16,
+    587.33
+  ],
+  [
+    329.63,
+    392.0,
+    523.25,
+    659.25
+  ],
+  [
+    349.23,
+    440.0,
+    587.33,
+    698.46
+  ],
+  [
+    329.63,
+    392.0,
+    440.0,
+    554.37
+  ],
+  [
+    349.23,
+    440.0,
+    523.25,
+    698.46
+  ],
+  [
+    329.63,
+    392.0,
+    523.25,
+    659.25
+  ],
+  [
+    293.66,
+    392.0,
+    493.88,
+    587.33
+  ],
+  [
+    329.63,
+    392.0,
+    523.25,
+    659.25
+  ],
+  [
+    349.23,
+    440.0,
+    523.25,
+    698.46
+  ],
+  [
+    349.23,
+    440.0,
+    587.33,
+    698.46
+  ],
+  [
+    293.66,
+    349.23,
+    466.16,
+    587.33
+  ],
+  [
+    277.18,
+    329.63,
+    392.0,
+    440.0
+  ],
+  [
+    293.66,
+    392.0,
+    466.16,
+    587.33
+  ],
+  [
+    277.18,
+    329.63,
+    392.0,
+    440.0
+  ],
+  [
+    293.66,
+    349.23,
+    466.16,
+    587.33
+  ],
+  [
+    329.63,
+    392.0,
+    523.25,
+    659.25
+  ],
+  [
+    349.23,
+    440.0,
+    587.33,
+    698.46
+  ],
+  [
+    293.66,
+    392.0,
+    466.16,
+    587.33
+  ],
+  [
+    311.13,
+    369.99,
+    440.0,
+    523.25
+  ],
+  [
+    277.18,
+    329.63,
+    392.0,
+    440.0
   ]
+];
+
+const SPRINT_SCORE = {
+  lead: [293.66, 0, 293.66, 0, 349.23, 0, 392.0, 0, 440.0, 0, 0, 523.25, 0, 440.0, 0, 0, 587.33, 0, 0, 587.33, 0, 523.25, 0, 440.0, 0, 392.0, 0, 349.23, 0, 392.0, 440.0, 0, 293.66, 0, 293.66, 0, 349.23, 0, 392.0, 0, 440.0, 0, 523.25, 0, 587.33, 0, 0, 0, 659.25, 0, 587.33, 0, 523.25, 0, 440.0, 0, 392.0, 0, 440.0, 0, 349.23, 0, 0, 0, 293.66, 0, 293.66, 0, 349.23, 0, 392.0, 0, 440.0, 0, 0, 523.25, 0, 440.0, 0, 0, 698.46, 0, 0, 698.46, 0, 659.25, 0, 587.33, 0, 523.25, 0, 440.0, 0, 523.25, 587.33, 0, 659.25, 0, 698.46, 0, 783.99, 0, 880.0, 0, 698.46, 0, 659.25, 0, 587.33, 0, 523.25, 0, 587.33, 0, 0, 0, 587.33, 0, 0, 0, 0, 0, 440.0, 0, 523.25, 0, 587.33, 0, 466.16, 0, 0, 587.33, 0, 0, 698.46, 0, 587.33, 0, 466.16, 0, 523.25, 0, 587.33, 0, 659.25, 0, 0, 783.99, 0, 0, 659.25, 0, 523.25, 0, 392.0, 0, 440.0, 0, 523.25, 0, 587.33, 0, 0, 698.46, 0, 0, 880.0, 0, 698.46, 0, 587.33, 0, 523.25, 0, 587.33, 0, 523.25, 0, 0, 659.25, 0, 0, 523.25, 0, 440.0, 0, 329.63, 0, 392.0, 0, 440.0, 0, 466.16, 0, 0, 587.33, 0, 0, 698.46, 0, 783.99, 0, 698.46, 0, 587.33, 0, 466.16, 0, 523.25, 0, 0, 659.25, 0, 0, 783.99, 0, 880.0, 0, 783.99, 0, 659.25, 0, 523.25, 0, 587.33, 0, 659.25, 0, 698.46, 0, 783.99, 0, 880.0, 0, 932.33, 0, 880.0, 0, 783.99, 0, 880.0, 0, 0, 0, 0, 0, 440.0, 0, 523.25, 0, 587.33, 0, 659.25, 0, 0, 0, 698.46, 0, 0, 698.46, 0, 659.25, 0, 587.33, 0, 523.25, 0, 440.0, 0, 523.25, 0, 0, 880.0, 0, 0, 880.0, 0, 783.99, 0, 698.46, 0, 783.99, 0, 0, 0, 0, 0, 0, 783.99, 0, 0, 783.99, 0, 698.46, 0, 659.25, 0, 587.33, 0, 493.88, 0, 587.33, 0, 0, 1046.5, 0, 0, 1046.5, 0, 987.77, 0, 880.0, 0, 783.99, 0, 0, 0, 0, 0, 0, 698.46, 0, 0, 698.46, 0, 659.25, 0, 587.33, 0, 523.25, 0, 440.0, 0, 523.25, 0, 0, 587.33, 0, 0, 698.46, 0, 0, 880.0, 0, 783.99, 0, 698.46, 0, 783.99, 0, 0, 0, 880.0, 0, 783.99, 0, 698.46, 0, 659.25, 0, 587.33, 0, 523.25, 0, 466.16, 0, 440.0, 0, 392.0, 0, 440.0, 0, 466.16, 0, 523.25, 0, 587.33, 0, 659.25, 0, 698.46, 0, 783.99, 0, 783.99, 0, 0, 783.99, 0, 698.46, 0, 587.33, 0, 466.16, 0, 392.0, 0, 466.16, 0, 0, 880.0, 0, 0, 880.0, 0, 783.99, 0, 659.25, 0, 554.37, 0, 440.0, 0, 554.37, 0, 0, 932.33, 0, 0, 932.33, 0, 880.0, 0, 698.46, 0, 587.33, 0, 466.16, 0, 587.33, 0, 0, 1046.5, 0, 0, 1046.5, 0, 932.33, 0, 783.99, 0, 659.25, 0, 523.25, 0, 659.25, 0, 0, 1174.66, 0, 0, 0, 0, 0, 1046.5, 0, 880.0, 0, 698.46, 0, 587.33, 0, 698.46, 0, 783.99, 0, 698.46, 0, 659.25, 0, 587.33, 0, 523.25, 0, 466.16, 0, 440.0, 0, 392.0, 0, 349.23, 0, 392.0, 0, 415.3, 0, 440.0, 0, 466.16, 0, 493.88, 0, 523.25, 0, 554.37, 0, 587.33, 0, 587.33, 0, 587.33, 0, 587.33, 0, 659.25, 0, 698.46, 0, 783.99, 0, 880.0, 0],
+  bass: [73.42, 0, 146.83, 73.42, 0, 146.83, 73.42, 0, 73.42, 0, 146.83, 73.42, 0, 87.31, 98.0, 0, 73.42, 0, 146.83, 73.42, 0, 146.83, 73.42, 0, 73.42, 0, 146.83, 73.42, 0, 65.41, 69.3, 0, 73.42, 0, 146.83, 73.42, 0, 146.83, 73.42, 0, 73.42, 0, 146.83, 73.42, 0, 87.31, 98.0, 0, 55.0, 0, 110.0, 55.0, 0, 110.0, 55.0, 0, 65.41, 0, 73.42, 0, 82.41, 0, 87.31, 0, 73.42, 0, 146.83, 73.42, 0, 146.83, 73.42, 0, 73.42, 0, 146.83, 73.42, 0, 87.31, 98.0, 0, 73.42, 0, 146.83, 73.42, 0, 146.83, 73.42, 0, 73.42, 0, 146.83, 73.42, 0, 65.41, 69.3, 0, 73.42, 0, 146.83, 73.42, 0, 146.83, 73.42, 0, 73.42, 0, 146.83, 73.42, 0, 87.31, 98.0, 0, 73.42, 0, 146.83, 73.42, 0, 73.42, 0, 0, 55.0, 0, 65.41, 0, 69.3, 0, 73.42, 0, 58.27, 0, 116.54, 58.27, 0, 116.54, 58.27, 0, 58.27, 0, 116.54, 58.27, 0, 73.42, 87.31, 0, 65.41, 0, 130.81, 65.41, 0, 130.81, 65.41, 0, 65.41, 0, 130.81, 65.41, 0, 82.41, 98.0, 0, 73.42, 0, 146.83, 73.42, 0, 146.83, 73.42, 0, 73.42, 0, 146.83, 73.42, 0, 87.31, 110.0, 0, 55.0, 0, 110.0, 55.0, 0, 110.0, 55.0, 0, 55.0, 0, 110.0, 55.0, 0, 65.41, 82.41, 0, 58.27, 0, 116.54, 58.27, 0, 116.54, 58.27, 0, 58.27, 0, 116.54, 58.27, 0, 73.42, 87.31, 0, 65.41, 0, 130.81, 65.41, 0, 130.81, 65.41, 0, 65.41, 0, 130.81, 65.41, 0, 82.41, 98.0, 0, 73.42, 0, 146.83, 73.42, 0, 146.83, 73.42, 0, 87.31, 0, 174.61, 87.31, 0, 98.0, 0, 0, 55.0, 0, 110.0, 55.0, 0, 55.0, 0, 0, 55.0, 0, 61.74, 0, 65.41, 0, 69.3, 0, 87.31, 0, 174.61, 87.31, 0, 174.61, 87.31, 0, 87.31, 0, 174.61, 87.31, 0, 110.0, 130.81, 0, 65.41, 0, 130.81, 65.41, 0, 130.81, 65.41, 0, 65.41, 0, 130.81, 65.41, 0, 82.41, 98.0, 0, 98.0, 0, 196.0, 98.0, 0, 196.0, 98.0, 0, 98.0, 0, 196.0, 98.0, 0, 123.47, 146.83, 0, 65.41, 0, 130.81, 65.41, 0, 130.81, 65.41, 0, 65.41, 0, 130.81, 65.41, 0, 82.41, 98.0, 0, 87.31, 0, 174.61, 87.31, 0, 174.61, 87.31, 0, 87.31, 0, 174.61, 87.31, 0, 110.0, 130.81, 0, 73.42, 0, 146.83, 73.42, 0, 146.83, 73.42, 0, 73.42, 0, 146.83, 73.42, 0, 87.31, 110.0, 0, 58.27, 0, 116.54, 58.27, 0, 116.54, 58.27, 0, 65.41, 0, 130.81, 65.41, 0, 82.41, 0, 0, 55.0, 0, 110.0, 55.0, 0, 55.0, 0, 0, 55.0, 0, 58.27, 0, 61.74, 0, 65.41, 0, 49.0, 0, 98.0, 49.0, 0, 98.0, 49.0, 0, 49.0, 0, 98.0, 49.0, 0, 58.27, 73.42, 0, 55.0, 0, 110.0, 55.0, 0, 110.0, 55.0, 0, 55.0, 0, 110.0, 55.0, 0, 69.3, 82.41, 0, 58.27, 0, 116.54, 58.27, 0, 116.54, 58.27, 0, 58.27, 0, 116.54, 58.27, 0, 73.42, 87.31, 0, 65.41, 0, 130.81, 65.41, 0, 130.81, 65.41, 0, 65.41, 0, 130.81, 65.41, 0, 82.41, 98.0, 0, 73.42, 0, 146.83, 73.42, 0, 146.83, 73.42, 0, 73.42, 0, 146.83, 73.42, 0, 87.31, 110.0, 0, 49.0, 0, 98.0, 49.0, 0, 98.0, 49.0, 0, 55.0, 0, 110.0, 55.0, 0, 58.27, 0, 0, 58.27, 0, 61.74, 0, 65.41, 0, 69.3, 0, 73.42, 0, 77.78, 0, 82.41, 0, 87.31, 0, 92.5, 0, 98.0, 0, 103.83, 0, 110.0, 0, 55.0, 0, 55.0, 0, 55.0, 0, 55.0, 0]
 };
 
 window.soundManager = new SoundManager();
