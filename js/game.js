@@ -8,6 +8,9 @@ class BurgerPanicGame {
   }
   constructor() {
     this.canvas = document.getElementById('gameCanvas');
+    this.renderScale = 2;
+    this.canvas.width = 240 * this.renderScale;
+    this.canvas.height = 320 * this.renderScale;
     this.ctx = this.canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = false;
     this.gfxEngine = window.Godot2DGraphicsEngine ? new window.Godot2DGraphicsEngine(this) : null;
@@ -1261,8 +1264,8 @@ class BurgerPanicGame {
     if (this._bgCache[stageNum]) return this._bgCache[stageNum];
 
     const off = document.createElement('canvas');
-    off.width = this.canvas.width;
-    off.height = this.canvas.height;
+    off.width = 240;
+    off.height = 320;
     const octx = off.getContext('2d');
 
     octx.fillStyle = theme.wallColor;
@@ -1282,6 +1285,10 @@ class BurgerPanicGame {
   }
 
   draw() {
+    const scale = this.renderScale || 1;
+    this.ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    this.ctx.imageSmoothingEnabled = false;
+
     const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
     const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
 
@@ -1289,7 +1296,7 @@ class BurgerPanicGame {
       this.ctx.drawImage(this.getStageBgCache(stageNum, theme), 0, 0);
     } else {
       this.ctx.fillStyle = '#050508';
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.fillRect(0, 0, 240, 320);
     }
 
     if (this.state === 'TITLE') {
@@ -1466,13 +1473,13 @@ class BurgerPanicGame {
 
     // Render Boss Health Bar (Fixed screen coordinate overlay)
     if (this.kiloburnerBoss) {
-      this.kiloburnerBoss.drawBossHealthBar(this.ctx, this.canvas.width);
+      this.kiloburnerBoss.drawBossHealthBar(this.ctx, 240);
     // Render Blowtorch Fuel Gauge (Level 3 Soplete Top HUD)
     if (this.levelData && this.levelData.blowtorches && this.levelData.blowtorches.length > 0 && this.player) {
       const fuelPct = Math.max(0, Math.min(1, this.player.blowtorchFuel / this.player.maxBlowtorchFuel));
       const fuelBarW = 108;
       const fuelBarH = 4;
-      const fuelBarX = Math.round((this.canvas.width - fuelBarW) / 2); // 66
+      const fuelBarX = Math.round((240 - fuelBarW) / 2); // 66
       const fuelBarY = 24;
 
       this.ctx.save();

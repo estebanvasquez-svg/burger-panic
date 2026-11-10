@@ -55,8 +55,8 @@ class Godot2DGraphicsEngine {
 
     const glCanvas = document.createElement('canvas');
     glCanvas.id = 'webglCanvas';
-    glCanvas.width = this.baseCanvas.width * this.scaleFactor;   // 480
-    glCanvas.height = this.baseCanvas.height * this.scaleFactor; // 640
+    glCanvas.width = 480;
+    glCanvas.height = 640;
     glCanvas.style.position = 'absolute';
     glCanvas.style.inset = '0';
     glCanvas.style.width = '100%';
@@ -437,7 +437,7 @@ class Godot2DGraphicsEngine {
 
     const stageNum = (g.levelData && g.levelData.stageNumber) ? g.levelData.stageNumber : (g.stageIndex + 1);
     const camX = Math.round(g.cameraX || 0);
-    const cached = this.getCachedBackdrop(stageNum, g.canvas.width, g.canvas.height);
+    const cached = this.getCachedBackdrop(stageNum, 240, 320);
     ctx.drawImage(cached, camX, 0);
   }
 

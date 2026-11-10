@@ -37,13 +37,13 @@ class SpriteManager {
 
   initAtlas() {
     this.atlasImg = new Image();
-    this.atlasImg.src = 'assets/chef_atlas.png?v=96';
+    this.atlasImg.src = 'assets/chef_atlas.png?v=97';
     this.atlasLoaded = false;
     this.atlasImg.onload = () => {
       this.atlasLoaded = true;
     };
     this.atlasImg.onerror = () => {
-      this.atlasImg.src = 'assets/peter_atlas.png?v=96';
+      this.atlasImg.src = 'assets/peter_atlas.png?v=97';
     };
   }
 
@@ -53,13 +53,18 @@ class SpriteManager {
     const info = atlasData[name];
     if (!info) return false;
 
+    const sx = info.sx !== undefined ? info.sx : info.x;
+    const sy = info.sy !== undefined ? info.sy : info.y;
+    const sw = info.sw !== undefined ? info.sw : info.w;
+    const sh = info.sh !== undefined ? info.sh : info.h;
+
     ctx.save();
     if (flip) {
       ctx.translate(dx + info.w, dy);
       ctx.scale(-1, 1);
-      ctx.drawImage(this.atlasImg, info.x, info.y, info.w, info.h, 0, 0, info.w, info.h);
+      ctx.drawImage(this.atlasImg, sx, sy, sw, sh, 0, 0, info.w, info.h);
     } else {
-      ctx.drawImage(this.atlasImg, info.x, info.y, info.w, info.h, dx, dy, info.w, info.h);
+      ctx.drawImage(this.atlasImg, sx, sy, sw, sh, dx, dy, info.w, info.h);
     }
     ctx.restore();
     return true;
