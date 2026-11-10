@@ -705,13 +705,19 @@ class Player {
         atlasName = 'climb_1';
       }
     } else if (this.vx !== 0) {
-      // Walking horizontally (symmetrical 4-frame run cycles)
-      const runFramesRight = ['run_right_1', 'run_right_2', 'run_right_3', 'run_right_4'];
-      const runFramesLeft = ['run_left_1', 'run_left_2', 'run_left_3', 'run_left_4'];
-      const rIdx = Math.floor(this.animTimer / 4) % 4;
+      // Running horizontally (full 8-frame biomechanical leg-over-leg run cycle)
+      const runFramesRight = [
+        'run_right_1', 'run_right_2', 'run_right_3', 'run_right_4',
+        'run_right_5', 'run_right_6', 'run_right_7', 'run_right_8'
+      ];
+      const runFramesLeft = [
+        'run_left_1', 'run_left_2', 'run_left_3', 'run_left_4',
+        'run_left_5', 'run_left_6', 'run_left_7', 'run_left_8'
+      ];
+      const rIdx = Math.floor(this.animTimer / 3) % 8;
       if (this.dir === -1) {
         atlasName = runFramesLeft[rIdx];
-        flip = false; // Already flipped in atlas
+        flip = false; // Pre-rendered left-facing frames in atlas
       } else {
         atlasName = runFramesRight[rIdx];
         flip = false;
