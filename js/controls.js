@@ -119,8 +119,20 @@ class ControlsManager {
 
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
-      const dx = touch.clientX - centerX;
-      const dy = touch.clientY - centerY;
+      let dx = touch.clientX - centerX;
+      let dy = touch.clientY - centerY;
+
+      const lockAngle = window.getPortraitLockAngle ? window.getPortraitLockAngle() : 0;
+      if (lockAngle === -90) {
+        const tmp = dx;
+        dx = -dy;
+        dy = tmp;
+      } else if (lockAngle === 90) {
+        const tmp = dx;
+        dx = dy;
+        dy = -tmp;
+      }
+
       const dist = Math.hypot(dx, dy);
 
       if (dist < 10) {
@@ -286,8 +298,19 @@ class ControlsManager {
       if (e.touches.length === 0) return;
       const curX = e.touches[0].clientX;
       const curY = e.touches[0].clientY;
-      const dx = curX - startX;
-      const dy = curY - startY;
+      let dx = curX - startX;
+      let dy = curY - startY;
+
+      const lockAngle = window.getPortraitLockAngle ? window.getPortraitLockAngle() : 0;
+      if (lockAngle === -90) {
+        const tmp = dx;
+        dx = -dy;
+        dy = tmp;
+      } else if (lockAngle === 90) {
+        const tmp = dx;
+        dx = dy;
+        dy = -tmp;
+      }
 
       if (Math.hypot(dx, dy) > 20) {
         if (Math.abs(dy) > Math.abs(dx)) {
@@ -310,3 +333,69 @@ class ControlsManager {
 }
 
 window.ControlsManager = ControlsManager;
+
+// ==========================================================
+// STRICT PORTRAIT ORIENTATION LOCK MANAGER
+// Keeps the game physically vertical on mobile screens even
+// when the user rotates their cell phone sideways!
+// ==========================================================
+(function initPortraitLockManager() {
+  let currentLockAngle = 0; // 0 = normal upright, -90 = counter-rotated CCW, 90 = counter-rotated CW
+
+  function isMobileDevice() {
+    if (/Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent || '')) return true;
+    if (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches) return true;
+    if (navigator.maxTouchPoints && navigator.maxTouchPoints > 1 && Math.min(window.screen.width, window.screen.height) < 960) return true;
+    return false;
+  }
+
+  function tryNativePortraitLock() {
+    if (window.screen && window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
+      window.screen.orientation.lock('portrait-primary').catch(() => {});
+    }
+  }
+
+  function updateOrientationLock() {
+    if (!document.body) return;
+
+    const isLandscapeViewport = window.innerWidth > window.innerHeight;
+    if (isMobileDevice() && isLandscapeViewport) {
+      let rawAngle = 90;
+      if (window.screen && window.screen.orientation && typeof window.screen.orientation.angle === 'number') {
+        rawAngle = window.screen.orientation.angle;
+      } else if (typeof window.orientation === 'number') {
+        rawAngle = window.orientation;
+      }
+
+      if (rawAngle === 270 || rawAngle === -90) {
+        currentLockAngle = 90;
+        document.body.classList.remove('portrait-lock-ccw');
+        document.body.classList.add('portrait-lock-cw');
+      } else {
+        currentLockAngle = -90;
+        document.body.classList.remove('portrait-lock-cw');
+        document.body.classList.add('portrait-lock-ccw');
+      }
+    } else {
+      currentLockAngle = 0;
+      document.body.classList.remove('portrait-lock-ccw', 'portrait-lock-cw');
+    }
+  }
+
+  window.getPortraitLockAngle = () => currentLockAngle;
+  window.updateOrientationLock = updateOrientationLock;
+
+  window.addEventListener('resize', updateOrientationLock);
+  window.addEventListener('orientationchange', () => {
+    updateOrientationLock();
+    setTimeout(updateOrientationLock, 120);
+  });
+  if (window.screen && window.screen.orientation) {
+    window.screen.orientation.addEventListener('change', updateOrientationLock);
+  }
+  window.addEventListener('DOMContentLoaded', () => {
+    tryNativePortraitLock();
+    updateOrientationLock();
+  });
+  window.addEventListener('touchstart', tryNativePortraitLock, { once: true, passive: true });
+})();

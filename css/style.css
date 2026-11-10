@@ -946,3 +946,31 @@ canvas#gameCanvas {
   transform: scale(0.95);
   background: #c0003c;
 }
+
+/* ---------------------------------------------------
+   STRICT PORTRAIT LOCK FOR MOBILE DEVICES IN LANDSCAPE
+   Keeps the game physically vertical on the phone screen
+   even when the user rotates their phone sideways!
+   --------------------------------------------------- */
+body.portrait-lock-ccw #app-container,
+body.portrait-lock-cw #app-container {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 100vh !important;
+  width: 100dvh !important;
+  height: 100vw !important;
+  height: 100dvw !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  transform-origin: center center !important;
+}
+
+body.portrait-lock-ccw #app-container {
+  transform: translate(-50%, -50%) rotate(-90deg) !important;
+}
+
+body.portrait-lock-cw #app-container {
+  transform: translate(-50%, -50%) rotate(90deg) !important;
+}

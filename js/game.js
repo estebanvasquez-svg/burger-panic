@@ -2416,8 +2416,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function getCanvasCoords(canvas, e) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = 240 / rect.width;
-    const scaleY = 320 / rect.height;
     let clientX = e.clientX;
     let clientY = e.clientY;
     if (e.changedTouches && e.changedTouches.length > 0) {
@@ -2427,9 +2425,23 @@ window.addEventListener('DOMContentLoaded', () => {
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
     }
+
+    const lockAngle = window.getPortraitLockAngle ? window.getPortraitLockAngle() : 0;
+    if (lockAngle === -90) {
+      return {
+        x: ((rect.bottom - clientY) / Math.max(1, rect.height)) * 240,
+        y: ((clientX - rect.left) / Math.max(1, rect.width)) * 320
+      };
+    } else if (lockAngle === 90) {
+      return {
+        x: ((clientY - rect.top) / Math.max(1, rect.height)) * 240,
+        y: ((rect.right - clientX) / Math.max(1, rect.width)) * 320
+      };
+    }
+
     return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY
+      x: ((clientX - rect.left) / Math.max(1, rect.width)) * 240,
+      y: ((clientY - rect.top) / Math.max(1, rect.height)) * 320
     };
   }
 
@@ -2441,9 +2453,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const handlePointerDown = (e) => {
     const game = window.burgerPanicGame;
     if (!game || game.state !== 'MAP') return;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const coords = getCanvasCoords(canvas, e);
     isTouchDragging = true;
-    dragStartY = clientY;
+    dragStartY = coords.y;
     dragStartScrollY = game.mapScrollY;
     totalDragDist = 0;
   };
@@ -2451,16 +2463,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const handlePointerMove = (e) => {
     const game = window.burgerPanicGame;
     if (!game || game.state !== 'MAP' || !isTouchDragging) return;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const dy = clientY - dragStartY;
+    const coords = getCanvasCoords(canvas, e);
+    const dy = coords.y - dragStartY;
     totalDragDist += Math.abs(dy);
-    if (totalDragDist > 4) {
-      // Scale dy relative to 240x320 virtual world
-      const rect = canvas.getBoundingClientRect();
-      const scaleY = 320 / rect.height;
-      const scaledDy = dy * scaleY;
+    if (totalDragDist > 3) {
       const maxScroll = 1100 - 320; // 780px
-      game.mapTargetScrollY = Math.max(0, Math.min(dragStartScrollY - scaledDy, maxScroll));
+      game.mapTargetScrollY = Math.max(0, Math.min(dragStartScrollY - dy, maxScroll));
       game.mapScrollY = game.mapTargetScrollY;
     }
   };
