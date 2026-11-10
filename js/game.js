@@ -360,17 +360,7 @@ class BurgerPanicGame {
 
   applyDevModeUI() {
     const devToolbar = document.getElementById('dev-toolbar');
-    const gfxBtn = document.getElementById('btn-gfx');
-  if (gfxBtn) {
-    gfxBtn.addEventListener('click', () => {
-      if (window.burgerPanicGame && window.burgerPanicGame.gfxEngine) {
-        const label = window.burgerPanicGame.gfxEngine.cycleGraphicsMode();
-        window.burgerPanicGame.showDevToast(label);
-      }
-    });
-  }
-
-  const devBtn = document.getElementById('btn-dev');
+    const devBtn = document.getElementById('btn-dev');
     if (devToolbar) {
       devToolbar.classList.toggle('hidden', !this.devMode);
     }
@@ -1266,25 +1256,37 @@ class BurgerPanicGame {
   // ========================================================
   // RENDERING
   // ========================================================
+  getStageBgCache(stageNum, theme) {
+    if (!this._bgCache) this._bgCache = {};
+    if (this._bgCache[stageNum]) return this._bgCache[stageNum];
+
+    const off = document.createElement('canvas');
+    off.width = this.canvas.width;
+    off.height = this.canvas.height;
+    const octx = off.getContext('2d');
+
+    octx.fillStyle = theme.wallColor;
+    octx.fillRect(0, 0, off.width, off.height);
+
+    octx.fillStyle = theme.wallTileColor;
+    for (let ty = 34; ty < 320; ty += 16) {
+      for (let tx = 0; tx < off.width; tx += 16) {
+        if ((Math.floor(tx / 16) + Math.floor(ty / 16)) % 2 === 0) {
+          octx.fillRect(tx, ty, 15, 15);
+        }
+      }
+    }
+
+    this._bgCache[stageNum] = off;
+    return off;
+  }
+
   draw() {
     const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
     const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
 
     if (theme && this.state !== 'TITLE' && this.state !== 'MAP') {
-      this.ctx.fillStyle = theme.wallColor;
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-      // Subtle atmospheric kitchen tile backdrop pattern
-      this.ctx.save();
-      this.ctx.fillStyle = theme.wallTileColor;
-      for (let ty = 34; ty < 320; ty += 16) {
-        for (let tx = 0; tx < this.canvas.width; tx += 16) {
-          if ((Math.floor(tx / 16) + Math.floor(ty / 16)) % 2 === 0) {
-            this.ctx.fillRect(tx, ty, 15, 15);
-          }
-        }
-      }
-      this.ctx.restore();
+      this.ctx.drawImage(this.getStageBgCache(stageNum, theme), 0, 0);
     } else {
       this.ctx.fillStyle = '#050508';
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -1312,52 +1314,54 @@ class BurgerPanicGame {
       this.screenShake *= 0.82;
       if (this.screenShake < 0.25) this.screenShake = 0;
     }
-    const camRenderX = (this.cameraX !== 0) ? -Math.round(this.cameraX) : 0;
+    const camX = this.cameraX || 0;
+    const viewL = camX - 40;
+    const viewR = camX + 280;
+    const camRenderX = (camX !== 0) ? -Math.round(camX) : 0;
     this.ctx.translate(camRenderX + Math.round(shakeX), Math.round(shakeY));
 
-    // Render Cyber Furnace Environment Details for Stage 3 (matching reference artwork)
+    // Render Cyber Furnace Environment Details for Stage 3 (culled to camera viewport)
     if (stageNum === 3) {
       const bg3 = window.spriteManager ? window.spriteManager.sprites.bg_stage_3 : null;
       if (bg3) {
         const fullW = (this.levelData && this.levelData.width) ? this.levelData.width : 1600;
         for (let bx = 0; bx < fullW; bx += 360) {
+          if (bx + 360 < camX - 20 || bx > camX + 260) continue;
           this.ctx.drawImage(bg3, bx, 0, 360, 320);
         }
       }
 
-      // Truss lattice support legs under the sniper platform (x: 60 to 140, y: 200 to 288)
-      this.ctx.strokeStyle = '#334155';
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeRect(62, 206, 8, 82);
-      this.ctx.strokeRect(130, 206, 8, 82);
-      this.ctx.lineWidth = 1.4;
-      for (let ty = 206; ty + 20 <= 288; ty += 20) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(70, ty);
-        this.ctx.lineTo(130, ty + 20);
-        this.ctx.moveTo(130, ty);
-        this.ctx.lineTo(70, ty + 20);
-        this.ctx.stroke();
-      }
+      if (camX < 160) {
+        // Truss lattice support legs under the sniper platform (x: 60 to 140, y: 200 to 288)
+        this.ctx.strokeStyle = '#334155';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(62, 206, 8, 82);
+        this.ctx.strokeRect(130, 206, 8, 82);
+        this.ctx.lineWidth = 1.4;
+        for (let ty = 206; ty + 20 <= 288; ty += 20) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(70, ty);
+          this.ctx.lineTo(130, ty + 20);
+          this.ctx.moveTo(130, ty);
+          this.ctx.lineTo(70, ty + 20);
+          this.ctx.stroke();
+        }
 
-      // Animated Cheese Dripping from left pipe (x: 28, y: 240) into lava pit
-      const dropProgress = (Date.now() / 900) % 1;
-      const dropY = 240 + dropProgress * 48;
-      this.ctx.fillStyle = '#facc15';
-      this.ctx.beginPath();
-      this.ctx.arc(28, dropY, 2.5, 0, Math.PI * 2);
-      this.ctx.fill();
+        // Animated Cheese Dripping from left pipe (x: 28, y: 240) into lava pit
+        const dropProgress = (Date.now() / 900) % 1;
+        const dropY = 240 + dropProgress * 48;
+        this.ctx.fillStyle = '#facc15';
+        this.ctx.fillRect(26, Math.round(dropY), 4, 4);
 
-      // Animated Lava Pit Bubbles (x: 10 to 60, y: 290 to 318)
-      const t = Date.now() * 0.005;
-      for (let b = 0; b < 3; b++) {
-        const bx = 16 + b * 16 + Math.sin(t + b) * 4;
-        const bProgress = ((Date.now() / 1200 + b * 0.33) % 1);
-        const by = 312 - bProgress * 18;
-        this.ctx.fillStyle = bProgress > 0.8 ? '#fef08a' : '#f97316';
-        this.ctx.beginPath();
-        this.ctx.arc(bx, by, 1.5 + bProgress * 1.5, 0, Math.PI * 2);
-        this.ctx.fill();
+        // Animated Lava Pit Bubbles (x: 10 to 60, y: 290 to 318)
+        const t = Date.now() * 0.005;
+        for (let b = 0; b < 3; b++) {
+          const bx = 16 + b * 16 + Math.sin(t + b) * 4;
+          const bProgress = ((Date.now() / 1200 + b * 0.33) % 1);
+          const by = 312 - bProgress * 18;
+          this.ctx.fillStyle = bProgress > 0.8 ? '#fef08a' : '#f97316';
+          this.ctx.fillRect(Math.round(bx), Math.round(by), 3, 3);
+        }
       }
     }
 
@@ -1384,8 +1388,9 @@ class BurgerPanicGame {
       this.gfxEngine.drawEntityShadows25D(this.ctx);
     }
 
-    // Draw Burgers
+    // Draw Burgers (culled to camera viewport)
     for (const b of this.burgers) {
+      if (b.x + 36 < viewL || b.x > viewR) continue;
       b.draw(this.ctx);
     }
     if (this.gfxEngine) {
@@ -1397,14 +1402,18 @@ class BurgerPanicGame {
       item.draw(this.ctx);
     }
 
-    // Draw Enemies
+    // Draw Enemies (culled to camera viewport)
     for (const enemy of this.enemies) {
+      if (enemy.x + 24 < viewL || enemy.x > viewR) continue;
       enemy.draw(this.ctx);
     }
 
-    // Draw Blowtorch pickup stations
+    // Draw Blowtorch pickup stations (culled to camera viewport)
     if (this.blowtorches) {
-      for (const bt of this.blowtorches) bt.draw(this.ctx);
+      for (const bt of this.blowtorches) {
+        if (bt.x + 24 < viewL || bt.x - 24 > viewR) continue;
+        bt.draw(this.ctx);
+      }
     }
 
     // Draw Flame Projectiles
@@ -1608,8 +1617,12 @@ class BurgerPanicGame {
     const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
     const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
     const platSpr = window.spriteManager.get('platform');
+    const camX = this.cameraX || 0;
+    const viewL = camX - 40;
+    const viewR = camX + 280;
 
     for (const f of this.levelData.floors) {
+      if (f.x2 < viewL || f.x1 > viewR) continue;
       if (f.type === 'diagonal') {
         this.drawDiagonalPlatform(f, theme || platSpr);
       } else if (f.type === 'elevator') {
@@ -1792,8 +1805,12 @@ class BurgerPanicGame {
     const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
     const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
     const ladderSpr = window.spriteManager.get('ladder');
+    const camX = this.cameraX || 0;
+    const viewL = camX - 24;
+    const viewR = camX + 264;
 
     for (const l of this.levelData.ladders) {
+      if (l.x + 16 < viewL || l.x > viewR) continue;
       if (theme && window.stageThemesManager) {
         window.stageThemesManager.drawLadder(this.ctx, l, theme);
       } else if (ladderSpr) {
@@ -1809,8 +1826,12 @@ class BurgerPanicGame {
     const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
     const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
     const plateSpr = window.spriteManager.get('plate');
+    const camX = this.cameraX || 0;
+    const viewL = camX - 40;
+    const viewR = camX + 280;
 
     for (const p of this.levelData.plates) {
+      if (p.x + 40 < viewL || p.x > viewR) continue;
       if (theme && window.stageThemesManager) {
         window.stageThemesManager.drawPlate(this.ctx, p, theme);
       } else if (plateSpr) {
@@ -2357,8 +2378,28 @@ class BurgerPanicGame {
   }
 
   startLoop() {
+    const STEP_MS = 1000 / 60; // 16.667ms target (60 FPS)
+    let lastTime = performance.now();
+    let accumulator = 0;
+
     const loop = (timestamp) => {
-      this.update();
+      let dt = timestamp - lastTime;
+      lastTime = timestamp;
+      if (dt > 100) dt = STEP_MS;
+
+      if (dt >= 14.0 && dt <= 19.5) {
+        this.update();
+        accumulator = 0;
+      } else {
+        accumulator += dt;
+        let steps = 0;
+        while (accumulator >= STEP_MS && steps < 3) {
+          this.update();
+          accumulator -= STEP_MS;
+          steps++;
+        }
+      }
+
       this.draw();
       requestAnimationFrame(loop);
     };
@@ -2573,8 +2614,18 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // ----------------------------------------------------
-  // DEVELOPER MODE CONTROLS & SHORTCUTS
+  // DEVELOPER MODE & GRAPHICS ENGINE CONTROLS
   // ----------------------------------------------------
+  const gfxBtn = document.getElementById('btn-gfx');
+  if (gfxBtn) {
+    gfxBtn.addEventListener('click', () => {
+      if (window.burgerPanicGame && window.burgerPanicGame.gfxEngine) {
+        const label = window.burgerPanicGame.gfxEngine.cycleGraphicsMode();
+        window.burgerPanicGame.showDevToast(label);
+      }
+    });
+  }
+
   const devBtn = document.getElementById('btn-dev');
   if (devBtn) {
     devBtn.addEventListener('click', () => {

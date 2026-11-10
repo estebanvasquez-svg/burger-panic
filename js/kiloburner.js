@@ -215,24 +215,19 @@ class BlowtorchPickup {
 
     ctx.save();
 
-    // Bouncing overhead prompt
-    ctx.fillStyle = '#fef08a';
+    // Bouncing overhead prompt (crisp 1px drop shadow, zero CPU shadowBlur)
+    const tx = Math.round(this.x);
+    const ty = Math.round(drawY - 6);
     ctx.font = 'bold 7px monospace';
     ctx.textAlign = 'center';
-    ctx.shadowColor = '#f97316';
-    ctx.shadowBlur = 4;
-    ctx.fillText('▼ SOPLETE ▼', Math.round(this.x), Math.round(drawY - 6));
-    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#000000';
+    ctx.fillText('▼ SOPLETE ▼', tx + 1, ty + 1);
+    ctx.fillStyle = '#fef08a';
+    ctx.fillText('▼ SOPLETE ▼', tx, ty);
 
-    // Glowing aura
-    const glowR = 12 + Math.sin(this.animTimer * 2) * 2;
-    const aura = ctx.createRadialGradient(this.x, drawY + 8, 2, this.x, drawY + 8, glowR);
-    aura.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
-    aura.addColorStop(1, 'rgba(56, 189, 248, 0)');
-    ctx.fillStyle = aura;
-    ctx.beginPath();
-    ctx.arc(this.x, drawY + 8, glowR, 0, Math.PI * 2);
-    ctx.fill();
+    // Fast glowing aura ring (zero createRadialGradient per frame)
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
+    ctx.fillRect(Math.round(this.x - 9), Math.round(drawY + 1), 18, 15);
 
     // Gas Canister body (vivid blue industrial cylinder)
     ctx.fillStyle = '#0284c7';
@@ -978,42 +973,27 @@ class KiloburnerBoss {
       ctx.translate(-this.x, -this.y);
     }
 
-    // Damage flash effect (white / cyan silhouette flash)
-    if (this.hitFlashTimer > 0 && Math.floor(this.hitFlashTimer / 2) % 2 === 0) {
-      ctx.filter = 'brightness(2.2) drop-shadow(0 0 6px #4ade80)';
-    }
-
-    // Low HP Warning Aura (Overheated engine pulse)
-    if (this.health > 0 && this.health <= this.maxHealth * 0.3) {
-      ctx.shadowColor = '#ef4444';
-      ctx.shadowBlur = 8 + Math.sin(Date.now() * 0.01) * 4;
-    }
-
     sm.drawKiloburnerAtlas(ctx, spriteName, drawX, drawY, renderW, renderH, flip);
 
-    // 60 Hz Pulsing Cybernetic Crimson Eye Flare
+    // Damage flash overlay (fast alpha tint, zero slow CSS filter)
+    if (this.hitFlashTimer > 0 && Math.floor(this.hitFlashTimer / 2) % 2 === 0) {
+      ctx.globalAlpha = 0.45;
+      sm.drawKiloburnerAtlas(ctx, 'hit_00', drawX, drawY, renderW, renderH, flip);
+      ctx.globalAlpha = 1.0;
+    }
+
+    // 60 Hz Pulsing Cybernetic Crimson Eye Flare (zero createRadialGradient per frame)
     if (this.state !== 'dead' && this.hitFlashTimer <= 0) {
       const eyeRelX = (info.w * 0.38) * this.scale;
       const eyeRelY = (info.h * 0.40) * this.scale;
-      const eyeX = flip ? (drawX + renderW - eyeRelX) : (drawX + eyeRelX);
-      const eyeY = drawY + eyeRelY;
-      const eyePulse = 0.55 + Math.sin(this.animTimer * 0.16) * 0.35 + (Math.random() * 0.1);
-      
-      const glowGrad = ctx.createRadialGradient(eyeX, eyeY, 1, eyeX, eyeY, 8 * this.scale);
-      glowGrad.addColorStop(0, 'rgba(255, 50, 50, ' + (0.85 * eyePulse) + ')');
-      glowGrad.addColorStop(0.4, 'rgba(239, 68, 68, ' + (0.5 * eyePulse) + ')');
-      glowGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+      const eyeX = Math.round(flip ? (drawX + renderW - eyeRelX) : (drawX + eyeRelX));
+      const eyeY = Math.round(drawY + eyeRelY);
+      const eyePulse = 0.55 + Math.sin(this.animTimer * 0.16) * 0.35;
 
-      ctx.fillStyle = glowGrad;
-      ctx.beginPath();
-      ctx.arc(eyeX, eyeY, 8 * this.scale, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Sharp pupil pinpoint
-      ctx.fillStyle = 'rgba(255, 245, 245, ' + (0.9 * eyePulse) + ')';
-      ctx.beginPath();
-      ctx.arc(eyeX, eyeY, 1.5, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillStyle = `rgba(239, 68, 68, ${(0.38 * eyePulse).toFixed(2)})`;
+      ctx.fillRect(eyeX - 4, eyeY - 4, 8, 8);
+      ctx.fillStyle = 'rgba(255, 245, 245, 0.92)';
+      ctx.fillRect(eyeX - 1, eyeY - 1, 2, 2);
     }
 
     ctx.restore(); // restore boss body transform
@@ -1056,18 +1036,17 @@ class KiloburnerBoss {
     ctx.font = 'bold 5.5px "Press Start 2P", monospace, sans-serif';
     ctx.textBaseline = 'middle';
 
-    // Left label: BOSS: KILOBURNER
+    // Left label: BOSS: KILOBURNER (crisp 1px shadow, zero shadowBlur)
     ctx.textAlign = 'left';
+    ctx.fillStyle = '#000000';
+    ctx.fillText('KILOBURNER', barX + 1, 9);
     ctx.fillStyle = '#ef4444';
-    ctx.shadowColor = '#000000';
-    ctx.shadowBlur = 2;
     ctx.fillText('KILOBURNER', barX, 8);
 
     // Right label: Remaining HP
     ctx.textAlign = 'right';
     ctx.fillStyle = '#f8fafc';
     ctx.fillText(`${Math.max(0, this.health)} HP`, barX + barW, 8);
-    ctx.shadowBlur = 0;
 
     // 2. Health Bar Outer Steel Housing
     ctx.fillStyle = '#0f172a';
@@ -1081,17 +1060,18 @@ class KiloburnerBoss {
     ctx.fillStyle = '#3f0c0c';
     ctx.fillRect(barX, barY, barW, barH);
 
-    // Current HP Fill (Fiery Red to Gold Gradient)
+    // Current HP Fill (Cached Gradient)
     const healthRatio = Math.max(0, Math.min(1, this.health / this.maxHealth));
     const currentW = Math.round(barW * healthRatio);
 
     if (currentW > 0) {
-      const hpGrad = ctx.createLinearGradient(barX, barY, barX + currentW, barY);
-      hpGrad.addColorStop(0, '#ef4444');
-      hpGrad.addColorStop(0.7, '#f97316');
-      hpGrad.addColorStop(1, '#fef08a');
-
-      ctx.fillStyle = hpGrad;
+      if (!this._hpGrad) {
+        this._hpGrad = ctx.createLinearGradient(barX, barY, barX + barW, barY);
+        this._hpGrad.addColorStop(0, '#ef4444');
+        this._hpGrad.addColorStop(0.7, '#f97316');
+        this._hpGrad.addColorStop(1, '#fef08a');
+      }
+      ctx.fillStyle = this._hpGrad;
       ctx.fillRect(barX, barY, currentW, barH);
 
       // Top gloss highlight

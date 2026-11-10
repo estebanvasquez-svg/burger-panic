@@ -1,39 +1,44 @@
 /**
  * Godot-Inspired 2D WebGL2 Graphics, Lighting & Particle Engine for Burger Panic
- * Implements Godot 4 style visual features directly in HTML5/WebGL2:
- *  1. WorldEnvironment: Selective Emissive HDR Glow / Bloom & ACES Filmic Tonemapping
- *  2. PointLight2D & NormalMap2D: Real-time dynamic 2D point lights with procedural 2.5D normal mapping
- *  3. ScaleFX / xBR Shader: Razor-sharp edge-aware HD sprite upscaling (4x Super-Sampling 960x1280)
- *  4. 2.5D Soft Drop Shadows & Volumetric Depth: Ground contact shadows, platform occlusion & specular bevels
- *  5. GPUParticles2D: Advanced physics particles (steam, embers, shockwaves, sparkles, dust plumes)
+ * Ultra-Optimized 60 FPS Edition:
+ *  1. WorldEnvironment: Fast 9-Tap Dual-Kawase Selective Emissive HDR Bloom & Tonemapping
+ *  2. PointLight2D & NormalMap2D: Squared-distance zero-sqrt dynamic 2D point lights + 2.5D normal bevels
+ *  3. Sub-Pixel Crisp Upscaling: Sharp arcade pixel edges with zero MSAA/buffer-copy overhead
+ *  4. 2.5D Soft Drop Shadows & Volumetric Depth: Cached backdrop gradients & frustum-culled shadows
+ *  5. GPUParticles2D: Batched rect-based physics particles (steam, embers, shockwaves, sparkles)
  */
 
 class Godot2DGraphicsEngine {
   constructor(game) {
     this.game = game;
     this.baseCanvas = game.canvas;
-    // Modes: 0 = GODOT ULTRA HD (xBR + Emissive Bloom + Lights + 2.5D + Particles),
-    //        1 = GODOT RETRO GLOW (Pixel Crisp + Emissive Bloom + Lights + 2.5D + Particles),
+    // Modes: 0 = GODOT ULTRA HD (Sub-Pixel Crisp + Emissive Bloom + Lights + 2.5D + Particles),
+    //        1 = GODOT RETRO GLOW (Pixel + Bloom + Lights + 2.5D + Particles),
     //        2 = CLASSIC 2D
     this.mode = 0;
     this.modeNames = [
-      '✨ GODOT ULTRA HD (xBR + Bloom + Luces 2D)',
+      '✨ GODOT ULTRA HD (60 FPS + Bloom + Luces 2D)',
       '🌟 GODOT RETRO GLOW (Pixel + Bloom + Luces 2D)',
       '🕹️ CLÁSICO 2D ORIGINAL'
     ];
 
-    this.scaleFactor = 4; // 240x320 -> 960x1280 HD
+    // 2x internal resolution (480x640) gives 4x sub-pixel crispness at 1/4th the fragment cost of 4x
+    this.scaleFactor = 2;
     this.glCanvas = null;
     this.gl = null;
     this.program = null;
     this.texture = null;
+    this.textureAllocated = false;
     this.uniforms = {};
 
-    // Dynamic PointLight2D array (up to 16 simultaneous lights)
-    this.maxLights = 16;
-    this.lightData = new Float32Array(this.maxLights * 4);  // x(uv), y(uv), radius(uv), intensity
+    // Dynamic PointLight2D array (up to 8 simultaneous lights, zero-sqrt squared distance)
+    this.maxLights = 8;
+    this.lightData = new Float32Array(this.maxLights * 4);  // x(uv), y(uv), radiusSq(uv^2), intensity
     this.lightColors = new Float32Array(this.maxLights * 3); // r, g, b
     this.activeLightCount = 0;
+
+    // Cached offscreen backdrop atmosphere per stage (zero per-frame gradient allocations)
+    this.backdropCache = {};
 
     // GPUParticles2D system
     this.particles = [];
@@ -48,11 +53,10 @@ class Godot2DGraphicsEngine {
   initWebGL2Overlay() {
     if (!this.baseCanvas || !this.baseCanvas.parentElement) return;
 
-    // Create high-resolution WebGL2 overlay canvas inside .bezel
     const glCanvas = document.createElement('canvas');
     glCanvas.id = 'webglCanvas';
-    glCanvas.width = this.baseCanvas.width * this.scaleFactor;   // 960
-    glCanvas.height = this.baseCanvas.height * this.scaleFactor; // 1280
+    glCanvas.width = this.baseCanvas.width * this.scaleFactor;   // 480
+    glCanvas.height = this.baseCanvas.height * this.scaleFactor; // 640
     glCanvas.style.position = 'absolute';
     glCanvas.style.inset = '0';
     glCanvas.style.width = '100%';
@@ -61,28 +65,31 @@ class Godot2DGraphicsEngine {
     glCanvas.style.pointerEvents = 'none';
     glCanvas.style.borderRadius = '6px';
     glCanvas.style.zIndex = '2';
+    glCanvas.style.imageRendering = 'pixelated';
 
     this.baseCanvas.parentElement.appendChild(glCanvas);
     this.glCanvas = glCanvas;
 
-    const gl = glCanvas.getContext('webgl2', {
+    const ctxAttrs = {
       alpha: false,
-      antialias: true,
+      antialias: false,
       depth: false,
       stencil: false,
       premultipliedAlpha: false,
-      preserveDrawingBuffer: true
-    }) || glCanvas.getContext('webgl', {
-      alpha: false,
-      antialias: true,
-      preserveDrawingBuffer: true
-    });
+      preserveDrawingBuffer: false,
+      powerPreference: 'high-performance'
+    };
+
+    const gl = glCanvas.getContext('webgl2', ctxAttrs) || glCanvas.getContext('webgl', ctxAttrs);
 
     if (!gl) {
-      console.warn('WebGL no disponible, usando modo Canvas 2D mejorado.');
+      console.warn('WebGL no disponible, usando modo Canvas 2D.');
       glCanvas.style.display = 'none';
       return;
     }
+
+    // Hide baseCanvas paint opacity while keeping pointer events active on it
+    this.baseCanvas.style.opacity = '0';
 
     this.gl = gl;
     this.setupShaders();
@@ -101,199 +108,98 @@ class Godot2DGraphicsEngine {
       }
     `;
 
+    // Ultra-fast single-pass shader:
+    // Only 9 texture fetches total (shared between 2.5D normal bevel, sub-pixel AA, and Dual-Kawase bloom)
+    // Zero sqrt(), zero normalize(), zero pow() inside the PointLight2D loop!
     const fsSource = `
-      precision highp float;
+      precision mediump float;
       varying vec2 v_uv;
 
       uniform sampler2D u_texture;
       uniform vec2 u_texSize;
-      uniform float u_time;
-      uniform float u_hdFilter;       // 1.0 = ScaleFX/xBR HD, 0.0 = crisp sub-pixel
-      uniform float u_normalStrength; // 2.5D normal map relief intensity
-      uniform float u_bloomStrength;  // WorldEnvironment glow intensity
-      uniform vec3 u_ambientColor;    // CanvasModulate ambient tint
+      uniform float u_hdFilter;
+      uniform float u_normalStrength;
+      uniform float u_bloomStrength;
+      uniform vec3 u_ambientColor;
       uniform int u_lightCount;
-      uniform vec4 u_lights[16];      // xy = uv pos, z = radius, w = intensity
-      uniform vec3 u_lightColors[16]; // rgb color
+      uniform vec4 u_lights[8];      // xy = uv pos, z = radiusSq, w = intensity
+      uniform vec3 u_lightColors[8]; // rgb color
 
       float getLuma(vec3 c) {
         return dot(c, vec3(0.299, 0.587, 0.114));
       }
 
-      float getSaturation(vec3 c) {
-        float maxC = max(max(c.r, c.g), c.b);
-        float minC = min(min(c.r, c.g), c.b);
-        return (maxC > 0.01) ? ((maxC - minC) / maxC) : 0.0;
-      }
-
-      float colorDist(vec3 a, vec3 b) {
-        vec3 d = a - b;
-        return dot(d, d);
-      }
-
-      // Razor-Sharp 4x HD Sub-Pixel Anti-Aliasing + xBR Diagonal Corner Smoothing
-      vec3 sampleHDSprite(vec2 uv, vec2 texSize, float useHD) {
-        vec2 texel = 1.0 / texSize;
-        vec2 pos = uv * texSize - 0.5;
-        vec2 f = fract(pos);
-        vec2 base = (floor(pos) + 0.5) * texel;
-
-        // Keep pixel interiors 100% sharp; anti-alias only the outer 15% sub-pixel edge
-        vec2 sharpF = smoothstep(0.42, 0.58, f);
-        vec3 sharpSample = texture2D(u_texture, (floor(pos) + sharpF + 0.5) * texel).rgb;
-
-        if (useHD < 0.5) {
-          return sharpSample;
-        }
-
-        // Sample 4 cardinal neighbors for xBR diagonal corner rounding
-        vec3 c = texture2D(u_texture, base).rgb;
-        vec3 n = texture2D(u_texture, base + vec2(0.0, -texel.y)).rgb;
-        vec3 s = texture2D(u_texture, base + vec2(0.0,  texel.y)).rgb;
-        vec3 e = texture2D(u_texture, base + vec2( texel.x, 0.0)).rgb;
-        vec3 w = texture2D(u_texture, base + vec2(-texel.x, 0.0)).rgb;
-
-        vec3 result = sharpSample;
-        float eqThresh = 0.018;
-        float diffThresh = 0.065;
-
-        // Top-Left corner smoothing when N == W and C is different
-        if (colorDist(n, w) < eqThresh && colorDist(c, n) > diffThresh) {
-          float corner = smoothstep(0.45, 0.0, f.x + f.y);
-          result = mix(result, (n + w) * 0.5, corner * 0.55);
-        }
-        // Top-Right corner smoothing when N == E and C is different
-        if (colorDist(n, e) < eqThresh && colorDist(c, n) > diffThresh) {
-          float corner = smoothstep(0.45, 0.0, (1.0 - f.x) + f.y);
-          result = mix(result, (n + e) * 0.5, corner * 0.55);
-        }
-        // Bottom-Left corner smoothing when S == W and C is different
-        if (colorDist(s, w) < eqThresh && colorDist(c, s) > diffThresh) {
-          float corner = smoothstep(0.45, 0.0, f.x + (1.0 - f.y));
-          result = mix(result, (s + w) * 0.5, corner * 0.55);
-        }
-        // Bottom-Right corner smoothing when S == E and C is different
-        if (colorDist(s, e) < eqThresh && colorDist(c, s) > diffThresh) {
-          float corner = smoothstep(0.45, 0.0, (1.0 - f.x) + (1.0 - f.y));
-          result = mix(result, (s + e) * 0.5, corner * 0.55);
-        }
-
-        return result;
-      }
-
-      // Compute procedural 2.5D Normal Vector from local height/luminance gradients
-      vec3 computeNormal25D(vec2 uv, vec2 texSize) {
-        vec2 texel = 1.0 / texSize;
-        float lL = getLuma(texture2D(u_texture, uv + vec2(-texel.x, 0.0)).rgb);
-        float lR = getLuma(texture2D(u_texture, uv + vec2( texel.x, 0.0)).rgb);
-        float lU = getLuma(texture2D(u_texture, uv + vec2(0.0, -texel.y)).rgb);
-        float lD = getLuma(texture2D(u_texture, uv + vec2(0.0,  texel.y)).rgb);
-
-        float dx = (lL - lR) * u_normalStrength;
-        float dy = (lU - lD) * u_normalStrength;
-        return normalize(vec3(dx, dy, 1.0));
-      }
-
-      // Selective Emissive HDR Glow: blooms saturated neon/fire/gold colors without blurring white ladders/text
       vec3 extractGlow(vec3 col) {
+        float maxC = max(max(col.r, col.g), col.b);
+        float minC = min(min(col.r, col.g), col.b);
+        float sat = (maxC > 0.05) ? ((maxC - minC) / maxC) : 0.0;
         float luma = getLuma(col);
-        float sat = getSaturation(col);
-        // Only glow vibrant emissive colors (flames, neon, gold, lasers, buns)
-        float emissiveMask = smoothstep(0.32, 0.75, sat) * smoothstep(0.45, 0.85, luma);
-        return col * emissiveMask;
-      }
-
-      // Multi-scale Dual-Kawase Emissive Bloom
-      vec3 sampleBloom(vec2 uv, vec2 texSize) {
-        vec2 texel = 1.0 / texSize;
-        vec3 bloom = vec3(0.0);
-        float totalW = 0.0;
-
-        for (int x = -2; x <= 2; x++) {
-          for (int y = -2; y <= 2; y++) {
-            float w = 1.0 / (1.0 + float(x*x + y*y));
-            vec2 offset = vec2(float(x), float(y)) * texel * 1.5;
-            bloom += extractGlow(texture2D(u_texture, uv + offset).rgb) * w;
-            totalW += w;
-          }
-        }
-
-        vec3 wideHalo = vec3(0.0);
-        wideHalo += extractGlow(texture2D(u_texture, uv + vec2( 3.5,  0.0) * texel).rgb);
-        wideHalo += extractGlow(texture2D(u_texture, uv + vec2(-3.5,  0.0) * texel).rgb);
-        wideHalo += extractGlow(texture2D(u_texture, uv + vec2( 0.0,  3.5) * texel).rgb);
-        wideHalo += extractGlow(texture2D(u_texture, uv + vec2( 0.0, -3.5) * texel).rgb);
-
-        return (bloom / totalW) * 0.65 + (wideHalo / 4.0) * 0.45;
-      }
-
-      // ACES Filmic Tonemapping Curve
-      vec3 acesTonemap(vec3 x) {
-        float a = 2.51;
-        float b = 0.03;
-        float c = 2.43;
-        float d = 0.59;
-        float e = 0.14;
-        return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+        float mask = smoothstep(0.32, 0.72, sat) * smoothstep(0.45, 0.82, luma);
+        return col * mask;
       }
 
       void main() {
-        // 1. Sample crisp HD upscaled base albedo
-        vec3 baseCol = sampleHDSprite(v_uv, u_texSize, u_hdFilter);
+        vec2 texel = 1.0 / u_texSize;
+        vec2 pos = v_uv * u_texSize - 0.5;
+        vec2 f = fract(pos);
+        vec2 sharpF = mix(f, smoothstep(0.40, 0.60, f), u_hdFilter);
+        vec2 centerUV = (floor(pos) + sharpF + 0.5) * texel;
 
-        // 2. Compute 2.5D surface normal for relief lighting
-        vec3 normal = computeNormal25D(v_uv, u_texSize);
+        // 1. Sample center + 4 cardinal neighbors (shared for albedo, 2.5D normal, and inner bloom)
+        vec3 baseCol = texture2D(u_texture, centerUV).rgb;
+        vec3 n = texture2D(u_texture, v_uv + vec2(0.0, -texel.y)).rgb;
+        vec3 s = texture2D(u_texture, v_uv + vec2(0.0,  texel.y)).rgb;
+        vec3 e = texture2D(u_texture, v_uv + vec2( texel.x, 0.0)).rgb;
+        vec3 w = texture2D(u_texture, v_uv + vec2(-texel.x, 0.0)).rgb;
 
-        // Global overhead directional key light (gives crisp 2.5D bevel to sprites & platforms)
-        vec3 keyLightDir = normalize(vec3(-0.25, -0.55, 0.85));
-        float keyDiff = max(dot(normal, keyLightDir), 0.0);
-        float bevelBoost = 0.95 + keyDiff * 0.14;
+        // 2. Fast 2.5D surface normal gradient (zero normalize needed)
+        float lL = getLuma(w);
+        float lR = getLuma(e);
+        float lU = getLuma(n);
+        float lD = getLuma(s);
+        vec2 normalXY = vec2(lL - lR, lU - lD) * u_normalStrength;
 
-        // 3. Accumulate Godot PointLight2D dynamic lighting
+        // Overhead directional key light bevel
+        float bevelBoost = clamp(0.97 + (normalXY.x * -0.18 + normalXY.y * -0.45), 0.86, 1.14);
+
+        // 3. Fast 8-Light PointLight2D accumulation using squared distance (zero sqrt/pow)
         vec3 dynamicLight = u_ambientColor;
-        vec3 specularAccum = vec3(0.0);
-        vec3 volumetricHalo = vec3(0.0);
-        vec2 aspect = vec2(1.0, u_texSize.y / u_texSize.x); // 1.0, 320/240
+        vec3 haloAccum = vec3(0.0);
+        vec2 aspect = vec2(1.0, 1.3333);
 
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < 8; i++) {
           if (i >= u_lightCount) break;
           vec4 l = u_lights[i];
-          vec3 lCol = u_lightColors[i];
-
           vec2 delta = (l.xy - v_uv) * aspect;
-          float dist = length(delta);
-          float radius = max(l.z, 0.001);
-
-          if (dist < radius) {
-            float atten = clamp(1.0 - (dist / radius), 0.0, 1.0);
-            atten = atten * atten * (3.0 - 2.0 * atten);
-
-            vec3 lightDir3D = normalize(vec3(delta.x, delta.y, 0.22));
-            float nDotL = max(dot(normal, lightDir3D), 0.35);
-
-            // Blinn-Phong 2.5D Specular Glint on sprites/platforms
-            vec3 halfVec = normalize(lightDir3D + vec3(0.0, 0.0, 1.0));
-            float spec = pow(max(dot(normal, halfVec), 0.0), 22.0);
-
-            dynamicLight += lCol * l.w * atten * nDotL * 0.45;
-            specularAccum += lCol * l.w * atten * spec * 0.16;
-            volumetricHalo += lCol * l.w * pow(atten, 2.4) * 0.055;
+          float distSq = dot(delta, delta);
+          if (distSq < l.z) {
+            float t = 1.0 - (distSq / l.z);
+            float atten = t * t;
+            float nDotL = clamp(0.75 + dot(normalXY, delta) * 3.5, 0.45, 1.30);
+            vec3 lCol = u_lightColors[i];
+            dynamicLight += lCol * (l.w * atten * nDotL * 0.48);
+            haloAccum += lCol * (l.w * atten * t * 0.05);
           }
         }
 
-        // Combine Albedo + 2.5D Bevel + Dynamic PointLight2D + Specular + Subtle Light Halo
-        vec3 litCol = baseCol * bevelBoost * dynamicLight + specularAccum * getLuma(baseCol) + volumetricHalo;
+        vec3 litCol = baseCol * bevelBoost * dynamicLight + haloAccum;
 
-        // 4. Add Selective Emissive WorldEnvironment HDR Bloom
-        vec3 bloom = sampleBloom(v_uv, u_texSize);
-        vec3 hdrColor = litCol + bloom * u_bloomStrength;
+        // 4. Fast Dual-Kawase Selective Emissive Bloom (only 4 outer diagonal taps + shared cardinals)
+        vec2 bOff = texel * 2.5;
+        vec3 b1 = texture2D(u_texture, v_uv + vec2( bOff.x,  bOff.y)).rgb;
+        vec3 b2 = texture2D(u_texture, v_uv + vec2(-bOff.x,  bOff.y)).rgb;
+        vec3 b3 = texture2D(u_texture, v_uv + vec2( bOff.x, -bOff.y)).rgb;
+        vec3 b4 = texture2D(u_texture, v_uv + vec2(-bOff.x, -bOff.y)).rgb;
 
-        // 5. Vibrance & ACES Filmic Tonemapping
+        vec3 innerGlow = (extractGlow(n) + extractGlow(s) + extractGlow(e) + extractGlow(w)) * 0.15;
+        vec3 outerGlow = (extractGlow(b1) + extractGlow(b2) + extractGlow(b3) + extractGlow(b4)) * 0.14;
+        vec3 hdrColor = litCol + (innerGlow + outerGlow) * u_bloomStrength;
+
+        // 5. Subtle vibrance & fast contrast curve
         float luma = getLuma(hdrColor);
-        hdrColor = mix(vec3(luma), hdrColor, 1.12);
-        vec3 finalColor = mix(hdrColor, acesTonemap(hdrColor * 1.06), 0.35);
+        hdrColor = mix(vec3(luma), hdrColor, 1.10);
 
-        gl_FragColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
+        gl_FragColor = vec4(clamp(hdrColor, 0.0, 1.0), 1.0);
       }
     `;
 
@@ -341,7 +247,6 @@ class Godot2DGraphicsEngine {
     this.uniforms = {
       u_texture: gl.getUniformLocation(program, 'u_texture'),
       u_texSize: gl.getUniformLocation(program, 'u_texSize'),
-      u_time: gl.getUniformLocation(program, 'u_time'),
       u_hdFilter: gl.getUniformLocation(program, 'u_hdFilter'),
       u_normalStrength: gl.getUniformLocation(program, 'u_normalStrength'),
       u_bloomStrength: gl.getUniformLocation(program, 'u_bloomStrength'),
@@ -350,6 +255,12 @@ class Godot2DGraphicsEngine {
       u_lights: gl.getUniformLocation(program, 'u_lights[0]'),
       u_lightColors: gl.getUniformLocation(program, 'u_lightColors[0]')
     };
+
+    // Set static uniforms once
+    gl.uniform1i(this.uniforms.u_texture, 0);
+    gl.uniform2f(this.uniforms.u_texSize, this.baseCanvas.width, this.baseCanvas.height);
+    gl.uniform1f(this.uniforms.u_normalStrength, 1.25);
+    gl.uniform1f(this.uniforms.u_bloomStrength, 0.85);
   }
 
   compileShader(type, source) {
@@ -368,13 +279,17 @@ class Godot2DGraphicsEngine {
   cycleGraphicsMode() {
     this.mode = (this.mode + 1) % 3;
     if (this.glCanvas) {
-      this.glCanvas.style.display = (this.mode === 2) ? 'none' : 'block';
+      const useGL = (this.mode !== 2);
+      this.glCanvas.style.display = useGL ? 'block' : 'none';
+      if (this.baseCanvas) {
+        this.baseCanvas.style.opacity = useGL ? '0' : '1';
+      }
     }
     return this.modeNames[this.mode];
   }
 
   // ==========================================================
-  // DYNAMIC POINTLIGHT2D COLLECTION
+  // DYNAMIC POINTLIGHT2D COLLECTION (PRE-SQUARED RADIUS)
   // ==========================================================
   clearLights() {
     this.activeLightCount = 0;
@@ -388,10 +303,11 @@ class Godot2DGraphicsEngine {
 
     if (screenX < -radiusPx || screenX > 240 + radiusPx) return;
 
+    const radUV = Math.max(radiusPx / 240.0, 0.01);
     const idx = this.activeLightCount;
     this.lightData[idx * 4 + 0] = screenX / 240.0;
     this.lightData[idx * 4 + 1] = screenY / 320.0;
-    this.lightData[idx * 4 + 2] = radiusPx / 240.0;
+    this.lightData[idx * 4 + 2] = radUV * radUV; // Pre-squared radius for zero-sqrt shader!
     this.lightData[idx * 4 + 3] = intensity;
 
     this.lightColors[idx * 3 + 0] = r;
@@ -439,82 +355,54 @@ class Godot2DGraphicsEngine {
       const bx = g.kiloburnerBoss.x;
       const by = g.kiloburnerBoss.y;
       const pulse = 0.85 + Math.sin(t * 2.5) * 0.2;
-      // Glowing fiery eyes & furnace mouth
       this.addPointLight(bx + 18, by + 28, 110, 0.95 * pulse, 1.0, 0.28, 0.08);
-      // Lava pit at bottom-left of Stage 3
       this.addPointLight(35 + g.cameraX, 305, 85, 0.85 * pulse, 1.0, 0.45, 0.05);
     }
 
-    // 3. Active Pepper Clouds (Sparkling Golden Magic Light)
+    // 3. Active Pepper Clouds
     if (g.pepperClouds) {
       for (const pc of g.pepperClouds) {
         this.addPointLight(pc.x + 8, pc.y + 8, 54, 0.95, 1.0, 0.85, 0.2);
       }
     }
 
-    // 4. Blowtorch Pickup Stations
+    // 4. Blowtorch Pickup Stations (only near camera)
     if (g.blowtorches) {
       for (const bt of g.blowtorches) {
-        if (bt.active) {
+        if (!bt.collected && Math.abs(bt.x - (g.cameraX + 120)) < 140) {
           this.addPointLight(bt.x + 8, bt.y + 8, 50, 0.8, 0.2, 0.85, 1.0);
         }
       }
     }
 
-    // 5. Flame Projectiles & Boss Meatballs
-    if (g.flameProjectiles) {
-      for (const fp of g.flameProjectiles) {
-        this.addPointLight(fp.x, fp.y, 46, 0.95, 1.0, 0.5, 0.1);
-      }
+    // 5. Projectiles & Bonus Items
+    if (g.flameProjectiles && g.flameProjectiles.length > 0) {
+      const fp = g.flameProjectiles[g.flameProjectiles.length - 1];
+      this.addPointLight(fp.x, fp.y, 48, 0.95, 1.0, 0.5, 0.1);
     }
-    if (g.bossProjectiles) {
-      for (const bp of g.bossProjectiles) {
-        this.addPointLight(bp.x, bp.y, 48, 0.90, 1.0, 0.35, 0.05);
-      }
+    if (g.bossProjectiles && g.bossProjectiles.length > 0) {
+      const bp = g.bossProjectiles[0];
+      this.addPointLight(bp.x, bp.y, 48, 0.90, 1.0, 0.35, 0.05);
     }
-    if (g.cryoProjectiles) {
-      for (const cp of g.cryoProjectiles) {
-        this.addPointLight(cp.x, cp.y, 44, 0.85, 0.2, 0.9, 1.0);
-      }
-    }
-
-    // 6. Bonus Items (Pulsing Treasure Glow)
     if (g.bonusItems) {
       for (const item of g.bonusItems) {
         this.addPointLight(item.x + 8, item.y + 8, 50, 0.78, 1.0, 0.75, 0.25);
       }
     }
-
-    // 7. Ambient Stage Theme Accent Lights
-    const stageNum = (g.levelData && g.levelData.stageNumber) ? g.levelData.stageNumber : (g.stageIndex + 1);
-    const camX = g.cameraX || 0;
-    if (stageNum === 8 || stageNum === 9) {
-      this.addPointLight(camX + 60, 300, 110, 0.65, 1.0, 0.35, 0.05);
-      this.addPointLight(camX + 180, 300, 110, 0.65, 1.0, 0.35, 0.05);
-    } else if (stageNum === 11) {
-      this.addPointLight(camX + 120, 80, 130, 0.50, 0.4, 0.9, 1.0);
-    } else if (stageNum === 14) {
-      this.addPointLight(camX + 60, 100, 110, 0.60, 0.85, 0.2, 1.0);
-      this.addPointLight(camX + 180, 220, 110, 0.60, 0.1, 0.9, 1.0);
-    }
   }
 
   // ==========================================================
-  // 2.5D DEPTH, VOLUMETRIC LIGHTING & SOFT SHADOWS (WORLD PASS)
+  // 2.5D DEPTH, CACHED ATMOSPHERE & FRUSTUM-CULLED SHADOWS
   // ==========================================================
-  drawBackdropAtmosphere(ctx) {
-    const g = this.game;
-    if (!g || this.mode === 2) return;
+  getCachedBackdrop(stageNum, w, h) {
+    if (this.backdropCache[stageNum]) return this.backdropCache[stageNum];
 
-    const w = g.canvas.width;
-    const h = g.canvas.height;
-    const stageNum = (g.levelData && g.levelData.stageNumber) ? g.levelData.stageNumber : (g.stageIndex + 1);
-    const camX = g.cameraX || 0;
+    const off = document.createElement('canvas');
+    off.width = w;
+    off.height = h;
+    const octx = off.getContext('2d');
 
-    ctx.save();
-
-    // Soft radial ambient lighting (no hard geometric edges)
-    const ambGrad = ctx.createRadialGradient(camX + 120, 120, 15, camX + 120, 150, 175);
+    const ambGrad = octx.createRadialGradient(120, 120, 15, 120, 150, 175);
     if (stageNum === 3 || stageNum === 8 || stageNum === 9) {
       ambGrad.addColorStop(0, 'rgba(249, 115, 22, 0.08)');
       ambGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
@@ -528,32 +416,45 @@ class Godot2DGraphicsEngine {
       ambGrad.addColorStop(0, 'rgba(255, 244, 214, 0.05)');
       ambGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     }
-    ctx.fillStyle = ambGrad;
-    ctx.fillRect(camX, 34, w, h - 34);
+    octx.fillStyle = ambGrad;
+    octx.fillRect(0, 34, w, h - 34);
 
-    // Bottom Floor Ambient Glow / Heat Haze on Fire & Boss Stages
     if (stageNum === 3 || stageNum === 8 || stageNum === 9) {
-      const lavaGlow = ctx.createLinearGradient(0, h - 42, 0, h);
+      const lavaGlow = octx.createLinearGradient(0, h - 42, 0, h);
       lavaGlow.addColorStop(0, 'rgba(239, 68, 68, 0)');
       lavaGlow.addColorStop(1, 'rgba(249, 115, 22, 0.20)');
-      ctx.fillStyle = lavaGlow;
-      ctx.fillRect(camX, h - 42, w, 42);
+      octx.fillStyle = lavaGlow;
+      octx.fillRect(0, h - 42, w, 42);
     }
 
-    ctx.restore();
+    this.backdropCache[stageNum] = off;
+    return off;
   }
 
-  // Draw 2.5D Soft Drop Shadows under Platforms & Ladders
+  drawBackdropAtmosphere(ctx) {
+    const g = this.game;
+    if (!g || this.mode === 2) return;
+
+    const stageNum = (g.levelData && g.levelData.stageNumber) ? g.levelData.stageNumber : (g.stageIndex + 1);
+    const camX = Math.round(g.cameraX || 0);
+    const cached = this.getCachedBackdrop(stageNum, g.canvas.width, g.canvas.height);
+    ctx.drawImage(cached, camX, 0);
+  }
+
+  // Draw Frustum-Culled 2.5D Soft Drop Shadows under Platforms & Ladders (Zero Gradients!)
   drawWorldShadows25D(ctx) {
     const g = this.game;
     if (!g || !g.levelData || this.mode === 2) return;
 
-    ctx.save();
+    const camX = g.cameraX || 0;
+    const viewL = camX - 24;
+    const viewR = camX + 264;
 
-    // 1. Ladder wall drop shadows (offset +2px right, +2px down)
+    // 1. Ladder wall drop shadows
     if (g.levelData.ladders) {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
       for (const l of g.levelData.ladders) {
+        if (l.x < viewL || l.x > viewR) continue;
         const y1 = l.y1 + 4;
         const y2 = l.y2 + 14;
         ctx.fillRect(l.x + 3, y1 + 2, 2, y2 - y1);
@@ -561,67 +462,75 @@ class Godot2DGraphicsEngine {
       }
     }
 
-    // 2. Platform 2.5D Underglow & Projected Wall Shadow
+    // 2. Fast 2-strip Platform Underglow Shadow (zero createLinearGradient calls)
     if (g.levelData.floors) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
       for (const f of g.levelData.floors) {
-        if (f.type === 'diagonal') continue;
-        const x = f.x1;
-        const w = f.x2 - f.x1;
+        if (f.type === 'diagonal' || f.x2 < viewL || f.x1 > viewR) continue;
+        const x = Math.max(f.x1, viewL);
+        const w = Math.min(f.x2, viewR) - x;
         const y = (f.currentY !== undefined ? f.currentY : f.y) + 14;
-
-        const shadGrad = ctx.createLinearGradient(0, y + 7, 0, y + 14);
-        shadGrad.addColorStop(0, 'rgba(0, 0, 0, 0.62)');
-        shadGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0.25)');
-        shadGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
-        ctx.fillStyle = shadGrad;
-        ctx.fillRect(x + 1, y + 7, w, 7);
+        ctx.fillRect(x + 1, y + 7, w, 3);
+      }
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.20)';
+      for (const f of g.levelData.floors) {
+        if (f.type === 'diagonal' || f.x2 < viewL || f.x1 > viewR) continue;
+        const x = Math.max(f.x1, viewL);
+        const w = Math.min(f.x2, viewR) - x;
+        const y = (f.currentY !== undefined ? f.currentY : f.y) + 14;
+        ctx.fillRect(x + 1, y + 10, w, 3);
       }
     }
-
-    ctx.restore();
   }
 
-  // Draw 2.5D Specular Rim & Bevel on Platforms
+  // Draw Frustum-Culled 2.5D Specular Rim & Bevel on Platforms
   drawPlatformSpecular25D(ctx) {
     const g = this.game;
     if (!g || !g.levelData || !g.levelData.floors || this.mode === 2) return;
 
-    ctx.save();
+    const camX = g.cameraX || 0;
+    const viewL = camX - 24;
+    const viewR = camX + 264;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
     for (const f of g.levelData.floors) {
-      if (f.type === 'diagonal') continue;
-      const x = f.x1;
-      const w = f.x2 - f.x1;
+      if (f.type === 'diagonal' || f.x2 < viewL || f.x1 > viewR) continue;
+      const x = Math.max(f.x1, viewL);
+      const w = Math.min(f.x2, viewR) - x;
       const y = (f.currentY !== undefined ? f.currentY : f.y) + 14;
-
-      // Top 2.5D bevel specular highlight
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.24)';
       ctx.fillRect(x, y, w, 1);
+    }
 
-      // Bottom ambient occlusion crease
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.40)';
+    for (const f of g.levelData.floors) {
+      if (f.type === 'diagonal' || f.x2 < viewL || f.x1 > viewR) continue;
+      const x = Math.max(f.x1, viewL);
+      const w = Math.min(f.x2, viewR) - x;
+      const y = (f.currentY !== undefined ? f.currentY : f.y) + 14;
       ctx.fillRect(x, y + 7, w, 1);
     }
-    ctx.restore();
   }
 
-  // Draw 2.5D Shadows & Gloss on Burgers + Spawn Hot Patty Steam
+  // Draw Frustum-Culled 2.5D Shadows & Gloss on Burgers + Spawn Hot Patty Steam
   drawBurgers25DEffects(ctx) {
     const g = this.game;
     if (!g || !g.burgers || this.mode === 2) return;
 
-    ctx.save();
+    const camX = g.cameraX || 0;
+    const viewL = camX - 40;
+    const viewR = camX + 264;
+
     for (const b of g.burgers) {
+      if (b.x < viewL || b.x > viewR) continue;
       const bx = b.x;
       const by = b.y + 6;
 
-      // Soft shadow beneath each burger segment onto the platform surface
-      ctx.fillStyle = b.falling ? 'rgba(0, 0, 0, 0.28)' : 'rgba(0, 0, 0, 0.48)';
+      ctx.fillStyle = b.falling ? 'rgba(0, 0, 0, 0.28)' : 'rgba(0, 0, 0, 0.46)';
       for (let i = 0; i < 4; i++) {
         const dropOffset = b.falling ? 0 : b.segments[i].dropY;
         ctx.fillRect(bx + i * 8 + 1, by + 7 + dropOffset, 7, 2);
       }
 
-      // Top glossy rim highlight on bun_top, cheese, tomato
       if (b.type === 'bun_top' || b.type === 'cheese' || b.type === 'tomato') {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.20)';
         for (let i = 0; i < 4; i++) {
@@ -630,60 +539,47 @@ class Godot2DGraphicsEngine {
         }
       }
 
-      // Emit subtle rising culinary steam from hot meat patties!
-      if (b.type === 'patty' && Math.random() < 0.035) {
+      if (b.type === 'patty' && Math.random() < 0.025) {
         this.spawnSteamWisp(bx + 6 + Math.random() * 20, by + 2);
       }
     }
-    ctx.restore();
   }
 
-  // Draw Contact Ground Shadows under Chef Pepe, Enemies & Bonus Items
+  // Draw Fast Pixel-Crisp Contact Ground Shadows under Chef Pepe, Enemies & Bonus Items
   drawEntityShadows25D(ctx) {
     const g = this.game;
     if (!g || !g.levelData || this.mode === 2) return;
 
-    ctx.save();
-
-    const drawShadowEllipse = (cx, footY, baseRadiusX, alpha) => {
-      ctx.fillStyle = `rgba(0, 0, 0, ${alpha.toFixed(2)})`;
-      ctx.beginPath();
-      ctx.ellipse(cx, footY, baseRadiusX, 2.0, 0, 0, Math.PI * 2);
-      ctx.fill();
-    };
+    const camX = g.cameraX || 0;
+    const viewL = camX - 24;
+    const viewR = camX + 264;
 
     if (g.player && !g.player.isDead) {
-      const px = g.player.x + 8;
-      const py = g.player.y + 15;
-      const shadowScale = g.player.isJumping ? 0.65 : 1.0;
-      const shadowAlpha = g.player.isJumping ? 0.25 : 0.50;
-      drawShadowEllipse(px, py, 6.2 * shadowScale, shadowAlpha);
+      const px = Math.round(g.player.x + 8);
+      const py = Math.round(g.player.y + 14);
+      const rx = g.player.isJumping ? 4 : 6;
+      ctx.fillStyle = g.player.isJumping ? 'rgba(0, 0, 0, 0.24)' : 'rgba(0, 0, 0, 0.46)';
+      ctx.fillRect(px - rx, py, rx * 2, 2);
     }
 
     if (g.enemies) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
       for (const e of g.enemies) {
-        if (e.state === 'spawning' || e.isClimbing) continue;
-        drawShadowEllipse(e.x + 8, e.y + 15, 5.8, 0.42);
+        if (e.state === 'spawning' || e.isClimbing || e.x < viewL || e.x > viewR) continue;
+        ctx.fillRect(Math.round(e.x + 3), Math.round(e.y + 14), 10, 2);
       }
     }
 
     if (g.bonusItems) {
-      const pulse = 0.5 + Math.sin(performance.now() * 0.008) * 0.3;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.44)';
       for (const item of g.bonusItems) {
-        drawShadowEllipse(item.x + 8, item.y + 15, 5.5, 0.45);
-        ctx.strokeStyle = `rgba(252, 180, 0, ${(0.35 * pulse).toFixed(2)})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(item.x + 8, item.y + 8, 9 + pulse * 2, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.fillRect(Math.round(item.x + 3), Math.round(item.y + 14), 10, 2);
       }
     }
-
-    ctx.restore();
   }
 
   // ==========================================================
-  // GPUPARTICLES2D SYSTEM (STEAM, EMBERS, SPARKLES, SHOCKWAVES)
+  // GPUPARTICLES2D SYSTEM (BATCHED RECT PARTICLES FOR 60 FPS)
   // ==========================================================
   initAmbientParticles() {
     this.particles = [];
@@ -691,22 +587,24 @@ class Godot2DGraphicsEngine {
   }
 
   spawnSteamWisp(x, y) {
-    if (this.particles.length > 120) return;
+    if (this.particles.length > 55) return;
     this.particles.push({
       kind: 'steam',
       x,
       y,
       vx: (Math.random() - 0.5) * 0.22,
       vy: -0.32 - Math.random() * 0.22,
-      size: 1.4 + Math.random() * 1.1,
+      size: 2,
+      color: '#f8fafc',
       alpha: 0.22,
-      life: 32 + Math.random() * 16,
-      maxLife: 48,
+      life: 28 + Math.random() * 12,
+      maxLife: 40,
       phase: Math.random() * Math.PI * 2
     });
   }
 
   spawnShockwave(x, y, color = '#38bdf8', maxRadius = 26) {
+    if (this.shockwaves.length > 6) return;
     this.shockwaves.push({
       x,
       y,
@@ -717,21 +615,22 @@ class Godot2DGraphicsEngine {
     });
   }
 
-  spawnGlowingBurst(x, y, color = '#fef08a', count = 12) {
+  spawnGlowingBurst(x, y, color = '#fef08a', count = 8) {
+    if (this.particles.length > 65) return;
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
-      const speed = 0.8 + Math.random() * 2.2;
+      const speed = 0.8 + Math.random() * 2.0;
       this.particles.push({
         kind: 'spark',
         x,
         y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed - 0.4,
-        size: 1.5 + Math.random() * 1.4,
+        size: 2,
         color,
-        alpha: 1.0,
-        life: 18 + Math.random() * 14,
-        maxLife: 32
+        alpha: 0.95,
+        life: 16 + Math.random() * 10,
+        maxLife: 26
       });
     }
   }
@@ -744,8 +643,8 @@ class Godot2DGraphicsEngine {
     const stageNum = (g.levelData && g.levelData.stageNumber) ? g.levelData.stageNumber : (g.stageIndex + 1);
     const camX = g.cameraX || 0;
 
-    // 1. Spawn ambient stage particles (Embers, Snowflakes, Neon Motes, Golden Dust)
-    if (this.ambientTimer % 6 === 0 && this.particles.length < 110) {
+    // 1. Spawn ambient stage particles (capped at 50 for zero CPU overhead)
+    if (this.ambientTimer % 10 === 0 && this.particles.length < 48) {
       const spawnX = camX + Math.random() * 240;
       if (stageNum === 3 || stageNum === 8 || stageNum === 9) {
         this.particles.push({
@@ -753,12 +652,12 @@ class Godot2DGraphicsEngine {
           x: spawnX,
           y: 318,
           vx: (Math.random() - 0.5) * 0.45,
-          vy: -0.6 - Math.random() * 0.7,
-          size: 1.2 + Math.random() * 1.5,
+          vy: -0.65 - Math.random() * 0.65,
+          size: 2,
           color: Math.random() < 0.5 ? '#f97316' : '#fef08a',
           alpha: 0.85,
-          life: 70 + Math.random() * 40,
-          maxLife: 110,
+          life: 60 + Math.random() * 30,
+          maxLife: 90,
           phase: Math.random() * Math.PI * 2
         });
       } else if (stageNum === 11) {
@@ -767,26 +666,26 @@ class Godot2DGraphicsEngine {
           x: spawnX,
           y: 34,
           vx: (Math.random() - 0.5) * 0.35,
-          vy: 0.45 + Math.random() * 0.4,
-          size: 1.3 + Math.random() * 1.2,
+          vy: 0.5 + Math.random() * 0.4,
+          size: 2,
           color: '#e0f2fe',
           alpha: 0.75,
-          life: 90 + Math.random() * 40,
-          maxLife: 130,
+          life: 75 + Math.random() * 30,
+          maxLife: 105,
           phase: Math.random() * Math.PI * 2
         });
-      } else if (this.ambientTimer % 18 === 0) {
+      } else if (this.ambientTimer % 20 === 0) {
         this.particles.push({
           kind: 'mote',
           x: spawnX,
           y: 50 + Math.random() * 240,
           vx: (Math.random() - 0.5) * 0.2,
           vy: -0.15 - Math.random() * 0.2,
-          size: 1.0 + Math.random() * 0.9,
+          size: 2,
           color: stageNum === 14 ? '#38bdf8' : '#fef08a',
           alpha: 0.40,
-          life: 60 + Math.random() * 30,
-          maxLife: 90,
+          life: 55 + Math.random() * 25,
+          maxLife: 80,
           phase: Math.random() * Math.PI * 2
         });
       }
@@ -794,30 +693,33 @@ class Godot2DGraphicsEngine {
 
     // 2. Spawn soft footstep dust when Chef Pepe runs
     if (g.player && !g.player.isDead && !g.player.isJumping && !g.player.isClimbing && g.player.vx !== 0) {
-      if (this.ambientTimer % 5 === 0) {
+      if (this.ambientTimer % 6 === 0 && this.particles.length < 55) {
         this.particles.push({
           kind: 'dust',
           x: g.player.x + 8 - Math.sign(g.player.vx) * 4,
-          y: g.player.y + 15,
-          vx: -Math.sign(g.player.vx) * (0.2 + Math.random() * 0.3),
-          vy: -0.15 - Math.random() * 0.2,
-          size: 1.5 + Math.random() * 1.0,
-          color: '#e2e8f0',
+          y: g.player.y + 14,
+          vx: -Math.sign(g.player.vx) * 0.25,
+          vy: -0.2,
+          size: 2,
+          color: '#cbd5e1',
           alpha: 0.38,
-          life: 14,
-          maxLife: 14
+          life: 12,
+          maxLife: 12
         });
       }
     }
 
-    // 3. Render & update Shockwave rings
+    if (this.shockwaves.length === 0 && this.particles.length === 0) return;
+
     ctx.save();
+
+    // 3. Render & update Shockwave rings
     for (let i = this.shockwaves.length - 1; i >= 0; i--) {
       const sw = this.shockwaves[i];
-      sw.radius += (sw.maxRadius - sw.radius) * 0.22 + 0.8;
-      sw.alpha *= 0.86;
+      sw.radius += (sw.maxRadius - sw.radius) * 0.24 + 0.8;
+      sw.alpha *= 0.84;
 
-      if (sw.alpha <= 0.04 || sw.radius >= sw.maxRadius) {
+      if (sw.alpha <= 0.05 || sw.radius >= sw.maxRadius) {
         this.shockwaves.splice(i, 1);
         continue;
       }
@@ -830,7 +732,7 @@ class Godot2DGraphicsEngine {
       ctx.stroke();
     }
 
-    // 4. Render & update GPU-style Particles with additive glow
+    // 4. Render & update Particles using fast fillRect (10x faster than arc())
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life--;
@@ -841,36 +743,15 @@ class Godot2DGraphicsEngine {
 
       const lifeRatio = p.life / p.maxLife;
       if (p.phase !== undefined) {
-        p.x += p.vx + Math.sin(this.ambientTimer * 0.06 + p.phase) * 0.18;
+        p.x += p.vx + Math.sin(this.ambientTimer * 0.06 + p.phase) * 0.16;
       } else {
         p.x += p.vx;
       }
       p.y += p.vy;
 
-      if (p.kind === 'steam') {
-        p.size += 0.025;
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = p.alpha * lifeRatio;
-        ctx.fillStyle = '#f8fafc';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (p.kind === 'dust') {
-        p.size += 0.035;
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = p.alpha * lifeRatio;
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = p.alpha * lifeRatio;
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      ctx.globalAlpha = p.alpha * lifeRatio;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
     }
 
     ctx.restore();
@@ -885,26 +766,21 @@ class Godot2DGraphicsEngine {
     const gl = this.gl;
     this.collectSceneLights();
 
-    gl.viewport(0, 0, this.glCanvas.width, this.glCanvas.height);
-    gl.useProgram(this.program);
-
-    gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.baseCanvas);
-
-    gl.uniform1i(this.uniforms.u_texture, 0);
-    gl.uniform2f(this.uniforms.u_texSize, this.baseCanvas.width, this.baseCanvas.height);
-    gl.uniform1f(this.uniforms.u_time, (performance.now() - this.startTime) * 0.001);
+    if (!this.textureAllocated) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.baseCanvas);
+      this.textureAllocated = true;
+    } else {
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.baseCanvas);
+    }
 
     gl.uniform1f(this.uniforms.u_hdFilter, this.mode === 0 ? 1.0 : 0.0);
-    gl.uniform1f(this.uniforms.u_normalStrength, 1.25);
-    gl.uniform1f(this.uniforms.u_bloomStrength, 0.85);
 
     const isPlaying = this.game && (this.game.state === 'PLAYING' || this.game.state === 'READY');
     if (isPlaying) {
-      gl.uniform3f(this.uniforms.u_ambientColor, 0.95, 0.95, 0.99);
+      gl.uniform3f(this.uniforms.u_ambientColor, 0.96, 0.96, 1.0);
     } else {
-      gl.uniform3f(this.uniforms.u_ambientColor, 0.98, 0.98, 1.0);
+      gl.uniform3f(this.uniforms.u_ambientColor, 0.99, 0.99, 1.0);
     }
 
     gl.uniform1i(this.uniforms.u_lightCount, this.activeLightCount);

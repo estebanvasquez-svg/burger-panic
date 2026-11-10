@@ -1,4 +1,4 @@
-const CACHE_NAME = 'burgerpanic-mobile-v93';
+const CACHE_NAME = 'burgerpanic-mobile-v94';
 const ASSETS = [
   './',
   './index.html',
@@ -57,8 +57,12 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((res) => {
-      return res || fetch(e.request).catch(() => caches.match('./index.html'));
-    })
+    fetch(e.request)
+      .then((res) => {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+        return res;
+      })
+      .catch(() => caches.match(e.request).then((res) => res || caches.match('./index.html')))
   );
 });
