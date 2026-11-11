@@ -694,24 +694,52 @@ class KiloburnerBoss {
       if (this.stateTimer <= 0) this.state = 'idle';
     } else if (this.state === 'flame') {
       this.stateTimer++;
+      if (this.stateTimer === 1 && player) {
+        this.facing = (player.x < this.x) ? -1 : 1;
+      }
       // Head tilts forward slightly during flame burst
       this.lungeX = this.facing * 8;
-      const flameW = 45;
-      const flameH = 24;
-      const flameX = (this.facing === -1)
-        ? (this.x + this.lungeX - this.logicalW / 2 - flameW + 12)
-        : (this.x + this.lungeX + this.logicalW / 2 - 12);
-      const flameY = this.y - this.logicalH * 0.65;
-
-      this.flameHitbox = { x: flameX, y: flameY, w: flameW, h: flameH };
 
       // Cadence requested: 3 flames separated by 2 seconds (120 frames at 60 FPS), then wait 5 seconds (300 frames)!
       // Shot 1 fires at frame 20
       // Shot 2 fires at frame 140 (20 + 120)
       // Shot 3 fires at frame 260 (140 + 120)
       const fireFrames = [20, 140, 260];
-      const isFiring = fireFrames.some(f => (this.stateTimer >= f && this.stateTimer < f + 25));
+      const relT = (this.stateTimer < 240) ? (this.stateTimer % 120) : (this.stateTimer - 240);
+
+      // Hitbox dynamically scales with the flame sprite progression (Poses 3 -> 4 -> 5 -> 6)
+      let flameW = 45;
+      let flameH = 24;
+      let isFiring = false;
+
+      if (relT >= 20 && relT < 28) {
+        // Pose 3: Initial Burst
+        isFiring = true;
+        flameW = 40;
+        flameH = 22;
+      } else if (relT >= 28 && relT < 40) {
+        // Pose 4: Flame Jet
+        isFiring = true;
+        flameW = 65;
+        flameH = 28;
+      } else if (relT >= 40 && relT < 76) {
+        // Pose 5 & Pulse: Full Blast Massive Flamethrower
+        isFiring = true;
+        flameW = 85;
+        flameH = 34;
+      } else if (relT >= 76 && relT < 90) {
+        // Pose 6: Dissipating Embers & Smoke
+        isFiring = true;
+        flameW = 45;
+        flameH = 22;
+      }
+
       this.flameActive = isFiring;
+      const flameX = (this.facing === -1)
+        ? (this.x + this.lungeX - this.logicalW / 2 - flameW + 12)
+        : (this.x + this.lungeX + this.logicalW / 2 - 12);
+      const flameY = this.y - this.logicalH * 0.65;
+      this.flameHitbox = { x: flameX, y: flameY, w: flameW, h: flameH };
 
       // Launch flying flame projectile at each designated interval
       if (fireFrames.includes(this.stateTimer)) {
@@ -1039,20 +1067,26 @@ class KiloburnerBoss {
     } else if (this.state === 'flame') {
       // 3-shot burst animation rhythm matching 120-frame (2s) intervals
       const relT = (this.stateTimer < 240) ? (this.stateTimer % 120) : (this.stateTimer - 240);
-      if (relT < 12) {
-        spriteName = 'flame_00'; // Preparing flame
+      if (relT < 10) {
+        spriteName = 'flame_00'; // Pose 1: Preparing flame / mouth open
       } else if (relT < 20) {
-        spriteName = 'flame_01'; // Ignition spark in mouth
-      } else if (relT < 35) {
-        spriteName = 'flame_02'; // Incandescent mouth launch burst
-      } else if (relT < 50) {
-        spriteName = 'flame_03'; // Flame discharge thrust
-      } else if (relT < 65) {
-        spriteName = 'flame_04'; // Exhaust dissipation
-      } else if (relT < 80) {
-        spriteName = 'flame_06'; // Mouth closing
+        spriteName = 'flame_01'; // Pose 2: Fiery furnace charging glow inside mouth
+      } else if (relT < 28) {
+        spriteName = 'flame_02'; // Pose 3: Incandescent mouth launch burst
+      } else if (relT < 40) {
+        spriteName = 'flame_03'; // Pose 4: Expanding flame jet thrust
+      } else if (relT < 52) {
+        spriteName = 'flame_04'; // Pose 5: Full blast flamethrower
+      } else if (relT < 64) {
+        spriteName = 'flame_05'; // Pose 5/Pulse: Flame turbulence pulse
+      } else if (relT < 76) {
+        spriteName = 'flame_04'; // Pose 5: Sustained blast
+      } else if (relT < 90) {
+        spriteName = 'flame_06'; // Pose 6: Exhaust smoke & dissipating embers
+      } else if (relT < 102) {
+        spriteName = 'flame_07'; // Pose 1: Mouth closing & recovery
       } else {
-        spriteName = 'hover_04'; // Hovering between burst shots
+        spriteName = 'hover_04'; // Hovering smoothly between burst shots
       }
     } else if (this.state === 'meatball') {
       spriteName = (this.stateTimer % 10 < 5) ? 'attack_meatball' : 'hover_08';
