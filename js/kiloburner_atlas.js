@@ -1,4 +1,8 @@
-/**\n * Kiloburner Giant Boss Sprite Atlas - Clean 100% Solid 60 FPS Edition\n * Eliminates all semi-transparency, bounding box jitter, and ghost dissolves\n */\nwindow.KILOBURNER_ATLAS_DATA = {
+/**
+ * Kiloburner Giant Boss Sprite Atlas - Clean 100% Solid 60 FPS Edition
+ * Eliminates all semi-transparency, bounding box jitter, and ghost dissolves
+ */
+window.KILOBURNER_ATLAS_DATA = {
   "attack_claw": {
     "x": 4,
     "y": 4,
@@ -383,4 +387,4 @@
     "w": 320,
     "h": 180
   }
-};\n
+};
