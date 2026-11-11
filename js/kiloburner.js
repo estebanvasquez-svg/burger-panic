@@ -364,6 +364,118 @@ class MeatballProjectile {
 }
 
 /**
+ * Flying Flame Projectile launched from Kiloburner Boss mouth
+ * Formed from high-fidelity animated sprite extracted and cleaned from the boss's flame artwork.
+ */
+class BossFlameProjectile {
+  constructor(x, y, targetX, targetY, facing = -1) {
+    this.x = x;
+    this.y = y;
+    this.facing = facing; // -1 = moving left toward player, 1 = moving right
+
+    // Targeted trajectory towards Chef Pepe's position at moment of launch
+    const dy = (targetY !== undefined) ? (targetY - y) : 0;
+    const speed = 3.6;
+    this.vx = facing * speed;
+    // Clamped vertical drift so Pepe can dodge by jumping, ducking, or climbing
+    this.vy = Math.max(-1.1, Math.min(1.1, dy / 55));
+
+    this.life = 180;
+    this.maxLife = 180;
+    this.bounces = 0;
+    this.maxBounces = 999; // Projectile flies through the air; no bouncing
+    this.animTimer = 0;
+    this.scale = 0.52;
+    this.width = Math.round(97 * this.scale);  // ~50px
+    this.height = Math.round(49 * this.scale); // ~25px
+
+    // Fair dodgeable hitbox centered near the leading incandescent head
+    this.hitboxW = 20;
+    this.hitboxH = 14;
+
+    BossFlameProjectile.initAssets();
+  }
+
+  static initAssets() {
+    if (BossFlameProjectile.framesLoaded) return;
+    BossFlameProjectile.frames = [];
+    for (let i = 0; i < 4; i++) {
+      const img = new Image();
+      img.src = `assets/boss_flame/frame_${i}.png`;
+      BossFlameProjectile.frames.push(img);
+    }
+    BossFlameProjectile.framesLoaded = true;
+  }
+
+  update(floors) {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life--;
+    this.animTimer++;
+  }
+
+  checkPlayerHit(player) {
+    if (!player || player.isDead || player.invulnerableTimer > 0) return false;
+    // Core hitbox is positioned near the leading head
+    const headX = (this.facing === -1) ? (this.x - this.width * 0.20) : (this.x + this.width * 0.20);
+    const headY = this.y;
+    const px = player.x + 8;
+    const py = player.y + 8;
+    const hitDistX = Math.abs(headX - px);
+    const hitDistY = Math.abs(headY - py);
+    return (hitDistX < (this.hitboxW / 2 + 6) && hitDistY < (this.hitboxH / 2 + 6));
+  }
+
+  draw(ctx) {
+    if (this.life <= 0) return;
+    // 4-frame animation cycle at 60 FPS (~6 frames per frame)
+    const frameIdx = Math.floor(this.animTimer / 6) % 4;
+    const img = (BossFlameProjectile.frames && BossFlameProjectile.frames.length > 0)
+      ? BossFlameProjectile.frames[frameIdx]
+      : null;
+
+    ctx.save();
+    ctx.translate(Math.round(this.x), Math.round(this.y));
+
+    // Slight angle tilt following trajectory vector
+    const angle = Math.atan2(this.vy, Math.abs(this.vx)) * (this.facing === -1 ? 1 : -1);
+    ctx.rotate(angle);
+
+    // Orientation: frame_*.png has incandescent head on LEFT (x=0) and fiery tail on RIGHT.
+    // When moving left (facing === -1), head is already leading on the left.
+    // When moving right (facing === 1), flip horizontally so head leads on right.
+    if (this.facing === 1) {
+      ctx.scale(-1, 1);
+    }
+
+    const drawW = this.width;
+    const drawH = this.height;
+    const drawX = -Math.round(drawW * 0.40);
+    const drawY = -Math.round(drawH * 0.50);
+
+    // Subtle thermal bloom / heat distortion aura around the incandescent head
+    ctx.save();
+    ctx.globalAlpha = 0.20;
+    const rad = Math.round(drawW * 0.45);
+    const grad = ctx.createRadialGradient(drawX + drawW * 0.25, drawY + drawH * 0.5, 2, drawX + drawW * 0.25, drawY + drawH * 0.5, rad);
+    grad.addColorStop(0, '#fef08a');
+    grad.addColorStop(0.5, '#ea580c');
+    grad.addColorStop(1, 'rgba(234, 88, 12, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(drawX + drawW * 0.25, drawY + drawH * 0.5, rad, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, drawX, drawY, drawW, drawH);
+    }
+
+    ctx.restore();
+  }
+}
+
+/**
  * Kiloburner - Giant Boss Class
  */
 class KiloburnerBoss {
@@ -409,10 +521,10 @@ class KiloburnerBoss {
     this.explosionList = [];
     this.deadFallVy = 0;
 
-    // Flame attack hit zone & particle stream
+    // Flame attack hit zone & projectile burst system
     this.flameActive = false;
     this.flameHitbox = { x: 0, y: 0, w: 0, h: 0 };
-    this.flameParticles = [];
+    BossFlameProjectile.initAssets();
 
     // Claw attack reach & kinetic effects
     this.clawActive = false;
@@ -580,43 +692,44 @@ class KiloburnerBoss {
       if (this.stateTimer <= 0) this.state = 'idle';
     } else if (this.state === 'flame') {
       this.stateTimer++;
-      // Head tilts forward slightly during flame
+      // Head tilts forward slightly during flame burst
       this.lungeX = this.facing * 8;
-      const flameW = 85;
-      const flameH = 30;
+      const flameW = 45;
+      const flameH = 24;
       const flameX = (this.facing === -1)
         ? (this.x + this.lungeX - this.logicalW / 2 - flameW + 12)
         : (this.x + this.lungeX + this.logicalW / 2 - 12);
       const flameY = this.y - this.logicalH * 0.65;
 
       this.flameHitbox = { x: flameX, y: flameY, w: flameW, h: flameH };
-      this.flameActive = (this.stateTimer >= 15 && this.stateTimer <= 55);
 
-      if (this.flameActive) {
-        if (this.stateTimer === 15 && window.soundManager && window.soundManager.playFlame) {
-          window.soundManager.playFlame();
+      // Cadence requested: 3 flames separated by 2 seconds (120 frames at 60 FPS), then wait 5 seconds (300 frames)!
+      // Shot 1 fires at frame 20
+      // Shot 2 fires at frame 140 (20 + 120)
+      // Shot 3 fires at frame 260 (140 + 120)
+      const fireFrames = [20, 140, 260];
+      const isFiring = fireFrames.some(f => (this.stateTimer >= f && this.stateTimer < f + 25));
+      this.flameActive = isFiring;
+
+      // Launch flying flame projectile at each designated interval
+      if (fireFrames.includes(this.stateTimer)) {
+        if (spawnProjectileCallback) {
+          const nozzleX = this.x + this.lungeX + (this.facing * (this.logicalW * 0.40));
+          const nozzleY = this.y - (this.logicalH * 0.62);
+          const targetX = player ? player.x : (this.x + this.facing * 200);
+          const targetY = player ? (player.y - 6) : this.y;
+          spawnProjectileCallback(new BossFlameProjectile(nozzleX, nozzleY, targetX, targetY, this.facing));
         }
-        // Spawn active firestorm particles
-        const nozzleX = this.x + this.lungeX + (this.facing * (this.logicalW * 0.40));
-        const nozzleY = this.y - (this.logicalH * 0.62);
-        for (let p = 0; p < 4; p++) {
-          this.flameParticles.push({
-            x: nozzleX,
-            y: nozzleY + (Math.random() - 0.5) * 6,
-            vx: this.facing * (4.5 + Math.random() * 2.8),
-            vy: (Math.random() - 0.5) * 1.8,
-            life: 14 + Math.random() * 8,
-            maxLife: 22,
-            size: 3 + Math.random() * 3,
-            maxSize: 14 + Math.random() * 6,
-            color: Math.random() < 0.4 ? '#ffffff' : (Math.random() < 0.75 ? '#f59e0b' : '#ef4444')
-          });
+        if (window.soundManager && window.soundManager.playFlame) {
+          window.soundManager.playFlame();
         }
       }
 
-      if (this.stateTimer > 65) {
+      // After 3rd flame launches and clears mouth at frame 280:
+      // Transition to idle and wait 5.0 seconds (300 frames at 60 FPS) before next attack!
+      if (this.stateTimer >= 280) {
         this.state = 'idle';
-        this.attackCooldown = 75 + Math.random() * 45;
+        this.attackCooldown = 300; // Exactly 5 seconds cooldown!
       }
     } else if (this.state === 'meatball') {
       this.stateTimer++;
@@ -724,14 +837,6 @@ class KiloburnerBoss {
       p.y += p.vy;
       p.life--;
       if (p.life <= 0) this.thrusterParticles.splice(i, 1);
-    }
-    for (let i = this.flameParticles.length - 1; i >= 0; i--) {
-      const p = this.flameParticles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.size = Math.min(p.maxSize, p.size + 0.6);
-      p.life--;
-      if (p.life <= 0) this.flameParticles.splice(i, 1);
     }
     for (let i = this.clawSlashParticles.length - 1; i >= 0; i--) {
       const p = this.clawSlashParticles[i];
@@ -892,9 +997,23 @@ class KiloburnerBoss {
       const clawIdx = Math.min(7, Math.floor(this.stateTimer / 5.5));
       spriteName = 'claw_' + String(clawIdx).padStart(2, '0');
     } else if (this.state === 'flame') {
-      // 8-frame ultra-fluid flame stream cycle (65 frames total, ~8 frames per in-between)
-      const flameIdx = Math.min(7, Math.floor(this.stateTimer / 8));
-      spriteName = 'flame_' + String(flameIdx).padStart(2, '0');
+      // 3-shot burst animation rhythm matching 120-frame (2s) intervals
+      const relT = (this.stateTimer < 240) ? (this.stateTimer % 120) : (this.stateTimer - 240);
+      if (relT < 12) {
+        spriteName = 'flame_00'; // Preparing flame
+      } else if (relT < 20) {
+        spriteName = 'flame_01'; // Ignition spark in mouth
+      } else if (relT < 35) {
+        spriteName = 'flame_02'; // Incandescent mouth launch burst
+      } else if (relT < 50) {
+        spriteName = 'flame_03'; // Flame discharge thrust
+      } else if (relT < 65) {
+        spriteName = 'flame_04'; // Exhaust dissipation
+      } else if (relT < 80) {
+        spriteName = 'flame_06'; // Mouth closing
+      } else {
+        spriteName = 'hover_04'; // Hovering between burst shots
+      }
     } else if (this.state === 'meatball') {
       spriteName = (this.stateTimer % 10 < 5) ? 'attack_meatball' : 'hover_08';
     } else if (this.state === 'lean') {
@@ -1180,20 +1299,6 @@ class KiloburnerBoss {
 
     ctx.restore(); // restore boss body transform
 
-    // 6. Draw Active Real-Time Flamethrower Firestorm Particles
-    if (this.flameParticles && this.flameParticles.length > 0) {
-      for (const fp of this.flameParticles) {
-        const alpha = Math.max(0, fp.life / fp.maxLife);
-        ctx.save();
-        ctx.globalAlpha = alpha * 0.88;
-        ctx.fillStyle = fp.color;
-        ctx.beginPath();
-        ctx.arc(fp.x, fp.y, fp.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-
     // 7. Draw Hydraulic Claw Slashing Arc Blades
     if (this.clawSlashParticles && this.clawSlashParticles.length > 0) {
       for (const cp of this.clawSlashParticles) {
@@ -1314,4 +1419,5 @@ window.CryoProjectile = CryoProjectile;
 window.MeatballProjectile = MeatballProjectile;
 window.FlameProjectile = FlameProjectile;
 window.BlowtorchPickup = BlowtorchPickup;
+window.BossFlameProjectile = BossFlameProjectile;
 

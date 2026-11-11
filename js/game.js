@@ -1073,8 +1073,14 @@ class BurgerPanicGame {
           bp.update(this.levelData.floors);
 
           if (!this.player.isDead && this.player.invulnerableTimer === 0) {
-            const dist = Math.hypot((bp.x) - (this.player.x + 8), (bp.y) - (this.player.y + 8));
-            if (dist < 12) {
+            let hit = false;
+            if (bp.checkPlayerHit) {
+              hit = bp.checkPlayerHit(this.player);
+            } else {
+              const dist = Math.hypot((bp.x) - (this.player.x + 8), (bp.y) - (this.player.y + 8));
+              hit = (dist < 12);
+            }
+            if (hit) {
               this.player.die();
               this.state = 'DYING';
               this.stateTimer = 90;
@@ -1082,7 +1088,7 @@ class BurgerPanicGame {
             }
           }
 
-          if (bp.life <= 0 || bp.bounces > bp.maxBounces || bp.y > 320) {
+          if (bp.life <= 0 || (bp.bounces > bp.maxBounces) || bp.y > 330 || bp.x < -100 || bp.x > (this.levelData.width || 320) + 100) {
             this.bossProjectiles.splice(i, 1);
           }
         }
