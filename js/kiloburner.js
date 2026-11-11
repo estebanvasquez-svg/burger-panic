@@ -488,9 +488,9 @@ class KiloburnerBoss {
     this.baseY = 215; // Vertical tracking base elevation
     this.y = this.baseY;
     this.vy = 0;
-    this.maxVerticalSpeed = 1.8; // Menacing, responsive cyber-thruster tracking speed
-    this.minBaseY = 105; // Ceiling gantry clearance (when player is on upper rails)
-    this.maxBaseY = 276; // Ground floor clearance (hovering just above floor grates)
+    this.maxVerticalSpeed = 2.4; // Menacing, responsive cyber-thruster tracking speed
+    this.minBaseY = 80;  // Ceiling gantry clearance (when player is on upper rails)
+    this.maxBaseY = 314; // Full ground floor descent (boss lowers completely to player height)
     this.lungeX = 0;     // Horizontal attack thrust
 
     // Scale ratio from original ~240px sprite down to game size (~96x68)
@@ -643,12 +643,12 @@ class KiloburnerBoss {
     // Follows Chef Pepe when climbing ladders or dropping floors!
     if (player && !this.isDead) {
       // Calculate target vertical position based on player's feet elevation (52, 120, 200, 288)
-      // Muzzle / eye aligns with Chef Pepe's torso
-      const targetBaseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, player.y + 48));
+      // Lowers completely down to ground floor (y = 288) so boss torso & claws align with Chef Pepe!
+      const targetBaseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, player.y + 42));
       const dy = targetBaseY - this.baseY;
 
       // Heavyweight responsive acceleration
-      const accel = 0.055;
+      const accel = 0.08;
       this.vy = Math.max(-this.maxVerticalSpeed, Math.min(this.maxVerticalSpeed, this.vy + dy * accel));
       this.vy *= 0.92; // Damping
       this.baseY += this.vy;
@@ -663,7 +663,7 @@ class KiloburnerBoss {
     // 3. Horizontal Viewport Anchoring (Follows auto-scrolling camera)
     const bossHalfW = Math.round(this.logicalW * 0.55);
     this.maxX = cameraX + 240 - bossHalfW - 8;
-    this.minX = cameraX + 240 - bossHalfW - 40;
+    this.minX = cameraX + 240 - bossHalfW - 65;
 
     if (this.x < this.minX) {
       this.x = this.minX;
@@ -934,20 +934,22 @@ class KiloburnerBoss {
    * Check if Boss hits Player with body, flame, or claw
    */
   checkPlayerDamage(player) {
-    if (this.health <= 0 || !player || player.isDead || player.isInvulnerable) return false;
+    if (this.health <= 0 || !player || player.isDead || (player.invulnerableTimer && player.invulnerableTimer > 0)) return false;
 
     const pBox = {
-      x: player.x + 2,
+      x: player.x,
       y: player.y,
-      w: 12,
-      h: 16
+      w: player.width || 16,
+      h: player.height || 16
     };
 
-    // 1. Direct Body Contact
-    const bLeft = this.x - this.logicalW * 0.35;
-    const bRight = this.x + this.logicalW * 0.35;
-    const bTop = this.y - this.logicalH * 0.85;
-    const bBottom = this.y;
+    const centerX = this.x + (this.lungeX || 0);
+
+    // 1. Direct Body Contact (Colossal mechanical furnace hull, chest core, claws & thrusters)
+    const bLeft = centerX - this.logicalW * 0.42;
+    const bRight = centerX + this.logicalW * 0.42;
+    const bTop = this.y - this.logicalH;
+    const bBottom = this.y + 8;
 
     if (pBox.x + pBox.w >= bLeft && pBox.x <= bRight &&
         pBox.y + pBox.h >= bTop && pBox.y <= bBottom) {

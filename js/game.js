@@ -1096,6 +1096,7 @@ class BurgerPanicGame {
 
       // Check Boss body/flame/claw damage against player
       if (this.kiloburnerBoss.checkPlayerDamage(this.player)) {
+        this.screenShake = 16;
         this.player.die();
         this.state = 'DYING';
         this.stateTimer = 90;
