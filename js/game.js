@@ -158,11 +158,17 @@ class BurgerPanicGame {
       if (window.soundManager && window.soundManager.playArcadeClick) {
         window.soundManager.playArcadeClick();
       }
+      if (window.soundManager && window.soundManager.ctx && window.soundManager.ctx.state === 'running') {
+        window.soundManager.ctx.suspend().catch(() => {});
+      }
       this.updatePauseButtonUI(true);
     } else if (this.state === 'PAUSED') {
       this.state = 'PLAYING';
       if (window.soundManager && window.soundManager.playArcadeClick) {
         window.soundManager.playArcadeClick();
+      }
+      if (window.soundManager && window.soundManager.ctx && window.soundManager.ctx.state === 'suspended') {
+        window.soundManager.ctx.resume().catch(() => {});
       }
       this.updatePauseButtonUI(false);
     }
@@ -241,6 +247,7 @@ class BurgerPanicGame {
 
   openMap(stageToFocus = null) {
     if (this.state === 'DYING') return;
+    if (window.soundManager) window.soundManager.stopBGM();
     this.updatePauseButtonUI(false);
     this.previousState = this.state;
     this.state = 'MAP';
@@ -420,6 +427,7 @@ class BurgerPanicGame {
   }
 
   loadStage(index) {
+    if (window.soundManager) window.soundManager.stopBGM();
     this.updatePauseButtonUI(false);
     this.levelData = this.levelMap.getLevel(index);
     this.particles = [];
@@ -727,7 +735,8 @@ class BurgerPanicGame {
       case 'READY':
         if (this.stateTimer <= 0) {
           this.state = 'PLAYING';
-          window.soundManager.startBGM();
+          const currentStage = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
+          if (window.soundManager) window.soundManager.startBGM(currentStage);
         }
         break;
 
