@@ -498,8 +498,9 @@ class KiloburnerBoss {
     this.logicalW = 120;
     this.logicalH = 88;
 
-    this.maxHealth = 750; // Epic boss durability
-    this.health = 750;
+    // Colossal boss endurance & fortified durability
+    this.maxHealth = 2000; // Colossal 2000 HP fortress health
+    this.health = 2000;
     this.animTimer = 0;
     this.facing = -1; // -1 = looking left toward Chef Pepe
 
@@ -534,6 +535,7 @@ class KiloburnerBoss {
     // Jet Thrusters & Mechanical particle systems
     this.thrusterParticles = [];
     this.cableSparks = [];
+    this.armorSparks = [];
     this.corePulse = 0;
   }
 
@@ -845,6 +847,15 @@ class KiloburnerBoss {
       p.life--;
       if (p.life <= 0) this.clawSlashParticles.splice(i, 1);
     }
+    if (this.armorSparks) {
+      for (let i = this.armorSparks.length - 1; i >= 0; i--) {
+        const spk = this.armorSparks[i];
+        spk.x += spk.vx;
+        spk.y += spk.vy;
+        spk.life--;
+        if (spk.life <= 0) this.armorSparks.splice(i, 1);
+      }
+    }
   }
 
   /**
@@ -891,7 +902,7 @@ class KiloburnerBoss {
    * Check collision with a falling burger piece (massive crush damage!)
    */
   checkHitByBurgerPiece(piece) {
-    if (this.health <= 0 || this.isDead || !piece.falling) return false;
+    if (this.health <= 0 || this.isDead || !piece.falling) return 0;
 
     const left = this.x - this.logicalW * 0.45;
     const right = this.x + this.logicalW * 0.45;
@@ -901,33 +912,60 @@ class KiloburnerBoss {
     // Burger piece bounds
     if (piece.x + 24 >= left && piece.x <= right &&
         piece.y + 12 >= top && piece.y <= bottom) {
-      this.takeDamage(50, 'burger');
-      return true;
+      const dealt = this.takeDamage(50, 'burger');
+      return dealt || 35;
     }
-    return false;
+    return 0;
   }
 
   takeDamage(amount, source = 'cryo') {
-    if (this.health <= 0) return;
-    this.health = Math.max(0, this.health - amount);
+    if (this.health <= 0) return 0;
+
+    // Heavy Cyber-Armor Resistance (Blindaje de Titanio Térmico):
+    // 50% damage reduction on energy/flame projectiles (reinforced thermal plating)
+    // 30% reduction on falling burger crush impacts (shock absorption chassis)
+    let effectiveDamage = amount;
+    if (source === 'flame' || source === 'cryo') {
+      effectiveDamage = Math.max(3, Math.round(amount * 0.50));
+    } else if (source === 'burger') {
+      effectiveDamage = Math.max(25, Math.round(amount * 0.70));
+    }
+
+    this.health = Math.max(0, this.health - effectiveDamage);
     this.hitFlashTimer = 10;
+
+    // Spawn cyber-armor ricochet sparks (metal deflecting incoming impact)
+    if (!this.armorSparks) this.armorSparks = [];
+    for (let s = 0; s < 5; s++) {
+      this.armorSparks.push({
+        x: this.x + (Math.random() - 0.5) * 40,
+        y: this.y - 45 + (Math.random() - 0.5) * 35,
+        vx: (Math.random() - 0.5) * 3.5,
+        vy: -1.2 - Math.random() * 2.2,
+        life: 10,
+        maxLife: 10,
+        color: Math.random() < 0.5 ? '#38bdf8' : '#ffffff'
+      });
+    }
 
     if (this.health <= 0) {
       this.state = 'explode';
       this.stateTimer = 0;
-      return;
+      return effectiveDamage;
     }
 
-    // Flinch state
+    // Hyper-Armor & Poise: minor projectiles do not interrupt the boss during attacks!
     if (source === 'burger') {
       this.state = 'hit';
-      this.stateTimer = 22; // Longer stun
+      this.stateTimer = 20; // Heavy crush stuns boss briefly
     } else {
+      // Light flinch recoil ONLY if completely idle; maintains uninterrupted attack flow!
       if (this.state === 'idle') {
         this.state = 'recoil';
-        this.stateTimer = 10;
+        this.stateTimer = 6;
       }
     }
+    return effectiveDamage;
   }
 
   /**
@@ -1330,6 +1368,16 @@ class KiloburnerBoss {
       ctx.restore();
     }
 
+    // 8. Draw Armor Ricochet Sparks (Deflecting projectile fire)
+    if (this.armorSparks && this.armorSparks.length > 0) {
+      for (const spk of this.armorSparks) {
+        ctx.save();
+        ctx.fillStyle = spk.color;
+        ctx.fillRect(Math.round(spk.x), Math.round(spk.y), 2, 2);
+        ctx.restore();
+      }
+    }
+
     ctx.restore(); // restore main draw context
 
     // Draw active explosions during defeat
@@ -1360,21 +1408,21 @@ class KiloburnerBoss {
 
     ctx.save();
 
-    const barW = 108;
+    const barW = 124;
     const barH = 5;
-    const barX = Math.round((screenWidth - barW) / 2); // 66
+    const barX = Math.round((screenWidth - barW) / 2);
     const barY = 12;
 
     // 1. Sleek Compact Boss Header Label (y = 8)
-    ctx.font = 'bold 5.5px "Press Start 2P", monospace, sans-serif';
+    ctx.font = 'bold 5px "Press Start 2P", monospace, sans-serif';
     ctx.textBaseline = 'middle';
 
-    // Left label: BOSS: KILOBURNER (crisp 1px shadow, zero shadowBlur)
+    // Left label: BOSS: KILOBURNER [BLINDADO] (crisp 1px shadow, zero shadowBlur)
     ctx.textAlign = 'left';
     ctx.fillStyle = '#000000';
-    ctx.fillText('KILOBURNER', barX + 1, 9);
+    ctx.fillText('KILOBURNER [ARMOR]', barX + 1, 9);
     ctx.fillStyle = '#ef4444';
-    ctx.fillText('KILOBURNER', barX, 8);
+    ctx.fillText('KILOBURNER [ARMOR]', barX, 8);
 
     // Right label: Remaining HP
     ctx.textAlign = 'right';

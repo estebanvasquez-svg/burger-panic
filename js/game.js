@@ -1103,12 +1103,13 @@ class BurgerPanicGame {
         return;
       }
 
-      // Check burger crush damage on boss (-50 HP)
+      // Check burger crush damage on boss
       for (const b of this.burgers) {
-        if (this.kiloburnerBoss.checkHitByBurgerPiece(b)) {
+        const damageDealt = this.kiloburnerBoss.checkHitByBurgerPiece(b);
+        if (damageDealt > 0) {
           this.addScore(500, this.kiloburnerBoss.x, this.kiloburnerBoss.y - 20);
-          this.popups.push(new window.ScorePopup('¡APLASTADO! -50 HP', this.kiloburnerBoss.x - 25, this.kiloburnerBoss.y - 30));
-          this.screenShake = 12;
+          this.popups.push(new window.ScorePopup(`¡APLASTADO! -${damageDealt} HP`, this.kiloburnerBoss.x - 25, this.kiloburnerBoss.y - 30));
+          this.screenShake = 14;
           if (window.soundManager && window.soundManager.playDrop) {
             window.soundManager.playDrop();
           }

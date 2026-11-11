@@ -174,7 +174,7 @@ class LevelMap {
         isBossStage: true,
         boss: {
           type: 'kiloburner',
-          health: 750,
+          health: 2000,
           name: 'KILOBURNER'
         },
         exclusivePower: 'SOPLETE',
