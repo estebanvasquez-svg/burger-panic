@@ -372,18 +372,21 @@ class KiloburnerBoss {
     this.arenaHeight = arenaHeight;
 
     // Anchor position (center-bottom reference)
-    // Default to right side when in wide scrolling arena (e.g. 1555 in 1600px stage)
     this.x = (initialX !== null) ? initialX : (arenaWidth > 320 ? arenaWidth - 45 : 275);
-    this.baseY = 205; // Hover level aligning with combat platforms (y = 200)
+    this.baseY = 215; // Vertical tracking base elevation
     this.y = this.baseY;
+    this.vy = 0;
+    this.maxVerticalSpeed = 1.8; // Menacing, responsive cyber-thruster tracking speed
+    this.minBaseY = 105; // Ceiling gantry clearance (when player is on upper rails)
+    this.maxBaseY = 276; // Ground floor clearance (hovering just above floor grates)
+    this.lungeX = 0;     // Horizontal attack thrust
 
     // Scale ratio from original ~240px sprite down to game size (~96x68)
     this.scale = 0.58; // Expanded formidable boss size
     this.logicalW = 120;
     this.logicalH = 88;
-    this.baseY = 215;
 
-    this.maxHealth = 750; // Increased stamina & epic boss durability
+    this.maxHealth = 750; // Epic boss durability
     this.health = 750;
     this.animTimer = 0;
     this.facing = -1; // -1 = looking left toward Chef Pepe
@@ -392,11 +395,11 @@ class KiloburnerBoss {
     this.state = 'idle';
     this.stateTimer = 0;
     this.hitFlashTimer = 0;
-    this.attackCooldown = 100; // frames before first attack
+    this.attackCooldown = 90; // frames before first attack
 
-    // Floating motion
+    // Floating motion & horizontal hover
     this.floatAngle = 0;
-    this.hoverSpeedX = 0.30;
+    this.hoverSpeedX = 0.35;
     this.minX = 220;
     this.maxX = 315;
 
@@ -406,13 +409,20 @@ class KiloburnerBoss {
     this.explosionList = [];
     this.deadFallVy = 0;
 
-    // Flame attack hit zone
+    // Flame attack hit zone & particle stream
     this.flameActive = false;
     this.flameHitbox = { x: 0, y: 0, w: 0, h: 0 };
+    this.flameParticles = [];
 
-    // Claw attack reach
+    // Claw attack reach & kinetic effects
     this.clawActive = false;
     this.clawHitbox = { x: 0, y: 0, w: 0, h: 0 };
+    this.clawSlashParticles = [];
+
+    // Jet Thrusters & Mechanical particle systems
+    this.thrusterParticles = [];
+    this.cableSparks = [];
+    this.corePulse = 0;
   }
 
   update(player, gameFloors, spawnProjectileCallback, cameraX = 0) {
@@ -508,108 +518,40 @@ class KiloburnerBoss {
     }
 
     // ----------------------------------------------------
-    // ACTIVE COMBAT BEHAVIOR
+    // ACTIVE COMBAT BEHAVIOR & 2D PURSUIT
     // ----------------------------------------------------
 
-    // Determine facing direction toward Player
-    if (player && this.state === 'idle') {
+    // 1. Facing Direction toward Player
+    if (player && (this.state === 'idle' || this.state === 'meatball')) {
       const targetFacing = (player.x < this.x) ? -1 : 1;
       this.facing = targetFacing;
     }
 
-    // State machine updates
-    this.flameActive = false;
-    this.clawActive = false;
+    // 2. Vertical 2D Pursuit & Hydraulic Cables Suspension Physics
+    // Follows Chef Pepe when climbing ladders or dropping floors!
+    if (player && !this.isDead) {
+      // Calculate target vertical position based on player's feet elevation (52, 120, 200, 288)
+      // Muzzle / eye aligns with Chef Pepe's torso
+      const targetBaseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, player.y + 48));
+      const dy = targetBaseY - this.baseY;
 
-    if (this.state === 'hit') {
-      this.stateTimer--;
-      if (this.stateTimer <= 0) {
-        this.state = 'idle';
-      }
-      return;
+      // Heavyweight responsive acceleration
+      const accel = 0.055;
+      this.vy = Math.max(-this.maxVerticalSpeed, Math.min(this.maxVerticalSpeed, this.vy + dy * accel));
+      this.vy *= 0.92; // Damping
+      this.baseY += this.vy;
+      this.baseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, this.baseY));
     }
 
-    if (this.state === 'recoil') {
-      this.stateTimer--;
-      this.x -= this.facing * 0.8; // pushback
-      if (this.stateTimer <= 0) {
-        this.state = 'idle';
-      }
-      return;
-    }
+    // Organic hover bobbing
+    this.floatAngle += 0.055;
+    const hoverBob = Math.sin(this.floatAngle) * 6;
+    this.y = this.baseY + hoverBob;
 
-    if (this.state === 'flame') {
-      this.stateTimer++;
-      // The flame hitbox extends in front of Kiloburner
-      const flameW = 80;
-      const flameH = 26;
-      const flameX = (this.facing === -1)
-        ? (this.x - this.logicalW / 2 - flameW + 10)
-        : (this.x + this.logicalW / 2 - 10);
-      const flameY = this.y - this.logicalH * 0.65;
-
-      this.flameHitbox = { x: flameX, y: flameY, w: flameW, h: flameH };
-      this.flameActive = (this.stateTimer >= 15 && this.stateTimer <= 55);
-
-      if (this.stateTimer > 65) {
-        this.state = 'idle';
-        this.attackCooldown = 80 + Math.random() * 50;
-      }
-      return;
-    }
-
-    if (this.state === 'meatball') {
-      this.stateTimer++;
-      // Fire meatballs at frame 15 and 28
-      if (this.stateTimer === 15 || this.stateTimer === 28) {
-        if (spawnProjectileCallback && player) {
-          const spawnX = this.x + (this.facing * (this.logicalW * 0.35));
-          const spawnY = this.y - (this.logicalH * 0.55);
-          const targetX = player.x + (Math.random() - 0.5) * 30;
-          const targetY = player.y;
-          spawnProjectileCallback(new MeatballProjectile(spawnX, spawnY, targetX, targetY));
-          if (window.soundManager && window.soundManager.playDrop) {
-            window.soundManager.playDrop();
-          }
-        }
-      }
-      if (this.stateTimer > 45) {
-        this.state = 'idle';
-        this.attackCooldown = 70 + Math.random() * 45;
-      }
-      return;
-    }
-
-    if (this.state === 'claw') {
-      this.stateTimer++;
-      const clawReach = 65;
-      const clawH = 24;
-      const clawX = (this.facing === -1)
-        ? (this.x - this.logicalW / 2 - clawReach)
-        : (this.x + this.logicalW / 2);
-      const clawY = this.y - this.logicalH * 0.5;
-
-      this.clawHitbox = { x: clawX, y: clawY, w: clawReach, h: clawH };
-      this.clawActive = (this.stateTimer >= 12 && this.stateTimer <= 35);
-
-      if (this.stateTimer > 45) {
-        this.state = 'idle';
-        this.attackCooldown = 80 + Math.random() * 50;
-      }
-      return;
-    }
-
-    // ----------------------------------------------------
-    // IDLE PATROL & ATTACK DECISION
-    // ----------------------------------------------------
-    this.floatAngle += 0.05;
-    this.y = this.baseY + Math.sin(this.floatAngle) * 16;
-
-    // Boss patrol anchored to the advancing viewport:
-    // Keeps Kiloburner 100% completely visible on screen (never cut in half by right screen boundary)
-    const bossHalfW = Math.round(this.logicalW * 0.55); // ~66px margin
-    this.maxX = cameraX + 240 - bossHalfW - 8;  // ~cameraX + 166 (8px safety margin from right edge)
-    this.minX = cameraX + 240 - bossHalfW - 38; // ~cameraX + 136 (smooth hover swing zone)
+    // 3. Horizontal Viewport Anchoring (Follows auto-scrolling camera)
+    const bossHalfW = Math.round(this.logicalW * 0.55);
+    this.maxX = cameraX + 240 - bossHalfW - 8;
+    this.minX = cameraX + 240 - bossHalfW - 40;
 
     if (this.x < this.minX) {
       this.x = this.minX;
@@ -620,31 +562,183 @@ class KiloburnerBoss {
     }
 
     // Horizontal patrol oscillation
-    this.x += this.hoverSpeedX;
+    if (this.state === 'idle') {
+      this.x += this.hoverSpeedX;
+    }
 
-    // Attack cooldown management
-    if (this.attackCooldown > 0) {
-      this.attackCooldown--;
-    } else {
-      // Pick attack based on distance and random strategy
-      const distToPlayer = player ? Math.hypot(player.x - this.x, player.y - this.y) : 999;
-      const verticalDiff = player ? Math.abs(player.y - this.y) : 999;
+    // 4. State Machine (Hit, Recoil, Flame, Meatball, Claw)
+    this.flameActive = false;
+    this.clawActive = false;
+    this.lungeX = 0;
 
-      if (distToPlayer < 90 && verticalDiff < 35) {
-        // Close range: Flame or Claw
-        this.state = Math.random() < 0.55 ? 'flame' : 'claw';
-      } else {
-        // Mid/Long range: Meatballs or Flame
-        const roll = Math.random();
-        if (roll < 0.45) {
-          this.state = 'meatball';
-        } else if (roll < 0.8) {
-          this.state = 'flame';
-        } else {
-          this.state = 'claw';
+    if (this.state === 'hit') {
+      this.stateTimer--;
+      if (this.stateTimer <= 0) this.state = 'idle';
+    } else if (this.state === 'recoil') {
+      this.stateTimer--;
+      this.x -= this.facing * 0.8;
+      if (this.stateTimer <= 0) this.state = 'idle';
+    } else if (this.state === 'flame') {
+      this.stateTimer++;
+      // Head tilts forward slightly during flame
+      this.lungeX = this.facing * 8;
+      const flameW = 85;
+      const flameH = 30;
+      const flameX = (this.facing === -1)
+        ? (this.x + this.lungeX - this.logicalW / 2 - flameW + 12)
+        : (this.x + this.lungeX + this.logicalW / 2 - 12);
+      const flameY = this.y - this.logicalH * 0.65;
+
+      this.flameHitbox = { x: flameX, y: flameY, w: flameW, h: flameH };
+      this.flameActive = (this.stateTimer >= 15 && this.stateTimer <= 55);
+
+      if (this.flameActive) {
+        if (this.stateTimer === 15 && window.soundManager && window.soundManager.playFlame) {
+          window.soundManager.playFlame();
+        }
+        // Spawn active firestorm particles
+        const nozzleX = this.x + this.lungeX + (this.facing * (this.logicalW * 0.40));
+        const nozzleY = this.y - (this.logicalH * 0.62);
+        for (let p = 0; p < 4; p++) {
+          this.flameParticles.push({
+            x: nozzleX,
+            y: nozzleY + (Math.random() - 0.5) * 6,
+            vx: this.facing * (4.5 + Math.random() * 2.8),
+            vy: (Math.random() - 0.5) * 1.8,
+            life: 14 + Math.random() * 8,
+            maxLife: 22,
+            size: 3 + Math.random() * 3,
+            maxSize: 14 + Math.random() * 6,
+            color: Math.random() < 0.4 ? '#ffffff' : (Math.random() < 0.75 ? '#f59e0b' : '#ef4444')
+          });
         }
       }
-      this.stateTimer = 0;
+
+      if (this.stateTimer > 65) {
+        this.state = 'idle';
+        this.attackCooldown = 75 + Math.random() * 45;
+      }
+    } else if (this.state === 'meatball') {
+      this.stateTimer++;
+      if (this.stateTimer === 15 || this.stateTimer === 28) {
+        if (spawnProjectileCallback && player) {
+          const spawnX = this.x + (this.facing * (this.logicalW * 0.35));
+          const spawnY = this.y - (this.logicalH * 0.55);
+          const targetX = player.x + (Math.random() - 0.5) * 25;
+          const targetY = player.y;
+          spawnProjectileCallback(new MeatballProjectile(spawnX, spawnY, targetX, targetY));
+          if (window.soundManager && window.soundManager.playDrop) {
+            window.soundManager.playDrop();
+          }
+        }
+      }
+      if (this.stateTimer > 45) {
+        this.state = 'idle';
+        this.attackCooldown = 65 + Math.random() * 40;
+      }
+    } else if (this.state === 'claw') {
+      this.stateTimer++;
+      // High-speed ferocious hydraulic lunge
+      if (this.stateTimer >= 10 && this.stateTimer <= 35) {
+        const progress = (this.stateTimer - 10) / 25;
+        this.lungeX = Math.sin(progress * Math.PI) * (this.facing * 22);
+      }
+      const clawReach = 70;
+      const clawH = 26;
+      const clawX = (this.facing === -1)
+        ? (this.x + this.lungeX - this.logicalW / 2 - clawReach)
+        : (this.x + this.lungeX + this.logicalW / 2);
+      const clawY = this.y - this.logicalH * 0.5;
+
+      this.clawHitbox = { x: clawX, y: clawY, w: clawReach, h: clawH };
+      this.clawActive = (this.stateTimer >= 12 && this.stateTimer <= 35);
+
+      if (this.clawActive && this.stateTimer % 3 === 0) {
+        // Hydraulic slash blur particles & steam
+        this.clawSlashParticles.push({
+          x: clawX + (this.facing === -1 ? 0 : clawReach),
+          y: clawY + Math.random() * clawH,
+          vx: -this.facing * (1.5 + Math.random() * 2),
+          vy: (Math.random() - 0.5) * 2,
+          life: 8,
+          maxLife: 8,
+          color: Math.random() < 0.5 ? '#38bdf8' : '#e2e8f0'
+        });
+      }
+
+      if (this.stateTimer > 45) {
+        this.state = 'idle';
+        this.attackCooldown = 75 + Math.random() * 45;
+      }
+    } else {
+      // Idle state: attack decision
+      if (this.attackCooldown > 0) {
+        this.attackCooldown--;
+      } else {
+        const distToPlayer = player ? Math.hypot(player.x - this.x, player.y - this.y) : 999;
+        const verticalDiff = player ? Math.abs(player.y - this.y) : 999;
+
+        if (distToPlayer < 95 && verticalDiff < 45) {
+          this.state = Math.random() < 0.55 ? 'flame' : 'claw';
+        } else {
+          const roll = Math.random();
+          if (roll < 0.45) {
+            this.state = 'meatball';
+          } else if (roll < 0.8) {
+            this.state = 'flame';
+          } else {
+            this.state = 'claw';
+          }
+        }
+        this.stateTimer = 0;
+      }
+    }
+
+    // 5. Update Thruster Plasma Jet Particles
+    if (this.state !== 'dead') {
+      const isAscending = this.vy < -0.15;
+      const thrusterOffsets = [-22, 22];
+      for (const offX of thrusterOffsets) {
+        const tX = this.x + this.lungeX + (this.facing === -1 ? -offX : offX);
+        const tY = this.y - 4;
+        const count = isAscending ? 3 : 1;
+        for (let k = 0; k < count; k++) {
+          this.thrusterParticles.push({
+            x: tX + (Math.random() - 0.5) * 6,
+            y: tY,
+            vx: (Math.random() - 0.5) * 0.8,
+            vy: (isAscending ? 3.2 : 1.8) + Math.random() * 1.6,
+            size: (isAscending ? 3.5 : 2.2) + Math.random() * 2,
+            life: 12 + Math.random() * 6,
+            maxLife: 18,
+            color: Math.random() < 0.45 ? '#38bdf8' : (Math.random() < 0.75 ? '#f97316' : '#ef4444')
+          });
+        }
+      }
+    }
+
+    // Particle cleanup loops
+    for (let i = this.thrusterParticles.length - 1; i >= 0; i--) {
+      const p = this.thrusterParticles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life--;
+      if (p.life <= 0) this.thrusterParticles.splice(i, 1);
+    }
+    for (let i = this.flameParticles.length - 1; i >= 0; i--) {
+      const p = this.flameParticles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.size = Math.min(p.maxSize, p.size + 0.6);
+      p.life--;
+      if (p.life <= 0) this.flameParticles.splice(i, 1);
+    }
+    for (let i = this.clawSlashParticles.length - 1; i >= 0; i--) {
+      const p = this.clawSlashParticles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life--;
+      if (p.life <= 0) this.clawSlashParticles.splice(i, 1);
     }
   }
 
@@ -821,12 +915,60 @@ class KiloburnerBoss {
     // Facing: Kiloburner's atlas sprite natively faces right.
     // If facing === -1 (looking left toward Chef), flip horizontally.
     const flip = (this.facing === -1);
-    const drawX = Math.round(this.x - renderW / 2);
+    const drawX = Math.round(this.x + this.lungeX - renderW / 2);
     const drawY = Math.round(this.y - renderH);
 
     ctx.save();
 
-    // 1. Draw Heavy Industrial Suspension Cables holding Boss from the Ceiling (ONLY cables support the boss)
+    // 0. Draw Underbody Plasma Jet Thrusters (Visual explanation of vertical flight)
+    if (this.state !== 'dead') {
+      const isAscending = (this.vy < -0.15);
+      const thrusterOffsets = [-22, 22];
+      for (const offX of thrusterOffsets) {
+        const tX = Math.round(this.x + this.lungeX + (flip ? -offX : offX));
+        const tY = Math.round(this.y - 4);
+
+        // Metallic thruster bracket / nozzle bell
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(tX - 4, tY - 3, 8, 4);
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(tX - 3, tY - 3, 6, 1);
+
+        // Pulsing jet flame cone
+        const flameLen = isAscending ? (24 + Math.random() * 8) : (14 + Math.random() * 5);
+        const flameW = isAscending ? 6 : 4;
+
+        // Outer orange/red flame cone
+        ctx.fillStyle = isAscending ? '#f97316' : '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(tX - flameW, tY);
+        ctx.lineTo(tX + flameW, tY);
+        ctx.lineTo(tX, tY + flameLen);
+        ctx.closePath();
+        ctx.fill();
+
+        // Inner incandescent cyan/white core
+        ctx.fillStyle = isAscending ? '#38bdf8' : '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(tX - flameW * 0.5, tY);
+        ctx.lineTo(tX + flameW * 0.5, tY);
+        ctx.lineTo(tX, tY + flameLen * 0.55);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Draw active thruster particles
+      for (const p of this.thrusterParticles) {
+        const alpha = Math.max(0, p.life / p.maxLife);
+        ctx.save();
+        ctx.globalAlpha = alpha * 0.85;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(p.size), Math.round(p.size));
+        ctx.restore();
+      }
+    }
+
+    // 1. Draw Heavy Industrial Suspension Cables holding Boss from the Ceiling
     if (this.state !== 'dead') {
       const bossTopY = Math.round(this.y - this.logicalH * 0.85);
       const isFlipped = flip;
@@ -835,8 +977,8 @@ class KiloburnerBoss {
       // 4 heavy power & coolant conduits plugged into cranial sockets across expanded cyber skull
       const cables = [
         {
-          anchorX: Math.round(this.x + (isFlipped ? 54 : -54) + sway * 0.6),
-          socketX: Math.round(this.x + (isFlipped ? 42 : -42)),
+          anchorX: Math.round(this.x + this.lungeX + (isFlipped ? 54 : -54) + sway * 0.6),
+          socketX: Math.round(this.x + this.lungeX + (isFlipped ? 42 : -42)),
           socketY: bossTopY + 12,
           curveOffset: (isFlipped ? 16 : -16) + sway,
           color: '#1e293b',
@@ -845,8 +987,8 @@ class KiloburnerBoss {
           pulseSpeed: 0.003
         },
         {
-          anchorX: Math.round(this.x + (isFlipped ? 28 : -28) + sway * 0.4),
-          socketX: Math.round(this.x + (isFlipped ? 22 : -22)),
+          anchorX: Math.round(this.x + this.lungeX + (isFlipped ? 28 : -28) + sway * 0.4),
+          socketX: Math.round(this.x + this.lungeX + (isFlipped ? 22 : -22)),
           socketY: bossTopY + 4,
           curveOffset: (isFlipped ? 8 : -8) + sway * 0.8,
           color: '#0f172a',
@@ -855,8 +997,8 @@ class KiloburnerBoss {
           pulseSpeed: 0.004
         },
         {
-          anchorX: Math.round(this.x + (isFlipped ? 6 : -6) + sway * 0.3),
-          socketX: Math.round(this.x + (isFlipped ? 6 : -6)),
+          anchorX: Math.round(this.x + this.lungeX + (isFlipped ? 6 : -6) + sway * 0.3),
+          socketX: Math.round(this.x + this.lungeX + (isFlipped ? 6 : -6)),
           socketY: bossTopY + 6,
           curveOffset: (isFlipped ? -8 : 8) + sway * 0.7,
           color: '#1e293b',
@@ -865,8 +1007,8 @@ class KiloburnerBoss {
           pulseSpeed: 0.005
         },
         {
-          anchorX: Math.round(this.x + (isFlipped ? -24 : 24) + sway * 0.5),
-          socketX: Math.round(this.x + (isFlipped ? -14 : 14)),
+          anchorX: Math.round(this.x + this.lungeX + (isFlipped ? -24 : 24) + sway * 0.5),
+          socketX: Math.round(this.x + this.lungeX + (isFlipped ? -14 : 14)),
           socketY: bossTopY + 18,
           curveOffset: (isFlipped ? -18 : 18) + sway * 1.1,
           color: '#0f172a',
@@ -877,14 +1019,16 @@ class KiloburnerBoss {
       ];
 
       for (const c of cables) {
-        // Ceiling anchor clamp box at top gantry (y = 0)
+        // Ceiling anchor clamp box at top gantry (y = 0) with sliding runner trolley
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(c.anchorX - 5, 0, 10, 8);
         ctx.fillStyle = '#334155';
-        ctx.fillRect(c.anchorX - 3, 0, 6, 8);
+        ctx.fillRect(c.anchorX - 4, 1, 8, 6);
+        ctx.fillStyle = '#eab308'; // Hazard warning strip
+        ctx.fillRect(c.anchorX - 3, 5, 6, 2);
+        // Trolley runner wheel
         ctx.fillStyle = '#64748b';
-        ctx.fillRect(c.anchorX - 2, 0, 4, 3);
-        // Yellow safety hazard accent on clamp
-        ctx.fillStyle = '#eab308';
-        ctx.fillRect(c.anchorX - 2, 5, 4, 2);
+        ctx.fillRect(c.anchorX - 3, 0, 6, 2);
 
         // Cable Shadow/Backing
         ctx.strokeStyle = '#020617';
@@ -892,7 +1036,7 @@ class KiloburnerBoss {
         ctx.beginPath();
         ctx.moveTo(c.anchorX, 0);
         const ctrlX = (c.anchorX + c.socketX) / 2 + c.curveOffset;
-        const ctrlY = (c.socketY) * 0.45;
+        const ctrlY = Math.max(12, c.socketY * 0.45);
         ctx.quadraticCurveTo(ctrlX, ctrlY, c.socketX, c.socketY);
         ctx.stroke();
 
@@ -931,15 +1075,16 @@ class KiloburnerBoss {
         ctx.strokeRect(c.socketX - 3, c.socketY - 3, 6, 6);
       }
 
-      // Occasional electric arc spark jumping at cranial sockets
-      if (Math.random() < 0.20) {
+      // Occasional electric arc spark jumping at cranial sockets or ceiling rail
+      if (Math.random() < 0.25) {
         if (!this.cableSparks) this.cableSparks = [];
         const sc = cables[Math.floor(Math.random() * cables.length)];
+        const atCeiling = Math.random() < 0.4;
         this.cableSparks.push({
-          x: sc.socketX + (Math.random() - 0.5) * 6,
-          y: sc.socketY + (Math.random() - 0.5) * 4,
-          vx: (Math.random() - 0.5) * 2,
-          vy: -Math.random() * 2,
+          x: atCeiling ? sc.anchorX : sc.socketX + (Math.random() - 0.5) * 6,
+          y: atCeiling ? 4 : sc.socketY + (Math.random() - 0.5) * 4,
+          vx: (Math.random() - 0.5) * 2.5,
+          vy: atCeiling ? (Math.random() * 2) : (-Math.random() * 2),
           color: Math.random() < 0.5 ? '#38bdf8' : '#fef08a',
           life: 8,
           maxLife: 8
@@ -967,10 +1112,10 @@ class KiloburnerBoss {
       const breathX = 1.0 - Math.sin(this.animTimer * 0.08) * 0.012;
       const tilt = Math.sin(this.floatAngle) * 0.032;
 
-      ctx.translate(this.x, this.y);
+      ctx.translate(this.x + this.lungeX, this.y);
       ctx.rotate(flip ? -tilt : tilt);
       ctx.scale(breathX, breathY);
-      ctx.translate(-this.x, -this.y);
+      ctx.translate(-(this.x + this.lungeX), -this.y);
     }
 
     sm.drawKiloburnerAtlas(ctx, spriteName, drawX, drawY, renderW, renderH, flip);
@@ -982,7 +1127,34 @@ class KiloburnerBoss {
       ctx.globalAlpha = 1.0;
     }
 
-    // 60 Hz Pulsing Cybernetic Crimson Eye Flare (zero createRadialGradient per frame)
+    // Chest Cybernetic Combustion Furnace Core (Glows behind iron rib grille)
+    if (this.state !== 'dead') {
+      const coreRelX = (info.w * 0.45) * this.scale;
+      const coreRelY = (info.h * 0.56) * this.scale;
+      const coreX = Math.round(flip ? (drawX + renderW - coreRelX) : (drawX + coreRelX));
+      const coreY = Math.round(drawY + coreRelY);
+
+      // Core intensity increases when attacking or charging
+      const isCharging = (this.state === 'flame' || this.state === 'meatball');
+      const pulseSpeed = isCharging ? 0.35 : 0.12;
+      const coreBrightness = isCharging ? (0.75 + Math.sin(this.animTimer * pulseSpeed) * 0.25) : (0.45 + Math.sin(this.animTimer * pulseSpeed) * 0.20);
+
+      // Outer thermal radiation aura
+      ctx.fillStyle = isCharging ? `rgba(254, 240, 138, ${coreBrightness * 0.75})` : `rgba(249, 115, 22, ${coreBrightness * 0.65})`;
+      ctx.fillRect(coreX - 7, coreY - 6, 14, 12);
+
+      // Hot molten center
+      ctx.fillStyle = isCharging ? '#ffffff' : '#facc15';
+      ctx.fillRect(coreX - 4, coreY - 4, 8, 8);
+
+      // Industrial iron grille slats over the core
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(coreX - 6, coreY - 4, 12, 1.5);
+      ctx.fillRect(coreX - 6, coreY - 1, 12, 1.5);
+      ctx.fillRect(coreX - 6, coreY + 2, 12, 1.5);
+    }
+
+    // 60 Hz Pulsing Cybernetic Crimson Eye Flare
     if (this.state !== 'dead' && this.hitFlashTimer <= 0) {
       const eyeRelX = (info.w * 0.38) * this.scale;
       const eyeRelY = (info.h * 0.40) * this.scale;
@@ -994,9 +1166,63 @@ class KiloburnerBoss {
       ctx.fillRect(eyeX - 4, eyeY - 4, 8, 8);
       ctx.fillStyle = 'rgba(255, 245, 245, 0.92)';
       ctx.fillRect(eyeX - 1, eyeY - 1, 2, 2);
+
+      // Targeting laser line pointing toward player
+      if (this.state === 'idle' || this.state === 'meatball') {
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.22)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(eyeX, eyeY);
+        ctx.lineTo(eyeX + (flip ? -90 : 90), eyeY + (Math.sin(this.floatAngle) * 8));
+        ctx.stroke();
+      }
     }
 
     ctx.restore(); // restore boss body transform
+
+    // 6. Draw Active Real-Time Flamethrower Firestorm Particles
+    if (this.flameParticles && this.flameParticles.length > 0) {
+      for (const fp of this.flameParticles) {
+        const alpha = Math.max(0, fp.life / fp.maxLife);
+        ctx.save();
+        ctx.globalAlpha = alpha * 0.88;
+        ctx.fillStyle = fp.color;
+        ctx.beginPath();
+        ctx.arc(fp.x, fp.y, fp.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // 7. Draw Hydraulic Claw Slashing Arc Blades
+    if (this.clawSlashParticles && this.clawSlashParticles.length > 0) {
+      for (const cp of this.clawSlashParticles) {
+        const alpha = Math.max(0, cp.life / cp.maxLife);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = cp.color;
+        ctx.fillRect(Math.round(cp.x), Math.round(cp.y), 4, 2);
+        ctx.restore();
+      }
+    }
+
+    // Dynamic Slash Arc Blade during active claw strike
+    if (this.clawActive) {
+      const c = this.clawHitbox;
+      ctx.save();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      const arcCenterX = c.x + c.w * 0.5;
+      const arcCenterY = c.y + c.h * 0.5;
+      ctx.arc(arcCenterX, arcCenterY, 18, -Math.PI * 0.4, Math.PI * 0.4, flip);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+
     ctx.restore(); // restore main draw context
 
     // Draw active explosions during defeat

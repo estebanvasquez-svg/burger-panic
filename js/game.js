@@ -743,6 +743,9 @@ class BurgerPanicGame {
               this.cameraX = (this.levelData.width || 1600) - 240;
               if (this.kiloburnerBoss) {
                 this.kiloburnerBoss.x = (this.levelData.width || 2500) - 78;
+                this.kiloburnerBoss.baseY = 215;
+                this.kiloburnerBoss.vy = 0;
+                this.kiloburnerBoss.y = 215;
                 this.kiloburnerBoss.state = 'idle';
               }
             }
@@ -1338,47 +1341,7 @@ class BurgerPanicGame {
 
     // Render Cyber Furnace Environment Details for Stage 3 (culled to camera viewport)
     if (stageNum === 3) {
-      const bg3 = window.spriteManager ? window.spriteManager.sprites.bg_stage_3 : null;
-      if (bg3) {
-        const fullW = (this.levelData && this.levelData.width) ? this.levelData.width : 1600;
-        for (let bx = 0; bx < fullW; bx += 360) {
-          if (bx + 360 < camX - 20 || bx > camX + 260) continue;
-          this.ctx.drawImage(bg3, bx, 0, 360, 320);
-        }
-      }
-
-      if (camX < 160) {
-        // Truss lattice support legs under the sniper platform (x: 60 to 140, y: 200 to 288)
-        this.ctx.strokeStyle = '#334155';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(62, 206, 8, 82);
-        this.ctx.strokeRect(130, 206, 8, 82);
-        this.ctx.lineWidth = 1.4;
-        for (let ty = 206; ty + 20 <= 288; ty += 20) {
-          this.ctx.beginPath();
-          this.ctx.moveTo(70, ty);
-          this.ctx.lineTo(130, ty + 20);
-          this.ctx.moveTo(130, ty);
-          this.ctx.lineTo(70, ty + 20);
-          this.ctx.stroke();
-        }
-
-        // Animated Cheese Dripping from left pipe (x: 28, y: 240) into lava pit
-        const dropProgress = (Date.now() / 900) % 1;
-        const dropY = 240 + dropProgress * 48;
-        this.ctx.fillStyle = '#facc15';
-        this.ctx.fillRect(26, Math.round(dropY), 4, 4);
-
-        // Animated Lava Pit Bubbles (x: 10 to 60, y: 290 to 318)
-        const t = Date.now() * 0.005;
-        for (let b = 0; b < 3; b++) {
-          const bx = 16 + b * 16 + Math.sin(t + b) * 4;
-          const bProgress = ((Date.now() / 1200 + b * 0.33) % 1);
-          const by = 312 - bProgress * 18;
-          this.ctx.fillStyle = bProgress > 0.8 ? '#fef08a' : '#f97316';
-          this.ctx.fillRect(Math.round(bx), Math.round(by), 3, 3);
-        }
-      }
+      this.drawCyberFurnaceBossArena(camX, nowAnimTime);
     }
 
     // Godot 2.5D Atmospheric Rays & Projected Wall Shadows
@@ -1627,6 +1590,285 @@ class BurgerPanicGame {
     if (this.boss && !this.boss.isDead && this.boss.drawHUDHealthBar) {
       this.boss.drawHUDHealthBar(this.ctx);
     }
+  }
+
+  // =========================================================================
+  // STAGE 3: CYBER-FURNACE ARENA (EL COLOSO KILOBURNER)
+  // Dynamic 2500px High-Density Industrial Architecture & Animated Hazards
+  // =========================================================================
+  drawCyberFurnaceBossArena(camX, nowAnimTime) {
+    const ctx = this.ctx;
+    const fullW = (this.levelData && this.levelData.width) ? this.levelData.width : 2500;
+    const viewL = Math.max(0, camX - 40);
+    const viewR = Math.min(fullW, camX + 280);
+    const t = (nowAnimTime || performance.now()) * 0.001;
+
+    ctx.save();
+
+    // 1. Tiled High-Resolution Cyber-Furnace Backdrop
+    const bg3 = window.spriteManager ? window.spriteManager.sprites.bg_stage_3 : null;
+    if (bg3) {
+      for (let bx = 0; bx < fullW; bx += 360) {
+        if (bx + 360 < viewL || bx > viewR) continue;
+        ctx.drawImage(bg3, bx, 0, 360, 320);
+      }
+    }
+
+    // 2. Heavy Industrial Ceiling Gantry & Trolley Rail Track (y: 0 to 28)
+    ctx.fillStyle = '#0f172a'; // Deep carbon steel backing
+    ctx.fillRect(viewL, 0, viewR - viewL, 26);
+
+    // Gantry top flange
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(viewL, 0, viewR - viewL, 6);
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(viewL, 5, viewR - viewL, 1);
+
+    // Diagonal yellow/black hazard chevron stripes along the gantry beam
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(viewL, 6, viewR - viewL, 14);
+    ctx.clip();
+    const stripeW = 16;
+    const startStripe = Math.floor(viewL / stripeW) * stripeW - stripeW;
+    for (let sx = startStripe; sx < viewR + stripeW; sx += stripeW * 2) {
+      ctx.fillStyle = '#eab308';
+      ctx.beginPath();
+      ctx.moveTo(sx, 6);
+      ctx.lineTo(sx + 10, 6);
+      ctx.lineTo(sx + 22, 20);
+      ctx.lineTo(sx + 12, 20);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // Gantry lower flange & trolley guide rail
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(viewL, 20, viewR - viewL, 6);
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(viewL, 20, viewR - viewL, 1);
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(viewL, 25, viewR - viewL, 1);
+
+    // Flashing Industrial Emergency Warning Strobe Lights on Gantry every 120px
+    const strobeSpacing = 120;
+    const startStrobe = Math.floor(viewL / strobeSpacing) * strobeSpacing;
+    for (let stX = startStrobe; stX < viewR + strobeSpacing; stX += strobeSpacing) {
+      const isRed = Math.floor(stX / strobeSpacing) % 2 === 0;
+      const flashSpeed = isRed ? 4.0 : 3.0;
+      const flash = (Math.sin(t * flashSpeed + stX * 0.05) > 0.2);
+
+      // Light housing bracket
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(stX - 4, 18, 8, 8);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(stX - 4, 18, 8, 8);
+
+      // Warning dome lens
+      const lensColor = isRed ? (flash ? '#ef4444' : '#7f1d1d') : (flash ? '#f59e0b' : '#78350f');
+      ctx.fillStyle = lensColor;
+      ctx.fillRect(stX - 3, 20, 6, 5);
+
+      // Halo flash aura
+      if (flash) {
+        ctx.fillStyle = isRed ? 'rgba(239, 68, 68, 0.35)' : 'rgba(245, 158, 11, 0.35)';
+        ctx.fillRect(stX - 8, 15, 16, 14);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(stX - 1, 21, 2, 2);
+      }
+    }
+
+    // 3. Structural Heavy Truss Lattice Pillars supporting platforms
+    if (this.levelData && this.levelData.floors) {
+      for (const f of this.levelData.floors) {
+        if (f.y === 200) {
+          // Mid platform: support pillars down to y = 288
+          const legs = [f.x1 + 6, f.x2 - 14];
+          for (const lx of legs) {
+            if (lx + 10 < viewL || lx > viewR) continue;
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(lx, 206, 8, 82);
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1.2;
+            ctx.strokeRect(lx, 206, 8, 82);
+            // Internal cross-braces
+            ctx.lineWidth = 1;
+            for (let ty = 206; ty + 16 <= 288; ty += 16) {
+              ctx.beginPath();
+              ctx.moveTo(lx, ty);
+              ctx.lineTo(lx + 8, ty + 16);
+              ctx.moveTo(lx + 8, ty);
+              ctx.lineTo(lx, ty + 16);
+              ctx.stroke();
+            }
+          }
+        } else if (f.y === 120) {
+          // High platform: support truss down to y = 200
+          const lx = Math.round((f.x1 + f.x2) / 2 - 4);
+          if (lx + 10 >= viewL && lx <= viewR) {
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(lx, 126, 8, 74);
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1.2;
+            ctx.strokeRect(lx, 126, 8, 74);
+          }
+        }
+      }
+    }
+
+    // 4. Molten Cheese / Thermal Slag Vats & Drainage Pipes every ~270px
+    const pipePoints = [220, 490, 760, 1030, 1300, 1570, 1840, 2110, 2380];
+    for (const px of pipePoints) {
+      if (px + 30 < viewL || px - 30 > viewR) continue;
+
+      // Pipe descending from ceiling gantry
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(px - 5, 26, 10, 42);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(px - 3, 26, 3, 42);
+      // Flange connector
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(px - 7, 58, 14, 4);
+
+      // Curved drainage spout
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(px - 4, 68, 8, 6);
+
+      // Continuous dripping molten stream
+      const dropTime = (t * 1.5 + px * 0.1) % 1;
+      const dropY = 74 + dropTime * 120; // drops down toward mid platform / floor
+
+      // Drip stream
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(px - 1, 74, 2, Math.min(18, dropY - 74));
+
+      // Falling molten globule
+      ctx.fillStyle = dropTime > 0.8 ? '#fef08a' : '#facc15';
+      ctx.fillRect(px - 2, Math.round(dropY), 4, 4);
+
+      // Splash embers when near impact
+      if (dropTime > 0.92) {
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(px - 5, Math.round(dropY) - 1, 2, 2);
+        ctx.fillRect(px + 4, Math.round(dropY) - 1, 2, 2);
+      }
+    }
+
+    // 5. High-Pressure Steam Relief Vents on Platform Edges
+    const ventPoints = [180, 440, 710, 980, 1250, 1510, 1780, 2050, 2320];
+    for (const vx of ventPoints) {
+      if (vx + 35 < viewL || vx - 35 > viewR) continue;
+      const vy = 196; // platform level
+
+      // Steam valve fitting
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(vx - 3, vy - 4, 6, 6);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(vx - 2, vy - 5, 4, 2);
+
+      // Periodic steam release burst
+      const steamPhase = (t * 2.2 + vx * 0.08) % 1;
+      if (steamPhase < 0.45) {
+        const steamProgress = steamPhase / 0.45;
+        const steamLen = steamProgress * 28;
+        const steamH = 4 + steamProgress * 12;
+        const alpha = Math.max(0, 1 - steamProgress);
+
+        ctx.save();
+        ctx.globalAlpha = alpha * 0.65;
+        ctx.fillStyle = '#f1f5f9';
+        ctx.beginPath();
+        ctx.arc(vx + steamLen * 0.8, vy - 6 - steamProgress * 10, steamH * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // 6. Molten Lava Grate Sub-Floor with Boiling Magma Bubbles (y: 296 to 320)
+    const lavaGrad = ctx.createLinearGradient(0, 296, 0, 320);
+    lavaGrad.addColorStop(0, '#ef4444');
+    lavaGrad.addColorStop(0.4, '#ea580c');
+    lavaGrad.addColorStop(1, '#7f1d1d');
+    ctx.fillStyle = lavaGrad;
+    ctx.fillRect(viewL, 296, viewR - viewL, 24);
+
+    // Glowing core heat line
+    const corePulse = 0.75 + Math.sin(t * 3.0) * 0.25;
+    ctx.fillStyle = `rgba(254, 240, 138, ${corePulse.toFixed(2)})`;
+    ctx.fillRect(viewL, 297, viewR - viewL, 2);
+
+    // Boiling magma bubbles bursting along floor
+    const bubbleSpacing = 48;
+    const startBubble = Math.floor(viewL / bubbleSpacing) * bubbleSpacing;
+    for (let bx = startBubble; bx < viewR + bubbleSpacing; bx += bubbleSpacing) {
+      const bPhase = (t * 1.8 + bx * 0.2) % 1;
+      const bX = bx + Math.sin(t * 2 + bx) * 6;
+      const bY = 312 - bPhase * 14;
+      const bSize = (bPhase < 0.8) ? (2 + bPhase * 3) : (5 - (bPhase - 0.8) * 15);
+
+      if (bSize > 1) {
+        ctx.fillStyle = (bPhase > 0.6) ? '#fef08a' : '#f97316';
+        ctx.beginPath();
+        ctx.arc(bX, bY, Math.max(1, bSize), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Rising thermal ember spark
+      const sparkY = 305 - ((t * 40 + bx * 12) % 60);
+      const sparkX = bx + Math.sin(sparkY * 0.1) * 8;
+      ctx.fillStyle = Math.random() < 0.5 ? '#fef08a' : '#f97316';
+      ctx.fillRect(Math.round(sparkX), Math.round(sparkY), 2, 2);
+    }
+
+    // Metal Diamond Security Catwalk Grate over the lava
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+    for (let gx = Math.floor(viewL / 8) * 8; gx < viewR + 8; gx += 8) {
+      ctx.fillRect(gx, 296, 2, 24);
+    }
+    for (let gy = 296; gy < 320; gy += 6) {
+      ctx.fillRect(viewL, gy, viewR - viewL, 1.5);
+    }
+
+    // 7. Holographic Cyber HUD Terminals on Back Wall
+    const holoSignPosts = [
+      { x: 2320, title: 'KILOBURNER SECTOR 03', sub: '⚠ DANGER: CORE ACTIVE ⚠', color: '#ef4444' },
+      { x: 1720, title: 'HIGH THERMAL RADIATION', sub: 'TEMPERATURE: 980°C', color: '#f59e0b' },
+      { x: 1040, title: 'FURNACE VENTILATION', sub: 'PRESSURE: CRITICAL', color: '#00f0ff' },
+      { x: 380,  title: 'EMERGENCY SHUTDOWN', sub: 'BLOWTORCH OVERRIDE', color: '#ef4444' }
+    ];
+
+    for (const h of holoSignPosts) {
+      if (h.x + 90 < viewL || h.x - 90 > viewR) continue;
+      const hy = 80;
+
+      // Terminal bracket
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(h.x - 42, hy - 14, 84, 26);
+      ctx.strokeStyle = h.color;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(h.x - 42, hy - 14, 84, 26);
+
+      // Scanline glass
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+      ctx.fillRect(h.x - 41, hy - 13, 82, 24);
+
+      // Pulsing holo text
+      const hPulse = 0.75 + Math.sin(t * 4.0 + h.x) * 0.25;
+      ctx.save();
+      ctx.globalAlpha = hPulse;
+      ctx.font = 'bold 4.5px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = h.color;
+      ctx.fillText(h.title, h.x, hy - 3);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '4px monospace';
+      ctx.fillText(h.sub, h.x, hy + 6);
+      ctx.restore();
+    }
+
+    ctx.restore();
   }
 
   drawPlatforms() {

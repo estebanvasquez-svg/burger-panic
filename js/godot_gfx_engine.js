@@ -352,10 +352,14 @@ class Godot2DGraphicsEngine {
 
     // 2. Kiloburner Giant Boss Lights (Stage 3)
     if (g.kiloburnerBoss && !g.kiloburnerBoss.isDead) {
-      const bx = g.kiloburnerBoss.x;
+      const bx = g.kiloburnerBoss.x + (g.kiloburnerBoss.lungeX || 0);
       const by = g.kiloburnerBoss.y;
       const pulse = 0.85 + Math.sin(t * 2.5) * 0.2;
-      this.addPointLight(bx + 18, by + 28, 110, 0.95 * pulse, 1.0, 0.28, 0.08);
+      // Main molten chest reactor & eye light (orange/crimson)
+      this.addPointLight(bx, by - 44, 115, 0.95 * pulse, 1.0, 0.35, 0.08);
+      // Underbody plasma thruster jet glow (vivid cyan/blue)
+      this.addPointLight(bx, by + 4, 75, 0.80, 0.2, 0.75, 1.0);
+      // Lava floor ambient reflection
       this.addPointLight(35 + g.cameraX, 305, 85, 0.85 * pulse, 1.0, 0.45, 0.05);
     }
 
