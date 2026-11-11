@@ -106,7 +106,7 @@ class SpriteManager {
 
   initKiloburnerAtlas() {
     this.kiloburnerAtlasImg = new Image();
-    this.kiloburnerAtlasImg.src = 'assets/kiloburner_atlas.png';
+    this.kiloburnerAtlasImg.src = 'assets/kiloburner_atlas.png?v=113';
     this.kiloburnerAtlasLoaded = false;
     this.kiloburnerAtlasImg.onload = () => {
       this.kiloburnerAtlasLoaded = true;
