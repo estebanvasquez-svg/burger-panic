@@ -385,13 +385,13 @@ class BossFlameProjectile {
     this.bounces = 0;
     this.maxBounces = 999; // Projectile flies through the air; no bouncing
     this.animTimer = 0;
-    this.scale = 0.52;
-    this.width = Math.round(97 * this.scale);  // ~50px
-    this.height = Math.round(49 * this.scale); // ~25px
+    this.scale = 0.48;
+    this.width = Math.round(120 * this.scale);  // 58px
+    this.height = Math.round(62 * this.scale); // 30px
 
     // Fair dodgeable hitbox centered near the leading incandescent head
-    this.hitboxW = 20;
-    this.hitboxH = 14;
+    this.hitboxW = 22;
+    this.hitboxH = 16;
 
     BossFlameProjectile.initAssets();
   }
@@ -401,7 +401,7 @@ class BossFlameProjectile {
     BossFlameProjectile.frames = [];
     for (let i = 0; i < 4; i++) {
       const img = new Image();
-      img.src = `assets/boss_flame/frame_${i}.png`;
+      img.src = `assets/boss_flame/frame_${i}.png?v=106`;
       BossFlameProjectile.frames.push(img);
     }
     BossFlameProjectile.framesLoaded = true;
