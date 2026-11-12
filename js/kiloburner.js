@@ -267,6 +267,7 @@ class BlowtorchPickup {
 
 /**
  * Fiery Meatball Projectile fired by Kiloburner Boss
+ * Balanced with clear parabolic arc, ground shadow & danger targeting reticle
  */
 class MeatballProjectile {
   constructor(x, y, targetX, targetY) {
@@ -275,15 +276,17 @@ class MeatballProjectile {
     const dx = targetX - x;
     const dy = targetY - y;
     const dist = Math.hypot(dx, dy) || 1;
-    const speed = 2.4;
+    const speed = 2.0; // Fair parabolic velocity allowing tactical evasion
     this.vx = (dx / dist) * speed;
-    this.vy = Math.min(-1.5, (dy / dist) * speed - 1.2); // arc launch
-    this.gravity = 0.12;
+    this.vy = Math.min(-1.6, (dy / dist) * speed - 1.4); // Graceful arc
+    this.gravity = 0.09;
     this.bounces = 0;
-    this.maxBounces = 2;
-    this.radius = 7;
+    this.maxBounces = 1; // Only 1 fair bounce before dissipating into harmless smoke!
+    this.radius = 6.5;
     this.life = 160;
     this.particles = [];
+    this.predictedFloorY = targetY || 288;
+    this.targetX = targetX;
   }
 
   update(floors) {
@@ -292,14 +295,34 @@ class MeatballProjectile {
     this.vy += this.gravity;
     this.life--;
 
+    // Dynamically locate the platform floor directly beneath the projectile
+    if (floors) {
+      let closestBelow = null;
+      for (const f of floors) {
+        if (this.x >= f.x1 - 6 && this.x <= f.x2 + 6 && f.y >= this.y - 4) {
+          if (!closestBelow || f.y < closestBelow.y) {
+            closestBelow = f;
+          }
+        }
+      }
+      if (closestBelow) {
+        this.predictedFloorY = closestBelow.y;
+      }
+    }
+
     // Check floor collision for bouncing
     if (floors && this.vy > 0) {
       for (const f of floors) {
         if (this.x >= f.x1 - 4 && this.x <= f.x2 + 4) {
-          if (Math.abs(this.y - f.y) <= 6) {
+          if (Math.abs(this.y - f.y) <= 5) {
             this.y = f.y - 4;
-            this.vy = -Math.abs(this.vy) * 0.65;
             this.bounces++;
+            if (this.bounces > this.maxBounces) {
+              this.life = 0; // Dissipates after 1 bounce!
+            } else {
+              this.vy = -Math.abs(this.vy) * 0.45;
+              this.vx *= 0.6;
+            }
             break;
           }
         }
@@ -329,6 +352,37 @@ class MeatballProjectile {
   }
 
   draw(ctx) {
+    // 1. Render Ground Landing Reticle & Shadow on floor before impact!
+    if (this.predictedFloorY && this.y < this.predictedFloorY - 6 && this.bounces === 0) {
+      const floorDist = this.predictedFloorY - this.y;
+      const progress = Math.max(0, Math.min(1, 1 - (floorDist / 140)));
+      const shadowW = 10 + progress * 6;
+
+      ctx.save();
+      // Drop shadow ellipse on floor
+      ctx.fillStyle = `rgba(0, 0, 0, ${0.25 + progress * 0.35})`;
+      ctx.beginPath();
+      ctx.ellipse(Math.round(this.x), Math.round(this.predictedFloorY), shadowW, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Flashing yellow/red danger target reticle when nearing ground
+      if (progress > 0.3) {
+        const pulse = Math.sin(Date.now() * 0.02) * 0.5 + 0.5;
+        ctx.strokeStyle = (progress > 0.7) ? '#ef4444' : '#f59e0b';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(Math.round(this.x), Math.round(this.predictedFloorY), 6 + pulse * 3, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Warning crosshairs
+        ctx.beginPath();
+        ctx.moveTo(Math.round(this.x) - 7, Math.round(this.predictedFloorY));
+        ctx.lineTo(Math.round(this.x) + 7, Math.round(this.predictedFloorY));
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     // Trail
     for (const p of this.particles) {
       const alpha = p.life / p.maxLife;
@@ -375,23 +429,23 @@ class BossFlameProjectile {
 
     // Targeted trajectory towards Chef Pepe's position at moment of launch
     const dy = (targetY !== undefined) ? (targetY - y) : 0;
-    const speed = 3.6;
+    const speed = 2.7; // Fair reaction speed (was 3.6)
     this.vx = facing * speed;
-    // Clamped vertical drift so Pepe can dodge by jumping, ducking, or climbing
-    this.vy = Math.max(-1.1, Math.min(1.1, dy / 55));
+    // Clamped horizontal drift: stays in horizontal corridor so Pepe can jump over it!
+    this.vy = Math.max(-0.5, Math.min(0.5, dy / 80));
 
     this.life = 180;
     this.maxLife = 180;
     this.bounces = 0;
     this.maxBounces = 999; // Projectile flies through the air; no bouncing
     this.animTimer = 0;
-    this.scale = 0.48;
-    this.width = Math.round(120 * this.scale);  // 58px
-    this.height = Math.round(62 * this.scale); // 30px
+    this.scale = 0.44;
+    this.width = Math.round(120 * this.scale);  // 53px
+    this.height = Math.round(62 * this.scale); // 27px
 
-    // Fair dodgeable hitbox centered near the leading incandescent head
-    this.hitboxW = 22;
-    this.hitboxH = 16;
+    // Fair dodgeable hitbox (16x12px) centered near the leading incandescent head
+    this.hitboxW = 16;
+    this.hitboxH = 12;
 
     BossFlameProjectile.initAssets();
   }
@@ -488,9 +542,9 @@ class KiloburnerBoss {
     this.baseY = 215; // Vertical tracking base elevation
     this.y = this.baseY;
     this.vy = 0;
-    this.maxVerticalSpeed = 2.4; // Menacing, responsive cyber-thruster tracking speed
-    this.minBaseY = 80;  // Ceiling gantry clearance (when player is on upper rails)
-    this.maxBaseY = 314; // Full ground floor descent (boss lowers completely to player height)
+    this.maxVerticalSpeed = 2.2; // Responsive cyber-thruster tracking speed
+    this.minBaseY = 95;  // Ceiling clearance
+    this.maxBaseY = 258; // Fair ground clearance: hovers at y <= 258, leaving 30px clear passage above floor 288!
     this.lungeX = 0;     // Horizontal attack thrust
 
     // Scale ratio from original ~240px sprite down to game size (~96x68)
@@ -644,9 +698,9 @@ class KiloburnerBoss {
     // 2. Vertical 2D Pursuit & Hydraulic Cables Suspension Physics
     // Follows Chef Pepe when climbing ladders or dropping floors!
     if (player && !this.isDead) {
-      // Calculate target vertical position based on player's feet elevation (52, 120, 200, 288)
-      // Lowers completely down to ground floor (y = 288) so boss torso & claws align with Chef Pepe!
-      const targetBaseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, player.y + 42));
+      // Calculate target vertical position based on player's feet elevation.
+      // Keeps boss elevated relative to player so player is never trapped or suffocated on the floor!
+      const targetBaseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, player.y - 12));
       const dy = targetBaseY - this.baseY;
 
       // Heavyweight responsive acceleration
@@ -659,13 +713,19 @@ class KiloburnerBoss {
 
     // Organic hover bobbing
     this.floatAngle += 0.055;
-    const hoverBob = Math.sin(this.floatAngle) * 6;
+    const hoverBob = Math.sin(this.floatAngle) * 5;
     this.y = this.baseY + hoverBob;
 
-    // 3. Horizontal Viewport Anchoring (Follows auto-scrolling camera)
+    // 3. Horizontal Viewport Anchoring & Tactical Standoff
     const bossHalfW = Math.round(this.logicalW * 0.55);
     this.maxX = cameraX + 240 - bossHalfW - 8;
     this.minX = cameraX + 240 - bossHalfW - 65;
+
+    // Enforce tactical standoff so the boss never drifts on top of player causing sudden collision death
+    const minStandoff = 65;
+    if (player && (this.x - player.x) < minStandoff && this.facing === -1) {
+      this.x = Math.max(this.x, player.x + minStandoff);
+    }
 
     if (this.x < this.minX) {
       this.x = this.minX;
@@ -696,58 +756,76 @@ class KiloburnerBoss {
       this.stateTimer++;
       if (this.stateTimer === 1 && player) {
         this.facing = (player.x < this.x) ? -1 : 1;
+        if (window.soundManager && window.soundManager.playBossFlameCharge) {
+          window.soundManager.playBossFlameCharge();
+        }
       }
       // Head tilts forward slightly during flame burst
-      this.lungeX = this.facing * 8;
+      this.lungeX = this.facing * 6;
 
       // Cadence requested: 3 flames separated by 2 seconds (120 frames at 60 FPS), then wait 5 seconds (300 frames)!
-      // Shot 1 fires at frame 20
-      // Shot 2 fires at frame 140 (20 + 120)
-      // Shot 3 fires at frame 260 (140 + 120)
-      const fireFrames = [20, 140, 260];
+      // Shot 1 fires at frame 28 (after 24-frame telegraph)
+      // Shot 2 fires at frame 148 (28 + 120)
+      // Shot 3 fires at frame 268 (148 + 120)
+      const fireFrames = [28, 148, 268];
       const relT = (this.stateTimer < 240) ? (this.stateTimer % 120) : (this.stateTimer - 240);
 
       // Hitbox dynamically scales with the flame sprite progression (Poses 3 -> 4 -> 5 -> 6)
-      let flameW = 45;
-      let flameH = 24;
+      let flameW = 38;
+      let flameH = 20;
       let isFiring = false;
 
-      if (relT >= 20 && relT < 28) {
+      // Frames 0 to 24: Telegraph Warning! Mouth charges and furnace glows. NO HITBOX.
+      if (relT < 24) {
+        isFiring = false;
+        if (relT % 4 === 0) {
+          // Venting furnace embers from top chimneys
+          this.armorSparks.push({
+            x: this.x + (this.facing * -15) + (Math.random() - 0.5) * 10,
+            y: this.y - this.logicalH + 10,
+            vx: (Math.random() - 0.5) * 1.2,
+            vy: -1.5 - Math.random() * 1.5,
+            life: 12,
+            maxLife: 12,
+            color: Math.random() < 0.5 ? '#f97316' : '#fef08a'
+          });
+        }
+      } else if (relT >= 24 && relT < 34) {
         // Pose 3: Initial Burst
         isFiring = true;
-        flameW = 40;
-        flameH = 22;
-      } else if (relT >= 28 && relT < 40) {
+        flameW = 32;
+        flameH = 18;
+      } else if (relT >= 34 && relT < 48) {
         // Pose 4: Flame Jet
         isFiring = true;
-        flameW = 65;
-        flameH = 28;
-      } else if (relT >= 40 && relT < 76) {
-        // Pose 5 & Pulse: Full Blast Massive Flamethrower
+        flameW = 44;
+        flameH = 20;
+      } else if (relT >= 48 && relT < 70) {
+        // Pose 5: Peak Flame (fair 50px reach, was 85px!)
         isFiring = true;
-        flameW = 85;
-        flameH = 34;
-      } else if (relT >= 76 && relT < 90) {
-        // Pose 6: Dissipating Embers & Smoke
-        isFiring = true;
-        flameW = 45;
+        flameW = 50;
         flameH = 22;
+      } else if (relT >= 70 && relT < 86) {
+        // Pose 6: Dissipating Embers & Smoke (Harmless!)
+        isFiring = false;
+        flameW = 26;
+        flameH = 16;
       }
 
       this.flameActive = isFiring;
       const flameX = (this.facing === -1)
-        ? (this.x + this.lungeX - this.logicalW / 2 - flameW + 12)
-        : (this.x + this.lungeX + this.logicalW / 2 - 12);
-      const flameY = this.y - this.logicalH * 0.65;
+        ? (this.x + this.lungeX - this.logicalW * 0.38 - flameW)
+        : (this.x + this.lungeX + this.logicalW * 0.38);
+      const flameY = this.y - this.logicalH * 0.58;
       this.flameHitbox = { x: flameX, y: flameY, w: flameW, h: flameH };
 
       // Launch flying flame projectile at each designated interval
       if (fireFrames.includes(this.stateTimer)) {
         if (spawnProjectileCallback) {
-          const nozzleX = this.x + this.lungeX + (this.facing * (this.logicalW * 0.40));
-          const nozzleY = this.y - (this.logicalH * 0.62);
+          const nozzleX = this.x + this.lungeX + (this.facing * (this.logicalW * 0.38));
+          const nozzleY = this.y - (this.logicalH * 0.56);
           const targetX = player ? player.x : (this.x + this.facing * 200);
-          const targetY = player ? (player.y - 6) : this.y;
+          const targetY = player ? player.y : this.y;
           spawnProjectileCallback(new BossFlameProjectile(nozzleX, nozzleY, targetX, targetY, this.facing));
         }
         if (window.soundManager && window.soundManager.playFlame) {
@@ -755,19 +833,19 @@ class KiloburnerBoss {
         }
       }
 
-      // After 3rd flame launches and clears mouth at frame 280:
+      // After 3rd flame launches and clears mouth at frame 290:
       // Transition to idle and wait 5.0 seconds (300 frames at 60 FPS) before next attack!
-      if (this.stateTimer >= 280) {
+      if (this.stateTimer >= 290) {
         this.state = 'idle';
         this.attackCooldown = 300; // Exactly 5 seconds cooldown!
       }
     } else if (this.state === 'meatball') {
       this.stateTimer++;
-      if (this.stateTimer === 15 || this.stateTimer === 28) {
+      if (this.stateTimer === 18 || this.stateTimer === 34) {
         if (spawnProjectileCallback && player) {
           const spawnX = this.x + (this.facing * (this.logicalW * 0.35));
           const spawnY = this.y - (this.logicalH * 0.55);
-          const targetX = player.x + (Math.random() - 0.5) * 25;
+          const targetX = player.x + (Math.random() - 0.5) * 20;
           const targetY = player.y;
           spawnProjectileCallback(new MeatballProjectile(spawnX, spawnY, targetX, targetY));
           if (window.soundManager && window.soundManager.playDrop) {
@@ -775,43 +853,74 @@ class KiloburnerBoss {
           }
         }
       }
-      if (this.stateTimer > 45) {
+      if (this.stateTimer > 48) {
         this.state = 'idle';
-        this.attackCooldown = 65 + Math.random() * 40;
+        this.attackCooldown = 80 + Math.random() * 40;
       }
     } else if (this.state === 'claw') {
       this.stateTimer++;
-      // High-speed ferocious hydraulic lunge
-      if (this.stateTimer >= 10 && this.stateTimer <= 35) {
-        const progress = (this.stateTimer - 10) / 25;
-        this.lungeX = Math.sin(progress * Math.PI) * (this.facing * 22);
-      }
-      const clawReach = 70;
-      const clawH = 26;
-      const clawX = (this.facing === -1)
-        ? (this.x + this.lungeX - this.logicalW / 2 - clawReach)
-        : (this.x + this.lungeX + this.logicalW / 2);
-      const clawY = this.y - this.logicalH * 0.5;
 
-      this.clawHitbox = { x: clawX, y: clawY, w: clawReach, h: clawH };
-      this.clawActive = (this.stateTimer >= 12 && this.stateTimer <= 35);
-
-      if (this.clawActive && this.stateTimer % 3 === 0) {
-        // Hydraulic slash blur particles & steam
-        this.clawSlashParticles.push({
-          x: clawX + (this.facing === -1 ? 0 : clawReach),
-          y: clawY + Math.random() * clawH,
-          vx: -this.facing * (1.5 + Math.random() * 2),
-          vy: (Math.random() - 0.5) * 2,
-          life: 8,
-          maxLife: 8,
-          color: Math.random() < 0.5 ? '#38bdf8' : '#e2e8f0'
-        });
+      // Phase 1: Telegraph Windup (frames 1 to 24, ~0.4s)
+      if (this.stateTimer === 1) {
+        if (window.soundManager && window.soundManager.playBossTelegraphClaw) {
+          window.soundManager.playBossTelegraphClaw();
+        }
       }
 
-      if (this.stateTimer > 45) {
+      if (this.stateTimer <= 24) {
+        // Windup: Boss pulls back slightly, claws flare open with electrical spark warning
+        this.lungeX = -this.facing * (Math.sin((this.stateTimer / 24) * Math.PI * 0.5) * 8);
+        this.clawActive = false;
+
+        // Warning electric sparks & hydraulic steam charging at claw arm
+        if (this.stateTimer % 2 === 0) {
+          const armX = this.x + this.lungeX + (this.facing * (this.logicalW * 0.28));
+          const armY = this.y - this.logicalH * 0.42;
+          this.clawSlashParticles.push({
+            x: armX + (Math.random() - 0.5) * 12,
+            y: armY + (Math.random() - 0.5) * 12,
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: -0.5 - Math.random() * 1.5,
+            life: 10,
+            maxLife: 10,
+            color: Math.random() < 0.6 ? '#38bdf8' : '#fef08a'
+          });
+        }
+      } else if (this.stateTimer <= 42) {
+        // Phase 2: Forward Hydraulic Strike (frames 25 to 42)
+        const progress = (this.stateTimer - 24) / 18;
+        this.lungeX = Math.sin(progress * Math.PI) * (this.facing * 16); // 16px lunge (was 22px)
+
+        const clawReach = 46; // Balanced reach (was 70px)
+        const clawH = 18;     // Balanced height (was 26px)
+        const clawX = (this.facing === -1)
+          ? (this.x + this.lungeX - this.logicalW * 0.35 - clawReach)
+          : (this.x + this.lungeX + this.logicalW * 0.35);
+        const clawY = this.y - this.logicalH * 0.45;
+
+        this.clawHitbox = { x: clawX, y: clawY, w: clawReach, h: clawH };
+        this.clawActive = true;
+
+        if (this.stateTimer % 2 === 0) {
+          this.clawSlashParticles.push({
+            x: clawX + (this.facing === -1 ? 0 : clawReach),
+            y: clawY + Math.random() * clawH,
+            vx: -this.facing * (1.8 + Math.random() * 2),
+            vy: (Math.random() - 0.5) * 2,
+            life: 8,
+            maxLife: 8,
+            color: Math.random() < 0.5 ? '#38bdf8' : '#ffffff'
+          });
+        }
+      } else {
+        // Phase 3: Cooldown & Retraction (frames 43 to 65)
+        this.clawActive = false;
+        this.lungeX *= 0.85;
+      }
+
+      if (this.stateTimer > 65) {
         this.state = 'idle';
-        this.attackCooldown = 75 + Math.random() * 45;
+        this.attackCooldown = 90 + Math.random() * 30; // 1.5 - 2s breather
       }
     } else {
       // Idle state: attack decision
@@ -998,6 +1107,7 @@ class KiloburnerBoss {
 
   /**
    * Check if Boss hits Player with body, flame, or claw
+   * Balanced: Body contact restricted to central furnace chassis so Pepe can run/walk underneath!
    */
   checkPlayerDamage(player) {
     if (this.health <= 0 || !player || player.isDead || (player.invulnerableTimer && player.invulnerableTimer > 0)) return false;
@@ -1011,11 +1121,11 @@ class KiloburnerBoss {
 
     const centerX = this.x + (this.lungeX || 0);
 
-    // 1. Direct Body Contact (Colossal mechanical furnace hull, chest core, claws & thrusters)
-    const bLeft = centerX - this.logicalW * 0.42;
-    const bRight = centerX + this.logicalW * 0.42;
-    const bTop = this.y - this.logicalH;
-    const bBottom = this.y + 8;
+    // 1. Direct Body Contact - tightened to central chassis so Pepe can safely walk/run underneath without sudden death!
+    const bLeft = centerX - this.logicalW * 0.28;
+    const bRight = centerX + this.logicalW * 0.28;
+    const bTop = this.y - this.logicalH * 0.88;
+    const bBottom = this.y - 12; // Raised 12px above bottom anchor: guaranteed safe walking space below!
 
     if (pBox.x + pBox.w >= bLeft && pBox.x <= bRight &&
         pBox.y + pBox.h >= bTop && pBox.y <= bBottom) {
@@ -1061,29 +1171,34 @@ class KiloburnerBoss {
       const hitIdx = Math.min(3, Math.floor(this.stateTimer / 3)) % 4;
       spriteName = 'hit_' + String(hitIdx).padStart(2, '0');
     } else if (this.state === 'claw') {
-      // 8-frame ultra-fluid claw strike cycle (45 frames total, ~5.5 frames per in-between)
-      const clawIdx = Math.min(7, Math.floor(this.stateTimer / 5.5));
-      spriteName = 'claw_' + String(clawIdx).padStart(2, '0');
+      // 3-Phase Claw Animation: Telegraph (0-24) -> Strike (25-42) -> Recovery (43-65)
+      if (this.stateTimer <= 24) {
+        spriteName = (this.stateTimer % 8 < 4) ? 'claw_00' : 'claw_01';
+      } else if (this.stateTimer <= 42) {
+        const strikeProgress = (this.stateTimer - 25) / 17;
+        const strikeIdx = 2 + Math.min(4, Math.floor(strikeProgress * 5));
+        spriteName = 'claw_' + String(strikeIdx).padStart(2, '0');
+      } else {
+        spriteName = 'claw_07';
+      }
     } else if (this.state === 'flame') {
       // 3-shot burst animation rhythm matching 120-frame (2s) intervals
       const relT = (this.stateTimer < 240) ? (this.stateTimer % 120) : (this.stateTimer - 240);
-      if (relT < 10) {
+      if (relT < 12) {
         spriteName = 'flame_00'; // Pose 1: Preparing flame / mouth open
-      } else if (relT < 20) {
+      } else if (relT < 24) {
         spriteName = 'flame_01'; // Pose 2: Fiery furnace charging glow inside mouth
-      } else if (relT < 28) {
+      } else if (relT < 34) {
         spriteName = 'flame_02'; // Pose 3: Incandescent mouth launch burst
-      } else if (relT < 40) {
+      } else if (relT < 48) {
         spriteName = 'flame_03'; // Pose 4: Expanding flame jet thrust
-      } else if (relT < 52) {
+      } else if (relT < 58) {
         spriteName = 'flame_04'; // Pose 5: Full blast flamethrower
-      } else if (relT < 64) {
+      } else if (relT < 70) {
         spriteName = 'flame_05'; // Pose 5/Pulse: Flame turbulence pulse
-      } else if (relT < 76) {
-        spriteName = 'flame_04'; // Pose 5: Sustained blast
-      } else if (relT < 90) {
+      } else if (relT < 86) {
         spriteName = 'flame_06'; // Pose 6: Exhaust smoke & dissipating embers
-      } else if (relT < 102) {
+      } else if (relT < 100) {
         spriteName = 'flame_07'; // Pose 1: Mouth closing & recovery
       } else {
         spriteName = 'hover_04'; // Hovering smoothly between burst shots
@@ -1121,7 +1236,58 @@ class KiloburnerBoss {
       sm.drawKiloburnerAtlas(ctx, 'hit_00', drawX, drawY, renderW, renderH, flip);
     }
 
-    // 7. Draw Hydraulic Claw Slashing Arc Blades
+    // 7. Visual Telegraph Signs (Fair gameplay warning prompts!)
+    // Telegraph prompt for Hydraulic Claw Attack
+    if (this.state === 'claw' && this.stateTimer <= 24) {
+      const warnX = this.x + this.lungeX + (this.facing * (this.logicalW * 0.35));
+      const warnY = this.y - this.logicalH * 0.48;
+      const pulse = Math.sin(this.stateTimer * 0.45) * 0.5 + 0.5;
+
+      ctx.save();
+      // Flashing electrical danger circle
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(Math.round(warnX), Math.round(warnY), 10 + pulse * 6, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Flashing text warning banner (jump over or back off!)
+      ctx.font = 'bold 6px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#000000';
+      ctx.fillText('⚡ ¡ZARPAZO! ⚡', Math.round(warnX) + 1, Math.round(warnY - 14) + 1);
+      ctx.fillStyle = (pulse > 0.4) ? '#fef08a' : '#38bdf8';
+      ctx.fillText('⚡ ¡ZARPAZO! ⚡', Math.round(warnX), Math.round(warnY - 14));
+      ctx.restore();
+    }
+
+    // Telegraph prompt for Flame Attack
+    if (this.state === 'flame') {
+      const relT = (this.stateTimer < 240) ? (this.stateTimer % 120) : (this.stateTimer - 240);
+      if (relT < 24) {
+        const warnX = this.x + this.lungeX + (this.facing * (this.logicalW * 0.38));
+        const warnY = this.y - this.logicalH * 0.58;
+        const pulse = Math.sin(relT * 0.45) * 0.5 + 0.5;
+
+        ctx.save();
+        // Heat distortion aura
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(Math.round(warnX), Math.round(warnY), 9 + pulse * 6, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.font = 'bold 6px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#000000';
+        ctx.fillText('🔥 ¡FUEGO! 🔥', Math.round(warnX) + 1, Math.round(warnY - 14) + 1);
+        ctx.fillStyle = (pulse > 0.4) ? '#ef4444' : '#fef08a';
+        ctx.fillText('🔥 ¡FUEGO! 🔥', Math.round(warnX), Math.round(warnY - 14));
+        ctx.restore();
+      }
+    }
+
+    // 8. Draw Hydraulic Claw Slashing Arc Blades
     if (this.clawSlashParticles && this.clawSlashParticles.length > 0) {
       for (const cp of this.clawSlashParticles) {
         const alpha = Math.max(0, cp.life / cp.maxLife);
