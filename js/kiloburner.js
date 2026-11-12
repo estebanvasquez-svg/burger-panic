@@ -393,27 +393,49 @@ class MeatballProjectile {
       ctx.restore();
     }
 
-    // Meatball core
-    ctx.save();
-    ctx.fillStyle = '#7c2d12'; // deep meat brown
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fill();
+    // HD Meatball In-Flight Sprite from user artwork (or clean fallback)
+    const sm = window.spriteManager;
+    let spriteDrawn = false;
+    if (sm && sm.kiloburnerAtlasLoaded && sm.drawKiloburnerAtlas) {
+      const projW = 24;
+      const projH = 20;
+      // Native sprite points right (fiery exhaust trail on left, meatball head on right).
+      // If moving left (vx < 0), flip horizontally so head leads left and trail trails right.
+      const flip = (this.vx < 0);
+      const angle = Math.atan2(this.vy, Math.abs(this.vx)) * (flip ? -1 : 1);
 
-    // Fiery crust
-    ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.stroke();
+      ctx.save();
+      ctx.translate(Math.round(this.x), Math.round(this.y));
+      ctx.rotate(angle * 0.6); // Graceful ballistic tilt
+      // Center the ball mass at origin: ball center in 24x20 sprite is at x=14, y=10
+      const drawX = -14;
+      const drawY = -10;
+      spriteDrawn = sm.drawKiloburnerAtlas(ctx, 'meatball_projectile', drawX, drawY, projW, projH, flip);
+      ctx.restore();
+    }
 
-    // Hot molten core highlight
-    ctx.fillStyle = '#ef4444';
-    ctx.beginPath();
-    ctx.arc(this.x - 2, this.y - 2, 2.5, 0, Math.PI * 2);
-    ctx.fill();
+    if (!spriteDrawn) {
+      // Procedural fallback
+      ctx.save();
+      ctx.fillStyle = '#7c2d12'; // deep meat brown
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fill();
 
-    ctx.restore();
+      // Fiery crust
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Hot molten core highlight
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(this.x - 2, this.y - 2, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 }
 

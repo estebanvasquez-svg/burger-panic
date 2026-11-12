@@ -309,6 +309,12 @@ window.KILOBURNER_ATLAS_DATA = {
     "w": 320,
     "h": 180
   },
+  "meatball_projectile": {
+    "x": 976,
+    "y": 1476,
+    "w": 83,
+    "h": 68
+  },
   "idle_1": {
     "x": 652,
     "y": 740,
