@@ -841,10 +841,25 @@ class KiloburnerBoss {
       }
     } else if (this.state === 'meatball') {
       this.stateTimer++;
-      if (this.stateTimer === 18 || this.stateTimer === 34) {
+      if (this.stateTimer === 1 && player) {
+        this.facing = (player.x < this.x) ? -1 : 1;
+      }
+      // Fluid telegraph: Boss pulls back slightly while preparing meatball in mouth
+      if (this.stateTimer < 22) {
+        this.lungeX = -this.facing * (Math.sin((this.stateTimer / 22) * Math.PI * 0.5) * 5);
+      } else if (this.stateTimer < 32) {
+        // Forward recoil on ejection
+        this.lungeX = this.facing * 6;
+      } else {
+        // Smooth return
+        this.lungeX = this.facing * Math.max(0, 6 - (this.stateTimer - 32) * 0.3);
+      }
+
+      // Meatball ejection synchronized with Pose 4 (Launch Frame at frame 24)
+      if (this.stateTimer === 24) {
         if (spawnProjectileCallback && player) {
-          const spawnX = this.x + (this.facing * (this.logicalW * 0.35));
-          const spawnY = this.y - (this.logicalH * 0.55);
+          const spawnX = this.x + (this.facing * (this.logicalW * 0.42));
+          const spawnY = this.y - (this.logicalH * 0.52);
           const targetX = player.x + (Math.random() - 0.5) * 20;
           const targetY = player.y;
           spawnProjectileCallback(new MeatballProjectile(spawnX, spawnY, targetX, targetY));
@@ -853,9 +868,9 @@ class KiloburnerBoss {
           }
         }
       }
-      if (this.stateTimer > 48) {
+      if (this.stateTimer > 52) {
         this.state = 'idle';
-        this.attackCooldown = 80 + Math.random() * 40;
+        this.attackCooldown = 90 + Math.random() * 40;
       }
     } else if (this.state === 'claw') {
       this.stateTimer++;
@@ -1204,7 +1219,26 @@ class KiloburnerBoss {
         spriteName = 'hover_04'; // Hovering smoothly between burst shots
       }
     } else if (this.state === 'meatball') {
-      spriteName = (this.stateTimer % 10 < 5) ? 'attack_meatball' : 'hover_08';
+      // 6-Frame fluid animation sequence for meatball launch:
+      // Pose 1 (meatball_00): Mouth open / targeting (frames 0-7)
+      // Pose 2 (meatball_01): Meatball chambered / charging (frames 8-15)
+      // Pose 3 (meatball_02): Pre-launch compression & sparks (frames 16-23)
+      // Pose 4 (meatball_03): Launch / ejection moment (frames 24-31)
+      // Pose 5 (meatball_04): Heavy muzzle flash / exhaust recoil (frames 32-41)
+      // Pose 6 (meatball_05): Smoke dissipation & recovery (frames 42-52)
+      if (this.stateTimer < 8) {
+        spriteName = 'meatball_00';
+      } else if (this.stateTimer < 16) {
+        spriteName = 'meatball_01';
+      } else if (this.stateTimer < 24) {
+        spriteName = 'meatball_02';
+      } else if (this.stateTimer < 32) {
+        spriteName = 'meatball_03';
+      } else if (this.stateTimer < 42) {
+        spriteName = 'meatball_04';
+      } else {
+        spriteName = 'meatball_05';
+      }
     } else if (this.state === 'lean') {
       spriteName = 'hover_08';
     } else {
