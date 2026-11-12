@@ -324,7 +324,7 @@ class LevelMap {
         ],
         burgers: [],
         plates: [],
-        playerStart: { x: 2210, y: 288 },
+        playerStart: { x: 2320, y: 288 },
         enemies: [],
         enemySpeed: 0.70
       },

@@ -315,30 +315,52 @@ class MeatballProjectile {
   constructor(x, y, targetX, targetY) {
     this.x = x;
     this.y = y;
+    this.targetX = targetX;
+    this.targetY = targetY;
+
     const dx = targetX - x;
     const dy = targetY - y;
-    const dist = Math.hypot(dx, dy) || 1;
-    const speed = 2.0; // Fair parabolic velocity allowing tactical evasion
-    this.vx = (dx / dist) * speed;
-    this.vy = Math.min(-1.6, (dy / dist) * speed - 1.4); // Graceful arc
-    this.gravity = 0.09;
+    const absDx = Math.abs(dx);
+
+    // Dynamic flight time in frames: ensures readable arcade parabola (28 to 50 frames ~ 0.45s - 0.85s)
+    // allowing tactical dodge (jump over, run away, or blowtorch counter)
+    const flightTime = Math.max(28, Math.min(50, Math.round(absDx / 1.75)));
+
+    this.vx = dx / flightTime;
+    this.gravity = 0.085;
+    // Ballistic formula: targetY - y = vy * T + 0.5 * g * T^2 ==> vy = (dy - 0.5 * g * T^2) / T
+    this.vy = (dy - 0.5 * this.gravity * flightTime * flightTime) / flightTime;
+
     this.bounces = 0;
     this.maxBounces = 1; // Only 1 fair bounce before dissipating into harmless smoke!
     this.radius = 6.5;
     this.life = 160;
     this.particles = [];
     this.predictedFloorY = targetY || 288;
-    this.targetX = targetX;
     this.animTimer = 0;
   }
 
   checkPlayerHit(player) {
     if (!player || player.isDead || (player.invulnerableTimer && player.invulnerableTimer > 0)) return false;
-    // Logical hitbox centered on the meatball core (radius 7.5px)
-    const px = player.x + (player.width ? player.width / 2 : 8);
-    const py = player.y + (player.height ? player.height / 2 : 8);
+
+    // Chef Pepe bounding profile (16x16 logical core, visual sprite 22x30)
+    // Feet are at player.y + 14, head at player.y - 10
+    const pLeft = player.x - 3;
+    const pRight = player.x + (player.width || 16) + 3;
+    const pTop = player.y - 10;
+    const pBottom = player.y + (player.height || 16) + 2;
+
+    // 1. Direct bounding box overlap with meatball radius (6.5px)
+    if (this.x + this.radius >= pLeft && this.x - this.radius <= pRight &&
+        this.y + this.radius >= pTop && this.y - this.radius <= pBottom) {
+      return true;
+    }
+
+    // 2. Radial contact with player torso center
+    const px = player.x + (player.width || 16) / 2;
+    const py = player.y + 6;
     const dist = Math.hypot(this.x - px, this.y - py);
-    return dist < 14; // Generous contact threshold ensuring player is hit
+    return dist < 17;
   }
 
   update(floors) {
@@ -363,11 +385,12 @@ class MeatballProjectile {
       }
     }
 
-    // Check floor collision for bouncing
+    // Continuous floor collision detection: catches fast falling projectiles without tunneling
     if (floors && this.vy > 0) {
       for (const f of floors) {
-        if (this.x >= f.x1 - 4 && this.x <= f.x2 + 4) {
-          if (Math.abs(this.y - f.y) <= 5) {
+        if (this.x >= f.x1 - 6 && this.x <= f.x2 + 6) {
+          const prevY = this.y - this.vy;
+          if (prevY <= f.y + 2 && this.y >= f.y - 6) {
             this.y = f.y - 4;
             this.bounces++;
             if (this.bounces > this.maxBounces) {
@@ -618,12 +641,12 @@ class KiloburnerBoss {
 
     // Anchor position (center-bottom reference)
     this.x = (initialX !== null) ? initialX : (arenaWidth > 320 ? arenaWidth - 45 : 275);
-    this.baseY = 215; // Vertical tracking base elevation
+    this.baseY = 288; // Vertical tracking base elevation: starts at floor height
     this.y = this.baseY;
     this.vy = 0;
-    this.maxVerticalSpeed = 2.2; // Responsive cyber-thruster tracking speed
+    this.maxVerticalSpeed = 2.8; // Agile cyber-thruster tracking speed
     this.minBaseY = 95;  // Ceiling clearance
-    this.maxBaseY = 282; // Descent tracking: descends to y=282 so attacks can strike player on floor (y=288)
+    this.maxBaseY = 320; // Full descent: allows boss to lower completely to the floor (y=320) so all attacks hit player
     this.lungeX = 0;     // Horizontal attack thrust
 
     // Scale ratio from original ~240px sprite down to game size (~96x68)
@@ -777,15 +800,15 @@ class KiloburnerBoss {
     // 2. Vertical 2D Pursuit & Hydraulic Cables Suspension Physics
     // Follows Chef Pepe when climbing ladders or dropping floors!
     if (player && !this.isDead) {
-      // Calculate target vertical position based on player's feet elevation.
-      // Descends dynamically so attacks (flame, claw, meatball) align with player's standing height!
-      const targetBaseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, player.y + 6));
+      // Calculate target vertical position based on player's elevation.
+      // Descends completely (player.y + 24) so the boss's mouth, flames, and claws align squarely with the player!
+      const targetBaseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, player.y + 24));
       const dy = targetBaseY - this.baseY;
 
       // Heavyweight responsive acceleration
-      const accel = 0.08;
+      const accel = 0.10;
       this.vy = Math.max(-this.maxVerticalSpeed, Math.min(this.maxVerticalSpeed, this.vy + dy * accel));
-      this.vy *= 0.92; // Damping
+      this.vy *= 0.90; // Damping
       this.baseY += this.vy;
       this.baseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, this.baseY));
     }
@@ -795,15 +818,26 @@ class KiloburnerBoss {
     const hoverBob = Math.sin(this.floatAngle) * 5;
     this.y = this.baseY + hoverBob;
 
-    // 3. Horizontal Viewport Anchoring & Tactical Standoff
+    // 3. Horizontal Viewport Anchoring & Active Combat Positioning
     const bossHalfW = Math.round(this.logicalW * 0.55);
     this.maxX = cameraX + 240 - bossHalfW - 8;
-    this.minX = cameraX + 240 - bossHalfW - 65;
+    this.minX = cameraX + 45; // Allows boss to pursue across the combat zone
 
-    // Enforce tactical standoff so the boss never drifts on top of player causing sudden collision death
-    const minStandoff = 65;
-    if (player && (this.x - player.x) < minStandoff && this.facing === -1) {
-      this.x = Math.max(this.x, player.x + minStandoff);
+    // If player is within viewport, boss advances to engage in close/medium combat range (~65-80px)
+    if (this.state === 'idle' && player) {
+      const desiredCombatX = (this.facing === -1) ? (player.x + 72) : (player.x - 72);
+      const targetX = Math.max(this.minX, Math.min(this.maxX, desiredCombatX));
+      this.x += (targetX - this.x) * 0.05 + this.hoverSpeedX;
+    }
+
+    // Safety clamp preventing boss from stepping on player's feet
+    const minStandoff = 42;
+    if (this.state === 'idle' && player && Math.abs(this.x - player.x) < minStandoff) {
+      if (this.facing === -1) {
+        this.x = player.x + minStandoff;
+      } else {
+        this.x = player.x - minStandoff;
+      }
     }
 
     if (this.x < this.minX) {
@@ -812,11 +846,6 @@ class KiloburnerBoss {
     } else if (this.x > this.maxX) {
       this.x = this.maxX;
       this.hoverSpeedX = -Math.abs(this.hoverSpeedX);
-    }
-
-    // Horizontal patrol oscillation
-    if (this.state === 'idle') {
-      this.x += this.hoverSpeedX;
     }
 
     // 4. State Machine (Hit, Recoil, Flame, Meatball, Claw)
@@ -880,14 +909,14 @@ class KiloburnerBoss {
         flameW = 44;
         flameH = 20;
       } else if (relT >= 48 && relT < 70) {
-        // Pose 5: Peak Flame (fair 50px reach, was 85px!)
+        // Pose 5: Peak Flame (reaches player standing on platform/ground)
         isFiring = true;
-        flameW = 50;
-        flameH = 22;
+        flameW = 60;
+        flameH = 24;
       } else if (relT >= 70 && relT < 86) {
         // Pose 6: Dissipating Embers & Smoke (Harmless!)
         isFiring = false;
-        flameW = 26;
+        flameW = 28;
         flameH = 16;
       }
 
@@ -895,16 +924,17 @@ class KiloburnerBoss {
       const flameX = (this.facing === -1)
         ? (this.x + this.lungeX - this.logicalW * 0.38 - flameW)
         : (this.x + this.lungeX + this.logicalW * 0.38);
-      const flameY = this.y - this.logicalH * 0.58;
-      this.flameHitbox = { x: flameX, y: flameY, w: flameW, h: flameH };
+      // Flame origin aligned with boss mouth center
+      const flameY = this.y - this.logicalH * 0.45;
+      this.flameHitbox = { x: flameX, y: flameY, w: flameW, h: flameH + 8 };
 
       // Launch flying flame projectile at each designated interval
       if (fireFrames.includes(this.stateTimer)) {
         if (spawnProjectileCallback) {
           const nozzleX = this.x + this.lungeX + (this.facing * (this.logicalW * 0.38));
-          const nozzleY = this.y - (this.logicalH * 0.56);
+          const nozzleY = this.y - (this.logicalH * 0.45);
           const targetX = player ? player.x : (this.x + this.facing * 200);
-          const targetY = player ? player.y : this.y;
+          const targetY = player ? (player.y + 4) : this.y;
           spawnProjectileCallback(new BossFlameProjectile(nozzleX, nozzleY, targetX, targetY, this.facing));
         }
         if (window.soundManager && window.soundManager.playFlame) {
@@ -938,9 +968,9 @@ class KiloburnerBoss {
       if (this.stateTimer === 24) {
         if (spawnProjectileCallback && player) {
           const spawnX = this.x + (this.facing * (this.logicalW * 0.42));
-          const spawnY = this.y - (this.logicalH * 0.52);
-          const targetX = player.x + (Math.random() - 0.5) * 20;
-          const targetY = player.y;
+          const spawnY = this.y - (this.logicalH * 0.45);
+          const targetX = player.x + (player.width ? player.width / 2 : 8) + (Math.random() - 0.5) * 8;
+          const targetY = player.y + 4;
           spawnProjectileCallback(new MeatballProjectile(spawnX, spawnY, targetX, targetY));
           if (window.soundManager && window.soundManager.playDrop) {
             window.soundManager.playDrop();
@@ -983,14 +1013,14 @@ class KiloburnerBoss {
       } else if (this.stateTimer <= 42) {
         // Phase 2: Forward Hydraulic Strike (frames 25 to 42)
         const progress = (this.stateTimer - 24) / 18;
-        this.lungeX = Math.sin(progress * Math.PI) * (this.facing * 16); // 16px lunge (was 22px)
+        this.lungeX = Math.sin(progress * Math.PI) * (this.facing * 20); // 20px lunge forward toward player
 
-        const clawReach = 46; // Balanced reach (was 70px)
-        const clawH = 18;     // Balanced height (was 26px)
+        const clawReach = 58; // Formidable reach reaching player
+        const clawH = 26;     // Covers full player height profile
         const clawX = (this.facing === -1)
           ? (this.x + this.lungeX - this.logicalW * 0.35 - clawReach)
           : (this.x + this.lungeX + this.logicalW * 0.35);
-        const clawY = this.y - this.logicalH * 0.45;
+        const clawY = this.y - this.logicalH * 0.38;
 
         this.clawHitbox = { x: clawX, y: clawY, w: clawReach, h: clawH };
         this.clawActive = true;
@@ -1024,13 +1054,13 @@ class KiloburnerBoss {
         const distToPlayer = player ? Math.hypot(player.x - this.x, player.y - this.y) : 999;
         const verticalDiff = player ? Math.abs(player.y - this.y) : 999;
 
-        if (distToPlayer < 95 && verticalDiff < 45) {
+        if (distToPlayer < 110 && verticalDiff < 65) {
           this.state = Math.random() < 0.55 ? 'flame' : 'claw';
         } else {
           const roll = Math.random();
           if (roll < 0.45) {
             this.state = 'meatball';
-          } else if (roll < 0.8) {
+          } else if (roll < 0.75) {
             this.state = 'flame';
           } else {
             this.state = 'claw';
