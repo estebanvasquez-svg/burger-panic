@@ -174,7 +174,7 @@ class LevelMap {
         isBossStage: true,
         boss: {
           type: 'kiloburner',
-          health: 2000,
+          health: 600,
           name: 'KILOBURNER'
         },
         exclusivePower: 'SOPLETE',
@@ -322,7 +322,43 @@ class LevelMap {
           { id: 26, x: 150, y: 120 },
           { id: 27, x: 90, y: 52 }
         ],
-        burgers: [],
+        burgers: [
+          // Section 9 (Initial combat arena)
+          { col: 8, x: 2230, y: 52, type: 'bun_top' },
+          { col: 8, x: 2250, y: 120, type: 'patty' },
+
+          // Section 8
+          { col: 7, x: 1960, y: 52, type: 'cheese' },
+          { col: 7, x: 1980, y: 120, type: 'lettuce' },
+
+          // Section 7
+          { col: 6, x: 1690, y: 52, type: 'bun_top' },
+          { col: 6, x: 1710, y: 120, type: 'patty' },
+
+          // Section 6
+          { col: 5, x: 1420, y: 52, type: 'bun_bottom' },
+          { col: 5, x: 1440, y: 120, type: 'cheese' },
+
+          // Section 5
+          { col: 4, x: 1160, y: 52, type: 'bun_top' },
+          { col: 4, x: 1180, y: 120, type: 'patty' },
+
+          // Section 4
+          { col: 3, x: 890, y: 52, type: 'lettuce' },
+          { col: 3, x: 910, y: 120, type: 'bun_bottom' },
+
+          // Section 3
+          { col: 2, x: 620, y: 52, type: 'bun_top' },
+          { col: 2, x: 640, y: 120, type: 'patty' },
+
+          // Section 2
+          { col: 1, x: 350, y: 52, type: 'cheese' },
+          { col: 1, x: 370, y: 120, type: 'lettuce' },
+
+          // Section 1 (Final escape door)
+          { col: 0, x: 80, y: 52, type: 'bun_top' },
+          { col: 0, x: 100, y: 120, type: 'bun_bottom' }
+        ],
         plates: [],
         playerStart: { x: 2320, y: 288 },
         enemies: [],

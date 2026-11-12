@@ -1395,13 +1395,15 @@ class PepperCloud {
     }
 
     // Also check collision with active Boss if present
-    if (window.burgerPanicGame && window.burgerPanicGame.boss && !window.burgerPanicGame.boss.isDead) {
-      const boss = window.burgerPanicGame.boss;
-      const bx = boss.x + 12;
-      const by = boss.y + 12;
+    const activeBoss = window.burgerPanicGame ? (window.burgerPanicGame.kiloburnerBoss || window.burgerPanicGame.boss) : null;
+    if (activeBoss && !activeBoss.isDead) {
+      const bx = activeBoss.x + (activeBoss.facing === -1 ? -activeBoss.logicalW * 0.25 : activeBoss.logicalW * 0.25);
+      const by = activeBoss.y - (activeBoss.logicalH ? activeBoss.logicalH * 0.5 : 20);
       for (const p of this.particles) {
-        if (Math.hypot(p.x - bx, p.y - by) < 18) {
-          boss.onPepperHit();
+        if (Math.hypot(p.x - bx, p.y - by) < 36) {
+          if (activeBoss.onPepperHit) {
+            activeBoss.onPepperHit();
+          }
           break;
         }
       }

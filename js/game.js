@@ -110,16 +110,21 @@ class BurgerPanicGame {
       } else if (this.state === 'PLAYING') {
         if (this.player) {
           if (this.levelData && this.levelData.blowtorches && this.levelData.blowtorches.length > 0) {
-            if (!this.player.hasBlowtorch || this.player.blowtorchFuel <= 0) {
-              this.popups.push(new window.ScorePopup('¡SUBE POR UN SOPLETE!', this.player.x - 30, this.player.y - 14));
+            if (this.player.hasBlowtorch && this.player.blowtorchFuel > 0) {
+              this.player.fireBlowtorch(this.flameProjectiles, this.controls.input);
+              this.updatePepperUI();
+              return;
+            } else if (this.player.peppers > 0) {
+              const tossed = this.player.throwPepper(this.pepperClouds, this.controls.input);
+              if (tossed) this.updatePepperUI();
+              return;
+            } else {
+              this.popups.push(new window.ScorePopup('¡BUSCA UN SOPLETE!', this.player.x - 30, this.player.y - 14));
               if (window.soundManager && window.soundManager.playGasEmpty) {
                 window.soundManager.playGasEmpty();
               }
               return;
             }
-            this.player.fireBlowtorch(this.flameProjectiles, this.controls.input);
-            this.updatePepperUI();
-            return;
           }
           if (this.kiloburnerBoss) {
             this.player.fireCryoExtinguisher(this.cryoProjectiles, this.controls.input);
@@ -410,9 +415,19 @@ class BurgerPanicGame {
   }
 
   jumpToStage(stageNum) {
+    this.devMode = true;
     const totalStages = (this.levelMap && this.levelMap.levels) ? this.levelMap.levels.length : 16;
     const target = Math.max(1, Math.min(stageNum, totalStages));
-    this.startStage(target);
+    this.saveCurrentStage(target);
+    this.stageIndex = target - 1;
+    this.loadStage(this.stageIndex);
+    if (this.player) {
+      this.player.lives = 3;
+      this.player.peppers = 5;
+    }
+    this.updatePepperUI();
+    this.state = 'READY';
+    this.stateTimer = 100;
     this.updateDevSelect();
     this.showDevToast(`CARGANDO NIVEL ${target}`);
   }
@@ -556,6 +571,11 @@ class BurgerPanicGame {
         if (labelSpan) labelSpan.textContent = 'FUEGO';
         if (iconSpan) iconSpan.textContent = '🔥';
         if (subLabel) subLabel.textContent = 'SOPLETE';
+      } else if (this.player && this.player.peppers > 0) {
+        if (badge) badge.textContent = this.player.peppers;
+        if (labelSpan) labelSpan.textContent = 'PIMIENTA';
+        if (iconSpan) iconSpan.textContent = '🧂';
+        if (subLabel) subLabel.textContent = 'CEGAR BOSS';
       } else {
         if (badge) badge.textContent = '0%';
         if (labelSpan) labelSpan.textContent = 'BUSCA';
@@ -969,7 +989,11 @@ class BurgerPanicGame {
       for (const bt of this.blowtorches) {
         bt.update();
         if (bt.checkCollision(this.player)) {
-          bt.collected = true;
+          if (bt.collect) {
+            bt.collect();
+          } else {
+            bt.collected = true;
+          }
           this.player.hasBlowtorch = true;
           this.player.blowtorchFuel = 100;
           this.addScore(100, bt.x, bt.y - 10);
@@ -1050,23 +1074,34 @@ class BurgerPanicGame {
           fp.update();
 
           // Hit check on Boss
-          if (this.kiloburnerBoss && this.kiloburnerBoss.checkHitByFlame(fp)) {
-            this.addScore(40, fp.x, fp.y);
-            this.popups.push(new window.ScorePopup('+40', fp.x, fp.y - 8));
-            for (let s = 0; s < 6; s++) {
-              this.particles.push(new window.ArcadeParticle(
-                fp.x, fp.y,
-                (Math.random() - 0.5) * 3.5,
-                (Math.random() - 0.5) * 3.5,
-                Math.random() < 0.5 ? '#f97316' : (Math.random() < 0.8 ? '#fef08a' : '#ef4444'),
-                2.5, 18, 'spark'
-              ));
+          if (this.kiloburnerBoss) {
+            const hitResult = this.kiloburnerBoss.checkHitByFlame(fp);
+            if (hitResult) {
+              const isCrit = (hitResult === 'crit');
+              const scoreVal = isCrit ? 120 : 40;
+              this.addScore(scoreVal, fp.x, fp.y);
+              if (isCrit) {
+                this.popups.push(new window.ScorePopup('¡CRÍTICO! -26 HP', fp.x - 22, fp.y - 12));
+                this.screenShake = Math.max(this.screenShake, 3);
+              } else {
+                this.popups.push(new window.ScorePopup('-12 HP', fp.x, fp.y - 8));
+              }
+              const sparkCount = isCrit ? 10 : 6;
+              for (let s = 0; s < sparkCount; s++) {
+                this.particles.push(new window.ArcadeParticle(
+                  fp.x, fp.y,
+                  (Math.random() - 0.5) * (isCrit ? 5 : 3.5),
+                  (Math.random() - 0.5) * (isCrit ? 5 : 3.5),
+                  isCrit ? (Math.random() < 0.5 ? '#fef08a' : '#00f0ff') : (Math.random() < 0.5 ? '#f97316' : '#fef08a'),
+                  isCrit ? 3.5 : 2.5, 18, 'spark'
+                ));
+              }
+              if (window.soundManager && window.soundManager.playBlip) {
+                window.soundManager.playBlip();
+              }
+              this.flameProjectiles.splice(i, 1);
+              continue;
             }
-            if (window.soundManager && window.soundManager.playBlip) {
-              window.soundManager.playBlip();
-            }
-            this.flameProjectiles.splice(i, 1);
-            continue;
           }
 
           if (fp.life <= 0 || fp.x < 0 || fp.x > (this.levelData.width || 1600) + 40) {

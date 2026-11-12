@@ -105,7 +105,7 @@ class FlameProjectile {
     this.radius = 5.5;
     this.life = 42; // frames
     this.maxLife = 42;
-    this.damage = 8;
+    this.damage = 12;
     this.particles = [];
   }
 
@@ -189,25 +189,57 @@ class BlowtorchPickup {
     this.w = 16;
     this.h = 18;
     this.collected = false;
+    this.respawnTimer = 0;
+    this.maxRespawnTime = 600; // ~10 seconds to auto-recharge
     this.animTimer = Math.random() * 60;
+  }
+
+  collect() {
+    this.collected = true;
+    this.respawnTimer = this.maxRespawnTime;
   }
 
   update() {
     this.animTimer += 0.08;
+    if (this.collected) {
+      this.respawnTimer--;
+      if (this.respawnTimer <= 0) {
+        this.collected = false;
+        if (window.burgerPanicGame && window.burgerPanicGame.particles) {
+          for (let s = 0; s < 8; s++) {
+            window.burgerPanicGame.particles.push(new window.ArcadeParticle(
+              this.x, this.y - 8,
+              (Math.random() - 0.5) * 2.5,
+              (Math.random() - 0.5) * 2.5,
+              Math.random() < 0.5 ? '#fef08a' : '#38bdf8',
+              2.5, 18, 'spark'
+            ));
+          }
+        }
+      }
+    }
   }
 
   draw(ctx) {
     if (this.collected) {
-      // Empty spent station bracket with cool industrial aesthetic
+      // Recharging bracket with animated progress bar
       ctx.save();
       ctx.fillStyle = '#1e293b';
-      ctx.fillRect(Math.round(this.x - 8), Math.round(this.y - 3), 16, 3);
+      ctx.fillRect(Math.round(this.x - 12), Math.round(this.y - 4), 24, 4);
       ctx.fillStyle = '#475569';
-      ctx.fillRect(Math.round(this.x - 6), Math.round(this.y - 2), 12, 1);
-      ctx.fillStyle = '#64748b';
+      ctx.fillRect(Math.round(this.x - 10), Math.round(this.y - 3), 20, 2);
+
+      // Recharge progress fill
+      const progress = Math.max(0, Math.min(1, 1 - (this.respawnTimer / this.maxRespawnTime)));
+      const fillW = Math.round(20 * progress);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(Math.round(this.x - 10), Math.round(this.y - 3), fillW, 2);
+
+      ctx.fillStyle = '#94a3b8';
       ctx.font = '5px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('VACÍO', Math.round(this.x), Math.round(this.y - 5));
+      const pct = Math.round(progress * 100);
+      ctx.fillText(`CARGA ${pct}%`, Math.round(this.x), Math.round(this.y - 7));
       ctx.restore();
       return;
     }
@@ -654,11 +686,12 @@ class KiloburnerBoss {
     this.logicalW = 120;
     this.logicalH = 88;
 
-    // Colossal boss endurance & fortified durability
-    this.maxHealth = 2000; // Colossal 2000 HP fortress health
-    this.health = 2000;
+    // Balanced arcade boss endurance
+    this.maxHealth = 600; // Balanced 600 HP arcade boss health
+    this.health = 600;
     this.animTimer = 0;
     this.facing = -1; // -1 = looking left toward Chef Pepe
+    this.pepperStunTimer = 0; // Blinding pepper duration
 
     // States: 'idle', 'lean', 'recoil', 'flame', 'meatball', 'claw', 'hit', 'explode', 'dead'
     this.state = 'idle';
@@ -853,7 +886,24 @@ class KiloburnerBoss {
     this.clawActive = false;
     this.lungeX = 0;
 
-    if (this.state === 'hit') {
+    if (this.pepperStunTimer > 0) {
+      this.pepperStunTimer--;
+      this.state = 'recoil';
+      this.flameActive = false;
+      this.clawActive = false;
+      if (Math.random() < 0.4) {
+        if (!this.armorSparks) this.armorSparks = [];
+        this.armorSparks.push({
+          x: this.x + (this.facing * -25) + (Math.random() - 0.5) * 16,
+          y: this.y - this.logicalH * 0.45 + (Math.random() - 0.5) * 12,
+          vx: (Math.random() - 0.5) * 2,
+          vy: -1 - Math.random() * 2,
+          life: 12,
+          maxLife: 12,
+          color: Math.random() < 0.5 ? '#fef08a' : '#ffffff'
+        });
+      }
+    } else if (this.state === 'hit') {
       this.stateTimer--;
       if (this.stateTimer <= 0) this.state = 'idle';
     } else if (this.state === 'recoil') {
@@ -1120,15 +1170,67 @@ class KiloburnerBoss {
   }
 
   /**
-   * Check collision with player's cryogenic projectile
+   * Stun and blind boss with Pepper Cloud
    */
+  onPepperHit() {
+    if (this.health <= 0 || this.isDead || this.pepperStunTimer > 0) return;
+    this.pepperStunTimer = 90; // 1.5s stun
+    this.flameActive = false;
+    this.clawActive = false;
+    this.state = 'recoil';
+    this.stateTimer = 90;
+    this.hitFlashTimer = 20;
+
+    // Spurt sneezing steam and sparks
+    if (!this.armorSparks) this.armorSparks = [];
+    for (let i = 0; i < 14; i++) {
+      this.armorSparks.push({
+        x: this.x + (this.facing * -20) + (Math.random() - 0.5) * 20,
+        y: this.y - this.logicalH * 0.45 + (Math.random() - 0.5) * 15,
+        vx: (Math.random() - 0.5) * 4,
+        vy: -2 - Math.random() * 3,
+        size: 3,
+        life: 20,
+        maxLife: 20,
+        color: Math.random() < 0.5 ? '#fef08a' : '#ffffff'
+      });
+    }
+
+    if (window.burgerPanicGame) {
+      window.burgerPanicGame.popups.push(new window.ScorePopup('¡CEGADO! 🧂', this.x - 20, this.y - this.logicalH * 0.8));
+      window.burgerPanicGame.addScore(100, this.x, this.y);
+      if (window.soundManager && window.soundManager.playBlip) {
+        window.soundManager.playBlip();
+      }
+    }
+  }
+
   /**
    * Check collision with player's blowtorch flame projectile
+   * Features a critical weak spot on the open mouth / furnace core during attacks!
    */
   checkHitByFlame(projectile) {
     if (this.health <= 0 || this.isDead) return false;
 
-    // Body hitbox
+    // 1. Weak Spot: Open Furnace Mouth / Exposed Core
+    // When boss is in 'flame', 'meatball', 'recoil', or pepper-stunned, the mouth is wide open!
+    const isMouthOpen = (this.state === 'flame' || this.state === 'meatball' || this.state === 'recoil' || this.pepperStunTimer > 0);
+    if (isMouthOpen) {
+      const mouthW = 34;
+      const mouthH = 26;
+      const mouthX = (this.facing === -1)
+        ? (this.x - this.logicalW * 0.48)
+        : (this.x + this.logicalW * 0.15);
+      const mouthY = this.y - this.logicalH * 0.58;
+
+      if (projectile.x >= mouthX && projectile.x <= mouthX + mouthW &&
+          projectile.y >= mouthY && projectile.y <= mouthY + mouthH) {
+        this.takeDamage(26, 'flame_crit');
+        return 'crit';
+      }
+    }
+
+    // 2. Body Armor Hitbox
     const left = this.x - this.logicalW * 0.5;
     const right = this.x + this.logicalW * 0.5;
     const top = this.y - this.logicalH;
@@ -1136,8 +1238,8 @@ class KiloburnerBoss {
 
     if (projectile.x >= left && projectile.x <= right &&
         projectile.y >= top && projectile.y <= bottom) {
-      this.takeDamage(projectile.damage || 8, 'flame');
-      return true;
+      this.takeDamage(projectile.damage || 12, 'flame');
+      return 'hit';
     }
     return false;
   }
@@ -1164,32 +1266,35 @@ class KiloburnerBoss {
    */
   checkHitByBurgerPiece(piece) {
     if (this.health <= 0 || this.isDead || !piece.falling) return 0;
+    if (piece.hitBossOnThisFall) return 0;
 
     const left = this.x - this.logicalW * 0.45;
     const right = this.x + this.logicalW * 0.45;
     const top = this.y - this.logicalH;
-    const bottom = this.y;
+    const bottom = this.y + 16;
 
     // Burger piece bounds
     if (piece.x + 24 >= left && piece.x <= right &&
         piece.y + 12 >= top && piece.y <= bottom) {
-      const dealt = this.takeDamage(50, 'burger');
-      return dealt || 35;
+      piece.hitBossOnThisFall = true;
+      const dealt = this.takeDamage(150, 'burger');
+      this.state = 'recoil';
+      this.stateTimer = 90; // Heavy crush stuns boss in recoil
+      return dealt || 150;
     }
     return 0;
   }
 
-  takeDamage(amount, source = 'cryo') {
+  takeDamage(amount, source = 'flame') {
     if (this.health <= 0) return 0;
 
-    // Heavy Cyber-Armor Resistance (Blindaje de Titanio Térmico):
-    // 50% damage reduction on energy/flame projectiles (reinforced thermal plating)
-    // 30% reduction on falling burger crush impacts (shock absorption chassis)
     let effectiveDamage = amount;
-    if (source === 'flame' || source === 'cryo') {
-      effectiveDamage = Math.max(3, Math.round(amount * 0.50));
+    if (source === 'flame_crit') {
+      effectiveDamage = 26; // High reward critical damage penetrating cyber armor!
+    } else if (source === 'flame') {
+      effectiveDamage = 12; // Solid visible chip damage
     } else if (source === 'burger') {
-      effectiveDamage = Math.max(25, Math.round(amount * 0.70));
+      effectiveDamage = 150; // Massive crushing crush damage
     }
 
     this.health = Math.max(0, this.health - effectiveDamage);
@@ -1197,7 +1302,8 @@ class KiloburnerBoss {
 
     // Spawn cyber-armor ricochet sparks (metal deflecting incoming impact)
     if (!this.armorSparks) this.armorSparks = [];
-    for (let s = 0; s < 5; s++) {
+    const sparkCount = (source === 'burger' || source === 'flame_crit') ? 8 : 4;
+    for (let s = 0; s < sparkCount; s++) {
       this.armorSparks.push({
         x: this.x + (Math.random() - 0.5) * 40,
         y: this.y - 45 + (Math.random() - 0.5) * 35,
@@ -1205,7 +1311,7 @@ class KiloburnerBoss {
         vy: -1.2 - Math.random() * 2.2,
         life: 10,
         maxLife: 10,
-        color: Math.random() < 0.5 ? '#38bdf8' : '#ffffff'
+        color: (source === 'flame_crit') ? '#00f0ff' : (Math.random() < 0.5 ? '#f97316' : '#fef08a')
       });
     }
 
@@ -1215,17 +1321,15 @@ class KiloburnerBoss {
       return effectiveDamage;
     }
 
-    // Hyper-Armor & Poise: minor projectiles do not interrupt the boss during attacks!
+    // Recoil state when taking heavy hits
     if (source === 'burger') {
-      this.state = 'hit';
-      this.stateTimer = 20; // Heavy crush stuns boss briefly
-    } else {
-      // Light flinch recoil ONLY if completely idle; maintains uninterrupted attack flow!
-      if (this.state === 'idle') {
-        this.state = 'recoil';
-        this.stateTimer = 6;
-      }
+      this.state = 'recoil';
+      this.stateTimer = 90;
+    } else if (this.state === 'idle') {
+      this.state = 'recoil';
+      this.stateTimer = 15;
     }
+
     return effectiveDamage;
   }
 
