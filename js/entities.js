@@ -167,15 +167,17 @@ class Player {
     }
 
     // Directional Ground Jump:
-    // Only jump sideways if direction buttons are held; otherwise purely vertical!
+    // In Stage 3 (Boss Kiloburner), jump impulse and leap distance are augmented so Chef Pepe can agilely dodge claws, flames and meatballs!
+    const isBossLevel = (this.levelData && (this.levelData.isBossStage || this.levelData.stageNumber === 3));
+    const hSpeed = isBossLevel ? 2.5 : 2.2;
     let jumpVx = 0;
     if (input) {
       if (input.x < 0) {
-        jumpVx = -2.2;
+        jumpVx = -hSpeed;
         this.dir = -1;
         this.facingDir = 'left';
       } else if (input.x > 0) {
-        jumpVx = 2.2;
+        jumpVx = hSpeed;
         this.dir = 1;
         this.facingDir = 'right';
       } else {
@@ -183,7 +185,7 @@ class Player {
         jumpVx = 0;
       }
     } else if (dir !== null && dir !== 0) {
-      jumpVx = dir > 0 ? 2.2 : -2.2;
+      jumpVx = dir > 0 ? hSpeed : -hSpeed;
       this.dir = dir > 0 ? 1 : -1;
       this.facingDir = dir > 0 ? 'right' : 'left';
     } else {
@@ -193,7 +195,11 @@ class Player {
     this.isJumping = true;
     this.isClimbing = false;
     this.vx = jumpVx;
-    this.vy = jumpVx === 0 ? -4.3 : -3.8; // High vertical vault or horizontal arc
+    if (isBossLevel) {
+      this.vy = jumpVx === 0 ? -5.2 : -4.7; // Enhanced agile jump in boss stage (~46-56px apex)
+    } else {
+      this.vy = jumpVx === 0 ? -4.3 : -3.8; // Standard retro kitchen jump
+    }
     if (window.burgerPanicGame && window.burgerPanicGame.spawnJumpDust) {
       window.burgerPanicGame.spawnJumpDust(this.x + 8, this.y + 14);
     }
