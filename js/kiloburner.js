@@ -198,60 +198,102 @@ class BlowtorchPickup {
 
   draw(ctx) {
     if (this.collected) {
-      // Empty spent station bracket
+      // Empty spent station bracket with cool industrial aesthetic
       ctx.save();
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(Math.round(this.x - 7), Math.round(this.y - 4), 14, 4);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(Math.round(this.x - 8), Math.round(this.y - 3), 16, 3);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(Math.round(this.x - 6), Math.round(this.y - 2), 12, 1);
       ctx.fillStyle = '#64748b';
-      ctx.font = '6px monospace';
+      ctx.font = '5px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('USADO', Math.round(this.x), Math.round(this.y - 6));
+      ctx.fillText('VACÍO', Math.round(this.x), Math.round(this.y - 5));
       ctx.restore();
       return;
     }
 
     const bob = Math.sin(this.animTimer) * 2;
-    const drawY = this.y - 18 + bob;
+    const drawY = this.y - 20 + bob;
+    const cx = Math.round(this.x);
 
     ctx.save();
 
-    // Bouncing overhead prompt (crisp 1px drop shadow, zero CPU shadowBlur)
-    const tx = Math.round(this.x);
-    const ty = Math.round(drawY - 6);
-    ctx.font = 'bold 7px monospace';
+    // 1. Sleek overhead badge (crisp 1px drop shadow, pulsing gold color)
+    const tx = cx;
+    const ty = Math.round(drawY - 7);
+    const pulse = Math.sin(this.animTimer * 2) * 0.5 + 0.5;
+    ctx.font = 'bold 6px monospace';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#000000';
-    ctx.fillText('▼ SOPLETE ▼', tx + 1, ty + 1);
-    ctx.fillStyle = '#fef08a';
-    ctx.fillText('▼ SOPLETE ▼', tx, ty);
+    ctx.fillText('⚡ SOPLETE ⚡', tx + 1, ty + 1);
+    ctx.fillStyle = (pulse > 0.4) ? '#fef08a' : '#f59e0b';
+    ctx.fillText('⚡ SOPLETE ⚡', tx, ty);
 
-    // Fast glowing aura ring (zero createRadialGradient per frame)
-    ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
-    ctx.fillRect(Math.round(this.x - 9), Math.round(drawY + 1), 18, 15);
-
-    // Gas Canister body (vivid blue industrial cylinder)
-    ctx.fillStyle = '#0284c7';
-    ctx.fillRect(Math.round(this.x - 5), Math.round(drawY + 5), 10, 11);
-    // Canister highlight
-    ctx.fillStyle = '#38bdf8';
-    ctx.fillRect(Math.round(this.x - 4), Math.round(drawY + 6), 2, 9);
-    // Metal base ring
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(Math.round(this.x - 6), Math.round(drawY + 15), 12, 2);
-
-    // Brass valve / regulator
-    ctx.fillStyle = '#eab308';
-    ctx.fillRect(Math.round(this.x - 3), Math.round(drawY + 2), 6, 3);
-    // Angled burner nozzle
-    ctx.fillStyle = '#94a3b8';
-    ctx.fillRect(Math.round(this.x + 2), Math.round(drawY - 1), 6, 3);
-
-    // Animated pilot flame at the tip
-    const flameSize = 2 + Math.random() * 2;
-    ctx.fillStyle = Math.random() < 0.5 ? '#38bdf8' : '#f59e0b';
+    // 2. High-Tech Holographic Base Glow
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.18)';
     ctx.beginPath();
-    ctx.arc(this.x + 9, drawY, flameSize, 0, Math.PI * 2);
+    ctx.ellipse(cx, Math.round(this.y - 2), 10, 3, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    // 3. Professional Blowtorch Tool Sprite (Industrial Pixel Art):
+    // Rubberized base foot
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(cx - 6, Math.round(drawY + 16), 12, 3);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(cx - 5, Math.round(drawY + 16), 10, 1);
+
+    // Blue pressurized tank with metallic cylindrical shading
+    ctx.fillStyle = '#0369a1'; // Base deep cyan
+    ctx.fillRect(cx - 5, Math.round(drawY + 6), 10, 10);
+    // Cylinder highlight reflection
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(cx - 4, Math.round(drawY + 6), 2, 10);
+    // Cylinder shadow
+    ctx.fillStyle = '#075985';
+    ctx.fillRect(cx + 3, Math.round(drawY + 6), 2, 10);
+    // Industrial caution hazard stripe band
+    ctx.fillStyle = '#eab308';
+    ctx.fillRect(cx - 5, Math.round(drawY + 10), 10, 2);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(cx - 3, Math.round(drawY + 10), 2, 2);
+    ctx.fillRect(cx + 1, Math.round(drawY + 10), 2, 2);
+
+    // Brass high-pressure regulator valve & control wheel
+    ctx.fillStyle = '#ca8a04';
+    ctx.fillRect(cx - 3, Math.round(drawY + 3), 6, 3);
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(cx - 2, Math.round(drawY + 3), 2, 1);
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(cx - 6, Math.round(drawY + 3), 3, 3); // side knob
+
+    // Heavy-duty stainless steel neck & curved burner tube
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(cx - 1, Math.round(drawY), 3, 3);
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(cx + 2, Math.round(drawY - 2), 6, 3);
+    // Chromed nozzle shroud
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(cx + 6, Math.round(drawY - 3), 4, 5);
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(cx + 10, Math.round(drawY - 2), 1, 3);
+
+    // Animated intense blue-core pilot flame
+    const fPulse = Math.sin(this.animTimer * 4) * 1.2;
+    const fLen = 4 + fPulse;
+    // Outer flame aura
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+    ctx.beginPath();
+    ctx.arc(cx + 12, drawY - 1, 3 + fPulse * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Inner incandescent white-blue pilot jet
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.moveTo(cx + 11, drawY - 2);
+    ctx.lineTo(cx + 11 + fLen, drawY - 1);
+    ctx.lineTo(cx + 11, drawY);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cx + 11, Math.round(drawY - 1), 2, 1);
 
     ctx.restore();
   }
@@ -287,6 +329,16 @@ class MeatballProjectile {
     this.particles = [];
     this.predictedFloorY = targetY || 288;
     this.targetX = targetX;
+    this.animTimer = 0;
+  }
+
+  checkPlayerHit(player) {
+    if (!player || player.isDead || (player.invulnerableTimer && player.invulnerableTimer > 0)) return false;
+    // Logical hitbox centered on the meatball core (radius 7.5px)
+    const px = player.x + (player.width ? player.width / 2 : 8);
+    const py = player.y + (player.height ? player.height / 2 : 8);
+    const dist = Math.hypot(this.x - px, this.y - py);
+    return dist < 14; // Generous contact threshold ensuring player is hit
   }
 
   update(floors) {
@@ -294,6 +346,7 @@ class MeatballProjectile {
     this.y += this.vy;
     this.vy += this.gravity;
     this.life--;
+    this.animTimer++;
 
     // Dynamically locate the platform floor directly beneath the projectile
     if (floors) {
@@ -397,20 +450,24 @@ class MeatballProjectile {
     const sm = window.spriteManager;
     let spriteDrawn = false;
     if (sm && sm.kiloburnerAtlasLoaded && sm.drawKiloburnerAtlas) {
-      const projW = 24;
-      const projH = 20;
+      const projW = 26;
+      const projH = 21;
       // Native sprite points right (fiery exhaust trail on left, meatball head on right).
       // If moving left (vx < 0), flip horizontally so head leads left and trail trails right.
       const flip = (this.vx < 0);
       const angle = Math.atan2(this.vy, Math.abs(this.vx)) * (flip ? -1 : 1);
 
+      // 4-frame animation cycle for glowing pulsating flame & molten meatball surface
+      const frameIdx = Math.floor(this.animTimer / 4) % 4;
+      const spriteName = `meatball_proj_${frameIdx}`;
+
       ctx.save();
       ctx.translate(Math.round(this.x), Math.round(this.y));
-      ctx.rotate(angle * 0.6); // Graceful ballistic tilt
-      // Center the ball mass at origin: ball center in 24x20 sprite is at x=14, y=10
-      const drawX = -14;
+      ctx.rotate(angle * 0.7); // Dynamic ballistic trajectory alignment
+      // Center the ball mass at origin: ball center in 26x21 sprite is at x=15, y=10
+      const drawX = -15;
       const drawY = -10;
-      spriteDrawn = sm.drawKiloburnerAtlas(ctx, 'meatball_projectile', drawX, drawY, projW, projH, flip);
+      spriteDrawn = sm.drawKiloburnerAtlas(ctx, spriteName, drawX, drawY, projW, projH, flip);
       ctx.restore();
     }
 
@@ -566,7 +623,7 @@ class KiloburnerBoss {
     this.vy = 0;
     this.maxVerticalSpeed = 2.2; // Responsive cyber-thruster tracking speed
     this.minBaseY = 95;  // Ceiling clearance
-    this.maxBaseY = 258; // Fair ground clearance: hovers at y <= 258, leaving 30px clear passage above floor 288!
+    this.maxBaseY = 282; // Descent tracking: descends to y=282 so attacks can strike player on floor (y=288)
     this.lungeX = 0;     // Horizontal attack thrust
 
     // Scale ratio from original ~240px sprite down to game size (~96x68)
@@ -721,8 +778,8 @@ class KiloburnerBoss {
     // Follows Chef Pepe when climbing ladders or dropping floors!
     if (player && !this.isDead) {
       // Calculate target vertical position based on player's feet elevation.
-      // Keeps boss elevated relative to player so player is never trapped or suffocated on the floor!
-      const targetBaseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, player.y - 12));
+      // Descends dynamically so attacks (flame, claw, meatball) align with player's standing height!
+      const targetBaseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, player.y + 6));
       const dy = targetBaseY - this.baseY;
 
       // Heavyweight responsive acceleration
