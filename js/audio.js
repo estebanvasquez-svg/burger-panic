@@ -470,11 +470,11 @@ class SoundManager {
   }
 
   // =========================================================================
-  // DYNAMIC MULTI-STAGE SOUNDTRACK ENGINE (16 UNIQUE STAGE SOUNDTRACKS)
-  // Stage 3: HEAVY METAL / HARD ROCK (Boss Kiloburner Custom Overdrive Engine)
+  // DYNAMIC MULTI-STAGE SOUNDTRACK ENGINE (16 RICH, CONTINUOUS SOUNDTRACKS)
+  // Stage 3: HEAVY METAL / HARD ROCK (Continuous Wall-of-Sound Overdrive Engine)
   // =========================================================================
 
-  makeDistortionCurve(k = 50) {
+  makeDistortionCurve(k = 55) {
     const n_samples = 22050;
     const curve = new Float32Array(n_samples);
     const deg = Math.PI / 180;
@@ -487,6 +487,7 @@ class SoundManager {
 
   // =========================================================================
   // STAGE 3: HEAVY METAL / HARD ROCK SYNTHESIZER (BOSS KILOBURNER)
+  // High-Energy, Zero-Silence, Full-Throttle Rock Engine
   // =========================================================================
 
   playRockGuitar(chordFreqs, time, dur, isPalmChug = false) {
@@ -500,17 +501,18 @@ class SoundManager {
       // 4x12 Marshall Stack Cabinet Emulation Filter
       const cabinet = this.ctx.createBiquadFilter();
       cabinet.type = 'lowpass';
-      cabinet.frequency.setValueAtTime(isPalmChug ? 1900 : 3800, time);
+      cabinet.frequency.setValueAtTime(isPalmChug ? 2200 : 4200, time);
       cabinet.Q.setValueAtTime(2.2, time);
 
       const gain = this.ctx.createGain();
-      const peak = isPalmChug ? 0.048 : 0.068;
+      // Loud, powerful rock guitar levels
+      const peak = isPalmChug ? 0.16 : 0.24;
       gain.gain.setValueAtTime(peak, time);
       if (isPalmChug) {
-        gain.gain.exponentialRampToValueAtTime(0.001, time + Math.min(dur, 0.085));
+        gain.gain.exponentialRampToValueAtTime(0.005, time + Math.min(dur, 0.088));
       } else {
-        gain.gain.setValueAtTime(peak * 0.88, time + dur * 0.4);
-        gain.gain.exponentialRampToValueAtTime(0.002, time + dur * 0.96);
+        gain.gain.setValueAtTime(peak * 0.90, time + dur * 0.5);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + dur * 0.98);
       }
 
       shaper.connect(cabinet);
@@ -524,14 +526,14 @@ class SoundManager {
         osc1.type = 'sawtooth';
         osc2.type = 'sawtooth';
         osc1.frequency.setValueAtTime(freq, time);
-        osc2.frequency.setValueAtTime(freq * 1.006, time);
+        osc2.frequency.setValueAtTime(freq * 1.007, time);
 
         osc1.connect(shaper);
         osc2.connect(shaper);
 
         osc1.start(time);
         osc2.start(time);
-        const stopT = isPalmChug ? (time + Math.min(dur, 0.095)) : (time + dur * 0.98);
+        const stopT = isPalmChug ? (time + Math.min(dur, 0.095)) : (time + dur);
         osc1.stop(stopT);
         osc2.stop(stopT);
       });
@@ -548,34 +550,34 @@ class SoundManager {
 
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(4600, time);
-      filter.Q.setValueAtTime(3.2, time);
+      filter.frequency.setValueAtTime(5200, time);
+      filter.Q.setValueAtTime(3.4, time);
 
       // Fast Rock Solo Vibrato LFO
       const lfo = this.ctx.createOscillator();
       const lfoGain = this.ctx.createGain();
       lfo.frequency.setValueAtTime(6.4, time);
       lfoGain.gain.setValueAtTime(0, time);
-      lfoGain.gain.setValueAtTime(freq * 0.024, time + 0.05);
+      lfoGain.gain.setValueAtTime(freq * 0.026, time + 0.04);
       lfo.connect(lfoGain);
 
       const osc1 = this.ctx.createOscillator();
       const osc2 = this.ctx.createOscillator();
       lfoGain.connect(osc1.frequency);
       lfoGain.connect(osc2.frequency);
-      lfo.start(time + 0.04);
+      lfo.start(time + 0.03);
       lfo.stop(time + dur);
 
       osc1.type = 'sawtooth';
       osc2.type = 'sawtooth';
       osc1.frequency.setValueAtTime(freq, time);
-      osc2.frequency.setValueAtTime(freq * 1.008, time);
+      osc2.frequency.setValueAtTime(freq * 1.009, time);
 
       const gain = this.ctx.createGain();
-      const peak = 0.055;
+      const peak = 0.20; // Searing rock lead presence
       gain.gain.setValueAtTime(peak, time);
-      gain.gain.setValueAtTime(peak * 0.9, time + dur * 0.5);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + dur * 0.98);
+      gain.gain.setValueAtTime(peak * 0.92, time + dur * 0.6);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + dur * 0.98);
 
       osc1.connect(shaper);
       osc2.connect(shaper);
@@ -585,8 +587,8 @@ class SoundManager {
 
       osc1.start(time);
       osc2.start(time);
-      osc1.stop(time + dur * 0.98);
-      osc2.stop(time + dur * 0.98);
+      osc1.stop(time + dur);
+      osc2.stop(time + dur);
     } catch (e) {}
   }
 
@@ -604,13 +606,13 @@ class SoundManager {
       sub.frequency.setValueAtTime(freq * 0.5, time);
 
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(850, time);
-      filter.frequency.exponentialRampToValueAtTime(320, time + dur * 0.8);
-      filter.Q.setValueAtTime(2.2, time);
+      filter.frequency.setValueAtTime(950, time);
+      filter.frequency.exponentialRampToValueAtTime(360, time + dur * 0.85);
+      filter.Q.setValueAtTime(2.4, time);
 
-      const peak = 0.065;
+      const peak = 0.24; // Punchy, driving bass
       gain.gain.setValueAtTime(peak, time);
-      gain.gain.exponentialRampToValueAtTime(0.002, time + dur * 0.95);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + dur * 0.96);
 
       osc.connect(filter);
       sub.connect(filter);
@@ -619,8 +621,8 @@ class SoundManager {
 
       osc.start(time);
       sub.start(time);
-      osc.stop(time + dur * 0.96);
-      sub.stop(time + dur * 0.96);
+      osc.stop(time + dur);
+      sub.stop(time + dur);
     } catch (e) {}
   }
 
@@ -630,36 +632,34 @@ class SoundManager {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(170, time);
-      osc.frequency.exponentialRampToValueAtTime(38, time + 0.08);
+      osc.frequency.setValueAtTime(180, time);
+      osc.frequency.exponentialRampToValueAtTime(40, time + 0.08);
 
-      gain.gain.setValueAtTime(0.12, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.11);
+      gain.gain.setValueAtTime(0.32, time); // Heavy thump
+      gain.gain.exponentialRampToValueAtTime(0.005, time + 0.12);
 
       osc.connect(gain);
       gain.connect(this.bgmMasterGain);
       osc.start(time);
-      osc.stop(time + 0.12);
+      osc.stop(time + 0.13);
     } catch (e) {}
   }
 
   playRockSnare(time) {
     if (!this.bgmMasterGain || !this.ctx) return;
     try {
-      // Punch tone
       const osc = this.ctx.createOscillator();
       const oscGain = this.ctx.createGain();
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(220, time);
-      osc.frequency.exponentialRampToValueAtTime(90, time + 0.07);
-      oscGain.gain.setValueAtTime(0.08, time);
-      oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.09);
+      osc.frequency.setValueAtTime(230, time);
+      osc.frequency.exponentialRampToValueAtTime(95, time + 0.07);
+      oscGain.gain.setValueAtTime(0.20, time);
+      oscGain.gain.exponentialRampToValueAtTime(0.005, time + 0.09);
       osc.connect(oscGain);
       oscGain.connect(this.bgmMasterGain);
       osc.start(time);
       osc.stop(time + 0.10);
 
-      // Noise crack
       if (this.noiseBuffer) {
         const noise = this.ctx.createBufferSource();
         noise.buffer = this.noiseBuffer;
@@ -667,8 +667,8 @@ class SoundManager {
         filter.type = 'highpass';
         filter.frequency.setValueAtTime(1200, time);
         const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.09, time);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+        gain.gain.setValueAtTime(0.24, time); // Cracking rock snap
+        gain.gain.exponentialRampToValueAtTime(0.005, time + 0.15);
         noise.connect(filter);
         filter.connect(gain);
         gain.connect(this.bgmMasterGain);
@@ -687,31 +687,38 @@ class SoundManager {
       filter.type = 'highpass';
       filter.frequency.setValueAtTime(7500, time);
       const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(accent ? 0.045 : 0.025, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + (accent ? 0.06 : 0.035));
+      gain.gain.setValueAtTime(accent ? 0.14 : 0.08, time);
+      gain.gain.exponentialRampToValueAtTime(0.005, time + (accent ? 0.07 : 0.04));
       noise.connect(filter);
       filter.connect(gain);
       gain.connect(this.bgmMasterGain);
       noise.start(time);
-      noise.stop(time + 0.07);
+      noise.stop(time + 0.08);
     } catch (e) {}
   }
 
   playRockDrums(stepInBar, bar, time) {
+    // Crash cymbal on beat 1 of every 4th bar
     if (stepInBar === 0 && bar % 4 === 0) {
       this.play16BitCrash(time);
     }
+    // Driving snare on 4 and 12 (beats 2 and 4), plus ghost notes on 15
     if (stepInBar === 4 || stepInBar === 12) {
       this.playRockSnare(time);
+    } else if (stepInBar === 15 && (bar % 2 === 1)) {
+      this.playRockSnare(time);
     }
+    // Driving double-kick pattern: 0, 3, 6, 8, 10, 14
     if (stepInBar === 0 || stepInBar === 3 || stepInBar === 6 || stepInBar === 8 || stepInBar === 10 || stepInBar === 14) {
       this.playRockKick(time);
     }
-    this.playRockHiHat(time, stepInBar % 2 === 0);
+    // Continuous 16th-note sizzle hi-hat (accent on upbeats)
+    this.playRockHiHat(time, stepInBar % 2 === 1);
   }
 
   // =========================================================================
   // GENERAL 16-BIT MULTI-GENRE INSTRUMENT SUITE (STAGES 1, 2, 4-16)
+  // Full-body, high-impact arcade instruments
   // =========================================================================
 
   play16BitLead(freq, time, dur) {
@@ -725,31 +732,31 @@ class SoundManager {
       osc1.type = 'sawtooth';
       osc2.type = 'square';
       osc1.frequency.setValueAtTime(freq, time);
-      osc2.frequency.setValueAtTime(freq * 1.004, time);
+      osc2.frequency.setValueAtTime(freq * 1.005, time);
 
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(3600, time);
-      filter.frequency.exponentialRampToValueAtTime(1400, time + dur * 0.85);
+      filter.frequency.setValueAtTime(4200, time);
+      filter.frequency.exponentialRampToValueAtTime(1600, time + dur * 0.85);
 
       if (dur > 0.12) {
         const lfo = this.ctx.createOscillator();
         const lfoGain = this.ctx.createGain();
         lfo.frequency.setValueAtTime(6.0, time);
         lfoGain.gain.setValueAtTime(0, time);
-        lfoGain.gain.setValueAtTime(freq * 0.016, time + 0.06);
+        lfoGain.gain.setValueAtTime(freq * 0.018, time + 0.05);
 
         lfo.connect(lfoGain);
         lfoGain.connect(osc1.frequency);
         lfoGain.connect(osc2.frequency);
 
-        lfo.start(time + 0.05);
+        lfo.start(time + 0.04);
         lfo.stop(time + dur);
       }
 
-      const peakGain = 0.048;
+      const peakGain = 0.18; // Full rich lead
       gain.gain.setValueAtTime(peakGain, time);
       gain.gain.setValueAtTime(peakGain * 0.90, time + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.002, time + dur * 0.92);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + dur * 0.95);
 
       osc1.connect(filter);
       osc2.connect(filter);
@@ -758,8 +765,8 @@ class SoundManager {
 
       osc1.start(time);
       osc2.start(time);
-      osc1.stop(time + dur * 0.94);
-      osc2.stop(time + dur * 0.94);
+      osc1.stop(time + dur);
+      osc2.stop(time + dur);
     } catch (e) {}
   }
 
@@ -777,13 +784,13 @@ class SoundManager {
       sub.frequency.setValueAtTime(freq * 0.5, time);
 
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1200, time);
-      filter.frequency.exponentialRampToValueAtTime(260, time + dur * 0.8);
-      filter.Q.setValueAtTime(3.5, time);
+      filter.frequency.setValueAtTime(1400, time);
+      filter.frequency.exponentialRampToValueAtTime(320, time + dur * 0.8);
+      filter.Q.setValueAtTime(3.2, time);
 
-      const peakGain = 0.062;
+      const peakGain = 0.22; // Solid bass foundation
       gain.gain.setValueAtTime(peakGain, time);
-      gain.gain.exponentialRampToValueAtTime(0.003, time + dur * 0.92);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + dur * 0.95);
 
       osc.connect(filter);
       sub.connect(filter);
@@ -792,8 +799,8 @@ class SoundManager {
 
       osc.start(time);
       sub.start(time);
-      osc.stop(time + dur * 0.95);
-      sub.stop(time + dur * 0.95);
+      osc.stop(time + dur);
+      sub.stop(time + dur);
     } catch (e) {}
   }
 
@@ -802,13 +809,13 @@ class SoundManager {
     try {
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(2400, time);
-      filter.frequency.exponentialRampToValueAtTime(800, time + dur);
+      filter.frequency.setValueAtTime(2800, time);
+      filter.frequency.exponentialRampToValueAtTime(900, time + dur);
       filter.Q.setValueAtTime(2.0, time);
 
       const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.038, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      gain.gain.setValueAtTime(0.16, time); // Full chord presence
+      gain.gain.exponentialRampToValueAtTime(0.01, time + dur);
       filter.connect(gain);
       gain.connect(this.bgmMasterGain);
 
@@ -830,8 +837,8 @@ class SoundManager {
       const gain = this.ctx.createGain();
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(freq, time);
-      gain.gain.setValueAtTime(0.032, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      gain.gain.setValueAtTime(0.14, time);
+      gain.gain.exponentialRampToValueAtTime(0.005, time + dur);
       osc.connect(gain);
       gain.connect(this.bgmMasterGain);
       osc.start(time);
@@ -849,10 +856,10 @@ class SoundManager {
       osc1.type = 'sine';
       osc2.type = 'triangle';
       osc1.frequency.setValueAtTime(freq, time);
-      osc2.frequency.setValueAtTime(freq * 2.76, time); // Inharmonic chime overtone
+      osc2.frequency.setValueAtTime(freq * 2.76, time);
 
-      gain.gain.setValueAtTime(0.045, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      gain.gain.setValueAtTime(0.16, time);
+      gain.gain.exponentialRampToValueAtTime(0.005, time + dur);
 
       osc1.connect(gain);
       osc2.connect(gain);
@@ -876,11 +883,11 @@ class SoundManager {
       osc.frequency.setValueAtTime(freq, time);
 
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(2000, time);
+      filter.frequency.setValueAtTime(2400, time);
 
-      gain.gain.setValueAtTime(0.01, time);
-      gain.gain.linearRampToValueAtTime(0.05, time + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      gain.gain.setValueAtTime(0.04, time);
+      gain.gain.linearRampToValueAtTime(0.18, time + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + dur);
 
       osc.connect(filter);
       filter.connect(gain);
@@ -897,14 +904,14 @@ class SoundManager {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(140, time);
+      osc.frequency.setValueAtTime(160, time);
       osc.frequency.exponentialRampToValueAtTime(45, time + 0.08);
-      gain.gain.setValueAtTime(0.10, time);
-      gain.gain.exponentialRampToValueAtTime(0.002, time + 0.10);
+      gain.gain.setValueAtTime(0.30, time); // Punchy kick
+      gain.gain.exponentialRampToValueAtTime(0.005, time + 0.12);
       osc.connect(gain);
       gain.connect(this.bgmMasterGain);
       osc.start(time);
-      osc.stop(time + 0.11);
+      osc.stop(time + 0.13);
     } catch (e) {}
   }
 
@@ -914,14 +921,14 @@ class SoundManager {
       const osc = this.ctx.createOscillator();
       const oscGain = this.ctx.createGain();
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(190, time);
+      osc.frequency.setValueAtTime(200, time);
       osc.frequency.exponentialRampToValueAtTime(80, time + 0.06);
-      oscGain.gain.setValueAtTime(0.06, time);
-      oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+      oscGain.gain.setValueAtTime(0.18, time);
+      oscGain.gain.exponentialRampToValueAtTime(0.005, time + 0.08);
       osc.connect(oscGain);
       oscGain.connect(this.bgmMasterGain);
       osc.start(time);
-      osc.stop(time + 0.08);
+      osc.stop(time + 0.09);
 
       if (this.noiseBuffer) {
         const noise = this.ctx.createBufferSource();
@@ -930,13 +937,13 @@ class SoundManager {
         filter.type = 'highpass';
         filter.frequency.setValueAtTime(1600, time);
         const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.07, time);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.11);
+        gain.gain.setValueAtTime(0.20, time); // Snappy snare
+        gain.gain.exponentialRampToValueAtTime(0.005, time + 0.12);
         noise.connect(filter);
         filter.connect(gain);
         gain.connect(this.bgmMasterGain);
         noise.start(time);
-        noise.stop(time + 0.12);
+        noise.stop(time + 0.13);
       }
     } catch (e) {}
   }
@@ -950,13 +957,13 @@ class SoundManager {
       filter.type = 'highpass';
       filter.frequency.setValueAtTime(8000, time);
       const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(accent ? 0.035 : 0.018, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + (accent ? 0.05 : 0.03));
+      gain.gain.setValueAtTime(accent ? 0.10 : 0.06, time);
+      gain.gain.exponentialRampToValueAtTime(0.005, time + (accent ? 0.06 : 0.035));
       noise.connect(filter);
       filter.connect(gain);
       gain.connect(this.bgmMasterGain);
       noise.start(time);
-      noise.stop(time + 0.06);
+      noise.stop(time + 0.07);
     } catch (e) {}
   }
 
@@ -969,18 +976,18 @@ class SoundManager {
       filter.type = 'highpass';
       filter.frequency.setValueAtTime(5000, time);
       const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.08, time);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.38);
+      gain.gain.setValueAtTime(0.26, time);
+      gain.gain.exponentialRampToValueAtTime(0.005, time + 0.45);
       noise.connect(filter);
       filter.connect(gain);
       gain.connect(this.bgmMasterGain);
       noise.start(time);
-      noise.stop(time + 0.40);
+      noise.stop(time + 0.48);
     } catch (e) {}
   }
 
   // =========================================================================
-  // SCHEDULER IMPLEMENTATIONS PER STAGE
+  // SCHEDULER IMPLEMENTATIONS PER STAGE (ZERO SILENCES, CONTINUOUS GROOVE)
   // =========================================================================
 
   // STAGE 3: HEAVY METAL ROCK (Boss Kiloburner)
@@ -990,10 +997,10 @@ class SoundManager {
     const bar = Math.floor(stepInPattern / 16);
     const stepInBar = stepInPattern % 16;
 
-    // Rock Drum Engine (Double-bass kick + heavy snare + hats/crash)
+    // 1. Rock Drums on every step
     this.playRockDrums(stepInBar, bar, time);
 
-    // Power Chords frequencies:
+    // Power Chords:
     const E5 = [82.41, 123.47, 164.81];
     const G5 = [98.0, 146.83, 196.0];
     const A5 = [110.0, 164.81, 220.0];
@@ -1001,12 +1008,12 @@ class SoundManager {
     const D5 = [146.83, 220.0, 293.66];
     const Bb5 = [116.54, 174.61, 233.08];
 
-    // Rhythm Guitar & Palm-Muted Chug Riffs:
+    // 2. Rhythm Guitar Wall-of-Sound (EVERY single step plays - NO SILENCE)
     let chordToPlay = null;
     let isChug = false;
 
     if (bar < 4 || (bar >= 8 && bar < 12)) {
-      // Verse / Riff Section: Heavy E-minor chugs with syncopated power chords
+      // Verse / Riff Section: Heavy E-minor power chords + continuous driving chugs
       if (stepInBar === 0 || stepInBar === 6) {
         chordToPlay = E5;
       } else if (stepInBar === 8) {
@@ -1014,18 +1021,18 @@ class SoundManager {
       } else if (stepInBar === 11) {
         chordToPlay = A5;
       } else if (stepInBar === 14) {
-        chordToPlay = bar % 2 === 1 ? D5 : Bb5;
-      } else if (stepInBar % 2 === 0) {
-        // Tight 16th-note palm-muted chug on low E
+        chordToPlay = (bar % 2 === 1) ? D5 : Bb5;
+      } else {
+        // Relentless 16th-note palm-muted chug
         chordToPlay = [82.41, 123.47];
         isChug = true;
       }
     } else if (bar >= 4 && bar < 8) {
-      // Chorus / Solo 1 Section: Driving chord changes
+      // Chorus / Driving Chord Changes
       const barChord = [C5, D5, E5, E5][bar - 4];
       if (stepInBar === 0 || stepInBar === 6 || stepInBar === 10) {
         chordToPlay = barChord;
-      } else if (stepInBar % 2 === 0) {
+      } else {
         chordToPlay = barChord.slice(0, 2);
         isChug = true;
       }
@@ -1035,212 +1042,289 @@ class SoundManager {
       else if (stepInBar === 4) chordToPlay = G5;
       else if (stepInBar === 8) chordToPlay = A5;
       else if (stepInBar === 12) chordToPlay = C5;
-      else if (stepInBar % 2 === 0) {
+      else {
         chordToPlay = [82.41, 123.47];
         isChug = true;
       }
     }
 
-    if (chordToPlay) {
-      this.playRockGuitar(chordToPlay, time, isChug ? stepDur * 0.9 : stepDur * 2.2, isChug);
-    }
+    this.playRockGuitar(chordToPlay, time, isChug ? stepDur * 0.95 : stepDur * 2.5, isChug);
 
-    // Heavy Distorted Metal Bass (16th-note gallop rhythm)
-    const bassRoot = bar < 4 ? 41.2 : (bar < 8 ? [65.41, 73.42, 41.2, 41.2][bar - 4] : (bar < 12 ? 41.2 : [41.2, 49.0, 55.0, 65.41][bar - 12]));
-    if (stepInBar % 2 === 0 || stepInBar % 4 === 3) {
-      const bassOctave = (stepInBar % 4 === 0) ? 1 : 2;
-      this.playRockBass(bassRoot * bassOctave, time, stepDur * 0.95);
-    }
+    // 3. Continuous 16th-note Distorted Galloping Bass (Plays on EVERY step!)
+    const bassRoot = (bar < 4 || (bar >= 8 && bar < 12))
+      ? 41.2
+      : (bar < 8 ? [65.41, 73.42, 41.2, 41.2][bar - 4] : [41.2, 49.0, 55.0, 65.41][bar - 12]);
+    // Octave gallop pattern on 16th notes
+    const bassOctave = (stepInBar % 4 === 2) ? 2 : 1;
+    this.playRockBass(bassRoot * bassOctave, time, stepDur * 0.98);
 
-    // Screaming Lead Guitar Solo during Bars 4-7 and Bars 12-15!
-    if ((bar >= 4 && bar < 8) || (bar >= 12 && bar < 16)) {
-      // Minor pentatonic blues screaming solos
-      const soloScale = [329.63, 392.0, 440.0, 466.16, 493.88, 587.33, 659.25, 783.99, 880.0];
-      const soloPattern = [
-        659.25, 0, 783.99, 0, 880.0, 0, 783.99, 659.25, 0, 587.33, 0, 493.88, 0, 587.33, 659.25, 0,
-        880.0, 0, 783.99, 0, 659.25, 0, 587.33, 0, 493.88, 0, 440.0, 0, 493.88, 587.33, 659.25, 0
-      ];
-      const soloNote = soloPattern[(stepInPattern - 64) % soloPattern.length];
-      if (soloNote && soloNote > 0) {
-        this.playRockSolo(soloNote, time, stepDur * 1.8);
-      }
+    // 4. Screaming Lead Guitar Solo & Riff Melody (Plays throughout battle!)
+    const soloMelody = [
+      // Bars 0-3: Heavy Rock Main Riff Hook
+      329.63, 0, 329.63, 392.0, 0, 440.0, 0, 466.16, 440.0, 0, 392.0, 0, 329.63, 0, 293.66, 329.63,
+      329.63, 0, 329.63, 392.0, 0, 440.0, 0, 587.33, 0, 493.88, 0, 440.0, 392.0, 0, 440.0, 0,
+      329.63, 0, 329.63, 392.0, 0, 440.0, 0, 466.16, 440.0, 0, 392.0, 0, 329.63, 0, 293.66, 329.63,
+      659.25, 0, 587.33, 0, 493.88, 0, 440.0, 0, 392.0, 440.0, 466.16, 440.0, 392.0, 0, 329.63, 0,
+
+      // Bars 4-7: Searing High Solo 1
+      659.25, 659.25, 783.99, 0, 880.0, 880.0, 783.99, 659.25, 0, 587.33, 587.33, 493.88, 0, 587.33, 659.25, 0,
+      880.0, 0, 783.99, 880.0, 987.77, 0, 880.0, 783.99, 659.25, 0, 587.33, 493.88, 587.33, 659.25, 783.99, 0,
+      1046.5, 0, 987.77, 0, 880.0, 0, 783.99, 0, 659.25, 0, 587.33, 0, 659.25, 783.99, 880.0, 0,
+      987.77, 0, 880.0, 0, 783.99, 0, 659.25, 0, 587.33, 493.88, 440.0, 392.0, 440.0, 493.88, 587.33, 659.25,
+
+      // Bars 8-11: Heavy Groove Metal Breakdown
+      329.63, 329.63, 0, 329.63, 392.0, 0, 440.0, 0, 493.88, 0, 440.0, 392.0, 329.63, 0, 0, 0,
+      329.63, 329.63, 0, 329.63, 392.0, 0, 587.33, 0, 523.25, 0, 440.0, 392.0, 440.0, 0, 0, 0,
+      329.63, 329.63, 0, 329.63, 392.0, 0, 440.0, 0, 493.88, 0, 440.0, 392.0, 329.63, 0, 0, 0,
+      783.99, 0, 659.25, 0, 587.33, 0, 493.88, 0, 440.0, 392.0, 329.63, 293.66, 329.63, 0, 0, 0,
+
+      // Bars 12-15: Shred Climax
+      659.25, 783.99, 880.0, 987.77, 1046.5, 987.77, 880.0, 783.99, 880.0, 987.77, 1046.5, 1174.66, 1318.51, 0, 0, 0,
+      1318.51, 0, 1174.66, 0, 1046.5, 0, 987.77, 0, 880.0, 0, 783.99, 0, 659.25, 0, 587.33, 659.25,
+      880.0, 0, 783.99, 0, 659.25, 0, 587.33, 0, 493.88, 0, 440.0, 0, 493.88, 587.33, 659.25, 783.99,
+      880.0, 0, 783.99, 0, 659.25, 0, 587.33, 0, 493.88, 440.0, 392.0, 329.63, 329.63, 329.63, 329.63, 0
+    ];
+    const note = soloMelody[stepInPattern];
+    if (note && note > 0) {
+      this.playRockSolo(note, time, stepDur * 2.2);
     }
   }
 
-  // STAGE 1: LA COCINA CLÁSICA (Bouncy 8-Bit Arcade Chiptune)
+  // STAGE 1: LA COCINA CLÁSICA (Bouncy Arcade Chiptune - Continuous 4-Layer Sound)
   scheduleStage1Step(step, time, stepDur) {
     const s = step % 64;
-    const bar = Math.floor(s / 16);
     const bStep = s % 16;
+    const bar = Math.floor(s / 16);
 
-    // Chiptune Drums
-    if (bStep === 0 || bStep === 8) this.play16BitKick(time);
+    // 1. Continuous Drums
+    if (bStep === 0 || bStep === 8 || bStep === 14) this.play16BitKick(time);
     if (bStep === 4 || bStep === 12) this.play16BitSnare(time);
-    if (bStep % 2 === 0) this.play16BitHiHat(time, bStep % 4 === 2);
+    this.play16BitHiHat(time, bStep % 2 === 1);
+    if (s === 0) this.play16BitCrash(time);
 
-    // Chiptune Melody (C Major BurgerTime vibe)
-    const melody = [
-      523.25, 0, 659.25, 0, 783.99, 0, 659.25, 0, 523.25, 587.33, 659.25, 0, 783.99, 0, 1046.5, 0,
-      880.0, 0, 698.46, 0, 783.99, 0, 659.25, 0, 587.33, 0, 523.25, 0, 587.33, 0, 783.99, 0,
-      523.25, 0, 659.25, 0, 783.99, 0, 880.0, 0, 1046.5, 0, 987.77, 0, 880.0, 0, 783.99, 0,
-      698.46, 0, 659.25, 0, 587.33, 0, 523.25, 0, 440.0, 0, 493.88, 0, 523.25, 0, 0, 0
+    // 2. Continuous 16-bit Fast Arpeggio (Fills every step)
+    const chords = [
+      [261.63, 329.63, 392.0, 523.25], // C
+      [220.0, 261.63, 329.63, 440.0],  // Am
+      [174.61, 220.0, 261.63, 349.23], // F
+      [196.0, 246.94, 293.66, 392.0]   // G
     ];
-    if (melody[s]) this.play16BitLead(melody[s], time, stepDur * 1.6);
+    const currChord = chords[bar];
+    this.play16BitArp(currChord[bStep % 4], time, stepDur * 0.95);
 
-    // Bouncy Walking Bass
-    const bassNotes = [130.81, 164.81, 196.0, 164.81, 174.61, 220.0, 261.63, 220.0, 130.81, 164.81, 196.0, 164.81, 196.0, 246.94, 293.66, 196.0];
-    if (bStep % 4 === 0) {
-      this.play16BitBass(bassNotes[Math.floor(s / 4) % bassNotes.length], time, stepDur * 2.5);
+    // 3. Continuous Driving Walking Bass (Every 8th note)
+    const bassLines = [
+      [130.81, 164.81, 196.0, 164.81, 130.81, 164.81, 196.0, 220.0],
+      [110.0, 130.81, 164.81, 130.81, 110.0, 130.81, 164.81, 196.0],
+      [87.31, 110.0, 130.81, 110.0, 87.31, 110.0, 130.81, 146.83],
+      [98.0, 123.47, 146.83, 123.47, 98.0, 123.47, 146.83, 164.81]
+    ];
+    if (bStep % 2 === 0) {
+      const bIdx = Math.floor(bStep / 2);
+      this.play16BitBass(bassLines[bar][bIdx], time, stepDur * 1.9);
+    }
+
+    // 4. Catchy Lead Melody (Sustained notes & phrasing)
+    const melody = [
+      523.25, 523.25, 659.25, 0, 783.99, 783.99, 659.25, 0, 523.25, 587.33, 659.25, 698.46, 783.99, 0, 1046.5, 0,
+      880.0, 880.0, 698.46, 0, 783.99, 783.99, 659.25, 0, 587.33, 659.25, 587.33, 523.25, 587.33, 0, 783.99, 0,
+      523.25, 523.25, 659.25, 0, 783.99, 783.99, 880.0, 0, 1046.5, 1046.5, 987.77, 880.0, 783.99, 0, 659.25, 0,
+      698.46, 698.46, 659.25, 0, 587.33, 659.25, 523.25, 0, 440.0, 493.88, 523.25, 587.33, 523.25, 0, 0, 0
+    ];
+    if (melody[s] && melody[s] > 0) {
+      this.play16BitLead(melody[s], time, stepDur * 2.1);
     }
   }
 
-  // STAGE 2: LA DESPENSA DE ESPECIAS (Spicy Latin Salsa Montuno)
+  // STAGE 2: LA DESPENSA DE ESPECIAS (Spicy Salsa Montuno - Full Latin Ensemble)
   scheduleStage2Step(step, time, stepDur) {
     const s = step % 64;
     const bStep = s % 16;
-    // Latin Clave & Shaker
-    if (bStep === 0 || bStep === 6 || bStep === 10 || bStep === 12) this.play16BitSnare(time);
-    if (bStep % 2 === 1) this.play16BitHiHat(time, true);
-    if (bStep === 0 || bStep === 8) this.play16BitKick(time);
+    const bar = Math.floor(s / 16);
 
-    // Montuno Brass Stabs (D Minor / Gm / A7)
+    // 1. Continuous Latin Percussion (Clave + Timbale + Shaker)
+    if (bStep === 0 || bStep === 8 || bStep === 14) this.play16BitKick(time);
+    if (bStep === 4 || bStep === 10 || bStep === 12) this.play16BitSnare(time);
+    this.play16BitHiHat(time, bStep % 2 === 1);
+
+    // 2. Montuno Piano & Brass Stabs (Dm, Gm, A7)
     const chords = [
-      [293.66, 349.23, 440.0], [293.66, 349.23, 440.0],
-      [392.0, 466.16, 587.33], [440.0, 554.37, 659.25]
+      [293.66, 349.23, 440.0],
+      [293.66, 349.23, 440.0],
+      [392.0, 466.16, 587.33],
+      [440.0, 554.37, 659.25]
     ];
-    const currChord = chords[Math.floor(s / 16)];
-    if (bStep === 3 || bStep === 6 || bStep === 9 || bStep === 12 || bStep === 14) {
-      this.play16BitBrassStabs(currChord, time, stepDur * 1.2);
+    const currChord = chords[bar];
+    if (bStep === 0 || bStep === 3 || bStep === 6 || bStep === 8 || bStep === 11 || bStep === 14) {
+      this.play16BitBrassStabs(currChord, time, stepDur * 1.8);
     }
 
-    // Afro-Cuban Tumbao Bass (Syncopated on beats 2+ and 4)
-    const bassRoots = [73.42, 73.42, 98.0, 110.0];
-    const root = bassRoots[Math.floor(s / 16)];
-    if (bStep === 6 || bStep === 14) {
-      this.play16BitBass(root, time, stepDur * 2.8);
+    // 3. Continuous Tumbao Bassline (Syncopated Afro-Cuban drive)
+    const roots = [73.42, 73.42, 98.0, 110.0];
+    const r = roots[bar];
+    if (bStep === 0 || bStep === 6 || bStep === 8 || bStep === 14) {
+      this.play16BitBass(r * (bStep === 6 ? 2 : 1), time, stepDur * 2.8);
     }
 
-    // Trumpet Solo Lead
-    const salsaLead = [0, 587.33, 0, 523.25, 0, 587.33, 698.46, 0, 0, 659.25, 0, 587.33, 0, 554.37, 0, 0];
-    if (salsaLead[bStep]) this.play16BitLead(salsaLead[bStep], time, stepDur * 1.5);
+    // 4. Trumpet Solo Lead
+    const trumpet = [
+      587.33, 0, 587.33, 698.46, 0, 783.99, 698.46, 587.33, 0, 523.25, 587.33, 0, 440.0, 0, 523.25, 0,
+      587.33, 0, 587.33, 698.46, 0, 783.99, 880.0, 0, 783.99, 698.46, 587.33, 0, 554.37, 0, 587.33, 0,
+      698.46, 0, 698.46, 783.99, 0, 880.0, 783.99, 698.46, 0, 587.33, 698.46, 0, 523.25, 0, 587.33, 0,
+      880.0, 0, 783.99, 698.46, 587.33, 0, 554.37, 0, 440.0, 0, 493.88, 554.37, 587.33, 0, 0, 0
+    ];
+    if (trumpet[s] && trumpet[s] > 0) {
+      this.play16BitLead(trumpet[s], time, stepDur * 2.2);
+    }
   }
 
-  // STAGE 4: EL GRAN BISTRÓ GOURMET (French Cafe Swing & Ragtime)
+  // STAGE 4: EL GRAN BISTRÓ GOURMET (French Swing & Ragtime)
   scheduleStage4Step(step, time, stepDur) {
     const s = step % 64;
     const bStep = s % 16;
-    // Stride Piano Swing
-    if (bStep === 4 || bStep === 12) this.play16BitSnare(time);
-    if (bStep % 4 === 2) this.play16BitHiHat(time, true);
+    const bar = Math.floor(s / 16);
 
-    // Walking Bass
+    // Swing Drums
+    if (bStep === 0 || bStep === 8) this.play16BitKick(time);
+    if (bStep === 4 || bStep === 12) this.play16BitSnare(time);
+    this.play16BitHiHat(time, bStep % 2 === 1);
+
+    // Stride Piano Chords on Beats 2 & 4
+    if (bStep === 4 || bStep === 12) {
+      this.play16BitBrassStabs([349.23, 440.0, 523.25], time, stepDur * 2.4);
+    }
+
+    // Continuous Walking Bass on EVERY Quarter Note (steps 0, 4, 8, 12)
     const walk = [87.31, 110.0, 130.81, 146.83, 174.61, 146.83, 130.81, 110.0];
     if (bStep % 4 === 0) {
-      this.play16BitBass(walk[(Math.floor(s / 4)) % walk.length], time, stepDur * 3);
+      const idx = (bar * 4 + Math.floor(bStep / 4)) % walk.length;
+      this.play16BitBass(walk[idx], time, stepDur * 3.6);
     }
-    // Off-beat chords
-    if (bStep === 4 || bStep === 12) {
-      this.play16BitBrassStabs([349.23, 440.0, 523.25], time, stepDur * 1.8);
+
+    // Clarinet Lead Melody
+    const bistroMelody = [
+      523.25, 0, 587.33, 659.25, 0, 698.46, 0, 783.99, 0, 698.46, 659.25, 587.33, 523.25, 0, 587.33, 0,
+      659.25, 0, 698.46, 783.99, 0, 880.0, 0, 1046.5, 0, 880.0, 783.99, 698.46, 659.25, 0, 587.33, 0,
+      523.25, 0, 587.33, 659.25, 0, 698.46, 0, 783.99, 0, 880.0, 783.99, 698.46, 659.25, 0, 587.33, 0,
+      523.25, 0, 440.0, 493.88, 523.25, 0, 587.33, 0, 659.25, 0, 587.33, 0, 523.25, 0, 0, 0
+    ];
+    if (bistroMelody[s] && bistroMelody[s] > 0) {
+      this.playFluteTone(bistroMelody[s], time, stepDur * 2.2);
     }
-    // Clarinet melody
-    const bistroMelody = [0, 0, 523.25, 587.33, 659.25, 0, 698.46, 0, 783.99, 0, 698.46, 659.25, 587.33, 0, 523.25, 0];
-    if (bistroMelody[bStep]) this.playFluteTone(bistroMelody[bStep], time, stepDur * 1.5);
   }
 
-  // STAGE 5: LA MARISQUERÍA DEL PULPO (60s Surf Rock)
+  // STAGE 5: LA MARISQUERÍA DEL PULPO (60s California Surf Rock)
   scheduleStage5Step(step, time, stepDur) {
     const s = step % 64;
     const bStep = s % 16;
-    // Surf Drums
-    if (bStep % 4 === 0) this.play16BitKick(time);
+    // Fast Surf Drums
+    if (bStep % 4 === 0 || bStep === 10) this.play16BitKick(time);
     if (bStep === 4 || bStep === 12) this.play16BitSnare(time);
-    this.play16BitHiHat(time, bStep % 2 === 0);
+    this.play16BitHiHat(time, true);
 
-    // Fast Surf Tremolo Lead
-    const surfRiff = [440.0, 440.0, 493.88, 523.25, 587.33, 587.33, 659.25, 698.46, 783.99, 698.46, 659.25, 587.33, 523.25, 493.88, 440.0, 415.3];
-    this.play16BitLead(surfRiff[bStep], time, stepDur * 0.9);
+    // Continuous Surf Bass
+    const surfBass = [55.0, 55.0, 65.41, 73.42, 82.41, 73.42, 65.41, 55.0];
+    if (bStep % 2 === 0) {
+      this.play16BitBass(surfBass[Math.floor(bStep / 2)], time, stepDur * 1.8);
+    }
 
-    // Driving Bass
-    if (bStep % 4 === 0) this.play16BitBass(55.0, time, stepDur * 2.5);
+    // Fast Surf Tremolo Guitar Lead
+    const surfRiff = [
+      440.0, 440.0, 493.88, 523.25, 587.33, 587.33, 659.25, 698.46,
+      783.99, 698.46, 659.25, 587.33, 523.25, 493.88, 440.0, 415.3
+    ];
+    this.play16BitLead(surfRiff[bStep], time, stepDur * 0.95);
   }
 
   // STAGE 6: LA ESTACIÓN DE CAFÉ & BARISTA (Smooth Bebop / Lo-Fi Coffee Jazz)
   scheduleStage6Step(step, time, stepDur) {
     const s = step % 64;
     const bStep = s % 16;
-    // Relaxed hip-hop / jazz drums
+    const bar = Math.floor(s / 16);
+    // Relaxed Hip-Hop / Jazz Drums
     if (bStep === 0 || bStep === 10) this.play16BitKick(time);
     if (bStep === 4 || bStep === 12) this.play16BitSnare(time);
-    if (bStep % 2 === 0) this.play16BitHiHat(time, false);
+    this.play16BitHiHat(time, bStep % 2 === 0);
 
     // Lush 7th Chords
     if (bStep === 0 || bStep === 8) {
-      this.play16BitBrassStabs([233.08, 293.66, 349.23, 440.0], time, stepDur * 3.5);
+      const chords = [
+        [233.08, 293.66, 349.23, 440.0],
+        [196.0, 246.94, 293.66, 369.99],
+        [220.0, 261.63, 329.63, 392.0],
+        [174.61, 220.0, 261.63, 329.63]
+      ];
+      this.play16BitBrassStabs(chords[bar], time, stepDur * 4.0);
     }
-    // Mellow Vibraphone Plucks
-    const vibe = [0, 466.16, 0, 523.25, 587.33, 0, 698.46, 0, 0, 587.33, 0, 523.25, 0, 466.16, 0, 0];
-    if (vibe[bStep]) this.playBellPluck(vibe[bStep], time, stepDur * 2.0);
 
-    // Warm Upright Bass
-    if (bStep % 4 === 0) this.play16BitBass(58.27, time, stepDur * 3.0);
+    // Upright Acoustic Bass on every 8th note
+    const coffeeBass = [58.27, 87.31, 116.54, 87.31, 49.0, 73.42, 98.0, 73.42];
+    if (bStep % 2 === 0) {
+      this.play16BitBass(coffeeBass[Math.floor(bStep / 2)], time, stepDur * 1.9);
+    }
+
+    // Mellow Vibraphone Plucks
+    const vibe = [0, 466.16, 523.25, 0, 587.33, 0, 698.46, 0, 587.33, 0, 523.25, 466.16, 523.25, 0, 0, 0];
+    if (vibe[bStep]) this.playBellPluck(vibe[bStep], time, stepDur * 2.5);
   }
 
   // STAGE 7: LA PASTELERÍA FELINA (Kawaii Chiptune Pop)
   scheduleStage7Step(step, time, stepDur) {
     const s = step % 64;
     const bStep = s % 16;
-    // Four-on-the-floor electro pop
+    // Electro Pop Beat
     if (bStep % 4 === 0) this.play16BitKick(time);
     if (bStep === 4 || bStep === 12) this.play16BitSnare(time);
-    this.play16BitHiHat(time, bStep % 2 === 1);
+    this.play16BitHiHat(time, true);
+
+    // Sparkle Bell Arpeggio
+    const arpNotes = [392.0, 493.88, 587.33, 783.99];
+    this.play16BitArp(arpNotes[bStep % 4], time, stepDur * 0.95);
+
+    // Bubblegum Bass on every 8th note
+    if (bStep % 2 === 0) this.play16BitBass(98.0 * ((bStep % 4 === 2) ? 1.5 : 1), time, stepDur * 1.8);
 
     // Bright Sparkle Lead
     const kawaii = [783.99, 0, 880.0, 0, 987.77, 0, 1046.5, 0, 987.77, 880.0, 783.99, 0, 659.25, 0, 783.99, 0];
-    if (kawaii[bStep]) this.play16BitLead(kawaii[bStep], time, stepDur * 1.4);
-
-    // Cute Arpeggios
-    const arpNotes = [392.0, 493.88, 587.33, 783.99];
-    this.play16BitArp(arpNotes[bStep % 4], time, stepDur * 0.8);
-
-    // Bubblegum Bass
-    if (bStep % 2 === 0) this.play16BitBass(98.0, time, stepDur * 0.9);
+    if (kawaii[bStep]) this.play16BitLead(kawaii[bStep], time, stepDur * 2.0);
   }
 
   // STAGE 8: EL ASADOR DEL CASTILLO (Medieval Battle March)
   scheduleStage8Step(step, time, stepDur) {
     const s = step % 64;
     const bStep = s % 16;
-    // Orchestral March Snare Cadence
-    if (bStep === 0 || bStep === 4 || bStep === 8 || bStep === 12) this.play16BitKick(time);
+    // Battle Snare Cadence & Kettle Drums
+    if (bStep % 4 === 0 || bStep === 14) this.play16BitKick(time);
     if (bStep === 4 || bStep === 10 || bStep === 12 || bStep === 14) this.play16BitSnare(time);
+    this.play16BitHiHat(time, bStep % 2 === 0);
+
+    // Fortress Deep Bass on every quarter note
+    if (bStep % 4 === 0) this.play16BitBass(73.42, time, stepDur * 3.8);
 
     // Heraldic Dorian Horn Fanfare
     const fanfare = [587.33, 0, 587.33, 0, 880.0, 0, 783.99, 0, 698.46, 0, 659.25, 0, 587.33, 0, 0, 0];
-    if (fanfare[bStep]) this.play16BitBrassStabs([fanfare[bStep], fanfare[bStep] * 1.5], time, stepDur * 1.8);
-
-    // Fortress Deep Bass
-    if (bStep % 4 === 0) this.play16BitBass(73.42, time, stepDur * 3.5);
+    if (fanfare[bStep]) this.play16BitBrassStabs([fanfare[bStep], fanfare[bStep] * 1.5], time, stepDur * 2.2);
   }
 
-  // STAGE 9: LA FORJA DEL DRAGÓN (Industrial Techno-Metal)
+  // STAGE 9: LA FORJA DEL DRAGÓN (Industrial Heavy Metal)
   scheduleStage9Step(step, time, stepDur) {
     const s = step % 64;
     const bStep = s % 16;
-    // Four on the floor Industrial Kick
+    // Industrial Kick & Snare
     if (bStep % 4 === 0) this.play16BitKick(time);
     if (bStep === 4 || bStep === 12) this.playRockSnare(time);
     this.play16BitHiHat(time, true);
 
     // Metallic Anvil Strike
-    if (bStep === 8 || bStep === 14) this.playBellPluck(1800, time, stepDur * 0.5);
+    if (bStep === 8 || bStep === 14) this.playBellPluck(1800, time, stepDur * 0.8);
 
-    // Sawtooth Industrial Bassline
+    // Continuous Sawtooth Industrial Bassline (Plays on every step!)
     const indBass = [46.25, 46.25, 92.5, 46.25, 55.0, 46.25, 92.5, 46.25];
-    this.playRockBass(indBass[Math.floor(bStep / 2) % indBass.length], time, stepDur * 0.9);
+    this.playRockBass(indBass[Math.floor(bStep / 2) % indBass.length], time, stepDur * 0.98);
 
     // Cyber Synth Lead
-    const forgeLead = [0, 0, 740.0, 0, 880.0, 0, 987.77, 0, 1108.73, 0, 987.77, 0, 740.0, 0, 0, 0];
-    if (forgeLead[bStep]) this.play16BitLead(forgeLead[bStep], time, stepDur * 1.5);
+    const forgeLead = [740.0, 0, 740.0, 880.0, 0, 987.77, 0, 1108.73, 0, 987.77, 0, 880.0, 740.0, 0, 0, 0];
+    if (forgeLead[bStep]) this.play16BitLead(forgeLead[bStep], time, stepDur * 2.0);
   }
 
   // STAGE 10: LA COCINA DE ALTA MAR (Pirate Sea Shanty Jig)
@@ -1250,13 +1334,14 @@ class SoundManager {
     // 6/8 Maritime Stomp & Clap
     if (bStep === 0 || bStep === 6) this.play16BitKick(time);
     if (bStep === 3 || bStep === 9) this.play16BitSnare(time);
+    this.play16BitHiHat(time, bStep % 3 === 0);
+
+    // Nautical Oom-Pah Bass on beats 1 and 4
+    if (bStep === 0 || bStep === 6) this.play16BitBass(82.41, time, stepDur * 2.8);
 
     // Accordion Sea Shanty Lead
     const shanty = [329.63, 392.0, 440.0, 493.88, 0, 493.88, 587.33, 493.88, 440.0, 392.0, 0, 329.63, 392.0, 440.0, 329.63, 0];
-    if (shanty[bStep]) this.playFluteTone(shanty[bStep], time, stepDur * 1.6);
-
-    // Nautical Oom-Pah Bass
-    if (bStep === 0 || bStep === 6) this.play16BitBass(82.41, time, stepDur * 2.0);
+    if (shanty[bStep]) this.playFluteTone(shanty[bStep], time, stepDur * 1.8);
   }
 
   // STAGE 11: LA HELADERÍA BAJO CERO (Subzero Crystalline Synthwave)
@@ -1264,54 +1349,54 @@ class SoundManager {
     const s = step % 64;
     const bStep = s % 16;
     // Ambient digital percussion
-    if (bStep === 0 || bStep === 10) this.play16BitKick(time);
+    if (bStep === 0 || bStep === 8) this.play16BitKick(time);
     if (bStep === 4 || bStep === 12) this.play16BitSnare(time);
-    if (bStep % 2 === 0) this.play16BitHiHat(time, false);
+    this.play16BitHiHat(time, bStep % 2 === 0);
 
-    // Pure Ice Crystal Bell Plucks
+    // Continuous Sub Drone / Bass
+    if (bStep % 4 === 0) this.play16BitBass(61.74, time, stepDur * 3.8);
+
+    // Ice Crystal Bell Plucks
     const ice = [987.77, 0, 1174.66, 0, 1318.51, 0, 1479.98, 0, 1318.51, 0, 1174.66, 0, 987.77, 0, 880.0, 0];
     if (ice[bStep]) this.playBellPluck(ice[bStep], time, stepDur * 2.8);
-
-    // Freezing Sub Drone
-    if (bStep === 0) this.play16BitBass(61.74, time, stepDur * 12);
   }
 
   // STAGE 12: LA PANADERÍA CRUJIENTE (Viennese Baker Waltz 3/4)
   scheduleStage12Step(step, time, stepDur) {
-    const s = step % 48; // 3/4 time (12 steps per bar, 4 bars = 48 steps)
+    const s = step % 48; // 3/4 time
     const bStep = s % 12;
-    // 3/4 Waltz Drums: Kick on 1, soft brushes on 2 & 3
+    // 3/4 Waltz Drums
     if (bStep === 0) this.play16BitKick(time);
     if (bStep === 4 || bStep === 8) this.play16BitHiHat(time, true);
 
-    // Downbeat Bass
-    if (bStep === 0) this.play16BitBass(77.78, time, stepDur * 3.5);
+    // Downbeat Bass on 1
+    if (bStep === 0) this.play16BitBass(77.78, time, stepDur * 3.8);
 
     // Accordion pads on beats 2 & 3
     if (bStep === 4 || bStep === 8) {
-      this.play16BitBrassStabs([311.13, 392.0, 466.16], time, stepDur * 2.2);
+      this.play16BitBrassStabs([311.13, 392.0, 466.16], time, stepDur * 2.6);
     }
 
     // Whimsical Flute Waltz
     const waltzLead = [622.25, 0, 0, 0, 698.46, 0, 0, 0, 783.99, 0, 622.25, 0];
-    if (waltzLead[bStep]) this.playFluteTone(waltzLead[bStep], time, stepDur * 3.0);
+    if (waltzLead[bStep]) this.playFluteTone(waltzLead[bStep], time, stepDur * 3.2);
   }
 
   // STAGE 13: EL WOK DEL PANDA DORADO (Kung-Fu Pentatonic Trap)
   scheduleStage13Step(step, time, stepDur) {
     const s = step % 64;
     const bStep = s % 16;
-    // Snappy Trap Drums
+    // Trap Drums
     if (bStep === 0 || bStep === 7) this.play16BitKick(time);
     if (bStep === 4 || bStep === 12) this.play16BitSnare(time);
-    this.play16BitHiHat(time, bStep % 2 === 0);
-
-    // Pentatonic Flute Melody (C Minor Pentatonic)
-    const kungfu = [523.25, 0, 622.25, 0, 698.46, 0, 783.99, 0, 932.33, 783.99, 698.46, 0, 622.25, 0, 523.25, 0];
-    if (kungfu[bStep]) this.playFluteTone(kungfu[bStep], time, stepDur * 1.5);
+    this.play16BitHiHat(time, true);
 
     // Booming 808 Sub Glide
-    if (bStep === 0 || bStep === 7) this.play16BitBass(32.7, time, stepDur * 4.0);
+    if (bStep === 0 || bStep === 7) this.play16BitBass(32.7, time, stepDur * 4.5);
+
+    // Pentatonic Flute Melody
+    const kungfu = [523.25, 0, 622.25, 0, 698.46, 0, 783.99, 0, 932.33, 783.99, 698.46, 0, 622.25, 0, 523.25, 0];
+    if (kungfu[bStep]) this.playFluteTone(kungfu[bStep], time, stepDur * 2.0);
   }
 
   // STAGE 14: COSMIC DINER 3000 (Cyberpunk Synthwave)
@@ -1323,39 +1408,45 @@ class SoundManager {
     if (bStep === 4 || bStep === 12) this.play16BitSnare(time);
     this.play16BitHiHat(time, bStep % 2 === 1);
 
-    // Galloping 16th Synthwave Bassline (Moroder Style)
+    // Galloping 16th Synthwave Bassline (Continuous on EVERY step!)
     const synthBass = [73.42, 146.83, 73.42, 146.83];
-    this.play16BitBass(synthBass[bStep % 4], time, stepDur * 0.9);
+    this.play16BitBass(synthBass[bStep % 4], time, stepDur * 0.98);
 
     // Dual Saw Lead
-    const synthLead = [0, 587.33, 0, 659.25, 0, 698.46, 0, 880.0, 0, 783.99, 0, 659.25, 587.33, 0, 0, 0];
-    if (synthLead[bStep]) this.play16BitLead(synthLead[bStep], time, stepDur * 1.6);
+    const synthLead = [587.33, 0, 659.25, 0, 698.46, 0, 880.0, 0, 783.99, 0, 659.25, 587.33, 659.25, 0, 0, 0];
+    if (synthLead[bStep]) this.play16BitLead(synthLead[bStep], time, stepDur * 2.2);
   }
 
   // STAGE 15: COSTILLAS JURÁSICAS & VOLCÁN (Prehistoric Tribal War Stomp)
   scheduleStage15Step(step, time, stepDur) {
     const s = step % 64;
     const bStep = s % 16;
-    // Heavy Primal Toms & War Stomp
+    // Heavy Primal Toms
     if (bStep === 0 || bStep === 3 || bStep === 6 || bStep === 10) this.play16BitKick(time);
     if (bStep === 8 || bStep === 14) this.play16BitSnare(time);
+    this.play16BitHiHat(time, bStep % 2 === 0);
+
+    // Lava Rumble Sub Bass on every 8th note
+    if (bStep % 2 === 0) this.play16BitBass(55.0, time, stepDur * 1.9);
 
     // Primitive Bone Flute
-    const tribal = [440.0, 0, 466.16, 0, 523.25, 0, 466.16, 440.0, 392.0, 0, 440.0, 0, 0, 0, 0, 0];
-    if (tribal[bStep]) this.playFluteTone(tribal[bStep], time, stepDur * 1.8);
-
-    // Lava Rumble Sub Bass
-    if (bStep % 4 === 0) this.play16BitBass(55.0, time, stepDur * 3.5);
+    const tribal = [440.0, 0, 466.16, 0, 523.25, 0, 466.16, 440.0, 392.0, 0, 440.0, 0, 493.88, 0, 0, 0];
+    if (tribal[bStep]) this.playFluteTone(tribal[bStep], time, stepDur * 2.2);
   }
 
   // STAGE 16: EL BANQUETE IMPERIAL (Grand Royal Fanfare Finale)
   scheduleStage16Step(step, time, stepDur) {
     const s = step % 64;
     const bStep = s % 16;
+    const bar = Math.floor(s / 16);
     // Grand Orchestral Snare & Timpani
     if (bStep === 0 || bStep === 8) this.play16BitKick(time);
     if (bStep === 4 || bStep === 12 || bStep === 14 || bStep === 15) this.play16BitSnare(time);
     if (s === 0) this.play16BitCrash(time);
+    this.play16BitHiHat(time, bStep % 2 === 1);
+
+    // Regal Counterpoint Bass on every quarter note
+    if (bStep % 4 === 0) this.play16BitBass(130.81, time, stepDur * 3.8);
 
     // Majestic Brass Fanfare Chords
     const fanfares = [
@@ -1365,11 +1456,8 @@ class SoundManager {
       [783.99, 987.77, 1174.66, 1567.98]
     ];
     if (bStep === 0 || bStep === 6) {
-      this.play16BitBrassStabs(fanfares[Math.floor(s / 16)], time, stepDur * 3.0);
+      this.play16BitBrassStabs(fanfares[bar], time, stepDur * 3.5);
     }
-
-    // Regal Counterpoint Bass
-    if (bStep % 4 === 0) this.play16BitBass(130.81, time, stepDur * 3.2);
   }
 
   // Master Step Scheduler dispatching to appropriate track
@@ -1415,8 +1503,8 @@ class SoundManager {
     this.currentBgmStage = Number(stageNumber) || 1;
 
     this.bgmMasterGain = this.ctx.createGain();
-    // Heavy metal rock on stage 3 benefits from a solid driving mix
-    this.bgmMasterGain.gain.setValueAtTime(this.currentBgmStage === 3 ? 0.32 : 0.28, this.ctx.currentTime);
+    // Loud, punchy arcade master levels (0.75 for Boss Rock, 0.68 for other stages)
+    this.bgmMasterGain.gain.setValueAtTime(this.currentBgmStage === 3 ? 0.75 : 0.68, this.ctx.currentTime);
     this.bgmMasterGain.connect(this.ctx.destination);
 
     // Tempo definition per stage
@@ -1444,6 +1532,10 @@ class SoundManager {
 
     const scheduler = () => {
       if (!this.bgmPlaying || this.muted || !this.ctx) return;
+      // Resynchronize immediately if time fell behind (e.g. tab switch or phone resume)
+      if (this.nextStepTime < this.ctx.currentTime) {
+        this.nextStepTime = this.ctx.currentTime + 0.02;
+      }
       while (this.nextStepTime < this.ctx.currentTime + 0.16) {
         this.scheduleStageStep(this.currentBgmStage, this.bgmStep, this.nextStepTime, stepDuration);
         this.nextStepTime += stepDuration;
@@ -1469,7 +1561,17 @@ class SoundManager {
       this.bgmMasterGain = null;
     }
   }
-
 }
 
 window.soundManager = new SoundManager();
+
+// Global unlock listener ensuring audio starts on first user touch anywhere
+const unlockAudioOnUserAction = () => {
+  if (window.soundManager) {
+    window.soundManager.init();
+    window.soundManager.resume();
+  }
+};
+['click', 'touchstart', 'touchend', 'pointerdown', 'keydown'].forEach(evt => {
+  window.addEventListener(evt, unlockAudioOnUserAction, { passive: true });
+});
