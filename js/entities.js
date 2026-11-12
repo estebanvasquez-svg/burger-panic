@@ -12,16 +12,17 @@ function getFloorElevation(f, x) {
 }
 
 // Helper to check platform collision (checks vertical proximity and horizontal platform span)
-function getNearestFloor(x, y, floors, tolerance = 6) {
+function getNearestFloor(x, y, floors, tolerance = 8) {
   if (typeof y === 'undefined') return null;
   for (const f of floors) {
     if (typeof x === 'number') {
       const footCenter = x + 8;
-      // Allow detection if character body [x + 2, x + 14] overlaps platform [f.x1, f.x2]
-      if (x + 14 >= f.x1 - 2 && x + 2 <= f.x2 + 2) {
+      // Allow detection if character body [x + 2, x + 14] overlaps platform [f.x1, f.x2] with 4px margin
+      if (x + 14 >= f.x1 - 4 && x + 2 <= f.x2 + 4) {
         const checkX = Math.max(f.x1, Math.min(f.x2, footCenter));
         const floorY = getFloorElevation(f, checkX);
-        if (Math.abs(y - floorY) <= tolerance) {
+        const tol = (f.type === 'diagonal') ? 16 : tolerance;
+        if (Math.abs(y - floorY) <= tol) {
           return f;
         }
       }
@@ -485,8 +486,8 @@ class Player {
           } else if (wantY < 0 && newY < touchingLadder.y1) {
             // Reached the top of the ladder! Ascend smoothly onto floor at top
             const topFloor = floors.find(
-              (f) => Math.abs(getFloorElevation(f, touchingLadder.x + 8) - touchingLadder.y1) <= 8 &&
-                     (touchingLadder.x + 14 >= f.x1 && touchingLadder.x + 2 <= f.x2)
+              (f) => Math.abs(getFloorElevation(f, touchingLadder.x + 8) - touchingLadder.y1) <= 12 &&
+                     (touchingLadder.x + 14 >= f.x1 - 4 && touchingLadder.x + 2 <= f.x2 + 4)
             );
             if (topFloor) {
               this.y = getFloorElevation(topFloor, this.x + 8);
@@ -505,8 +506,8 @@ class Player {
           } else if (wantY > 0 && newY > touchingLadder.y2) {
             // Reached the bottom of the ladder!
             const botFloor = floors.find(
-              (f) => Math.abs(getFloorElevation(f, touchingLadder.x + 8) - touchingLadder.y2) <= 8 &&
-                     (touchingLadder.x + 14 >= f.x1 && touchingLadder.x + 2 <= f.x2)
+              (f) => Math.abs(getFloorElevation(f, touchingLadder.x + 8) - touchingLadder.y2) <= 12 &&
+                     (touchingLadder.x + 14 >= f.x1 - 4 && touchingLadder.x + 2 <= f.x2 + 4)
             );
             if (botFloor) {
               this.y = getFloorElevation(botFloor, this.x + 8);
@@ -572,10 +573,12 @@ class Player {
           const nextFootX = newX + 8;
           const connectingFloor = floors.find(f => {
             if (f === currentFloor) return false;
-            if (newX + 14 < f.x1 - 2 || newX + 2 > f.x2 + 2) return false;
+            if (newX + 14 < f.x1 - 4 || newX + 2 > f.x2 + 4) return false;
             const checkX = Math.max(f.x1, Math.min(f.x2, nextFootX));
             const elev = getFloorElevation(f, checkX);
-            return Math.abs(elev - this.y) <= 8;
+            // 18px tolerance accommodates slope angle differences across character width (16px)
+            const maxDiff = (f.type === 'diagonal' || currentFloor.type === 'diagonal') ? 18 : 8;
+            return Math.abs(elev - this.y) <= maxDiff;
           });
 
           if (connectingFloor) {
@@ -1187,10 +1190,11 @@ class Enemy {
         const nextFootX = nextX + 8;
         const connectingFloor = floors.find(f => {
           if (f === currentFloor) return false;
-          if (nextX + 14 < f.x1 - 2 || nextX + 2 > f.x2 + 2) return false;
+          if (nextX + 14 < f.x1 - 4 || nextX + 2 > f.x2 + 4) return false;
           const checkX = Math.max(f.x1, Math.min(f.x2, nextFootX));
           const elev = getFloorElevation(f, checkX);
-          return Math.abs(elev - this.y) <= 8;
+          const maxDiff = (f.type === 'diagonal' || currentFloor.type === 'diagonal') ? 18 : 8;
+          return Math.abs(elev - this.y) <= maxDiff;
         });
 
         if (connectingFloor) {
