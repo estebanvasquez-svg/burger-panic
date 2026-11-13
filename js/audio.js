@@ -578,7 +578,7 @@ class SoundManager {
       cabinet.connect(gain);
       gain.connect(this.bgmMasterGain);
 
-      const freqs = Array.isArray(chordFreqs) ? chordFreqs : [chordFreqs];
+      const freqs = (Array.isArray(chordFreqs) ? chordFreqs : [chordFreqs]).map((f) => f * (this.bgmPitchMult || 1));
       freqs.forEach((freq) => {
         const osc1 = this.ctx.createOscillator();
         const osc2 = this.ctx.createOscillator();
@@ -601,6 +601,7 @@ class SoundManager {
 
   playRockSolo(freq, time, dur) {
     if (!this.bgmMasterGain || !this.ctx || !freq) return;
+    freq = freq * (this.bgmPitchMult || 1);
     try {
       if (!this.distortionCurve) this.distortionCurve = this.makeDistortionCurve(65);
       const shaper = this.ctx.createWaveShaper();
@@ -653,6 +654,7 @@ class SoundManager {
 
   playRockBass(freq, time, dur) {
     if (!this.bgmMasterGain || !this.ctx || !freq) return;
+    freq = freq * (this.bgmPitchMult || 1);
     try {
       const osc = this.ctx.createOscillator();
       const sub = this.ctx.createOscillator();
@@ -686,7 +688,7 @@ class SoundManager {
   }
 
   playRockKick(time) {
-    if (!this.bgmMasterGain || !this.ctx) return;
+    if (!this.bgmMasterGain || !this.ctx || this.bgmSuppressKick) return;
     try {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
@@ -705,7 +707,7 @@ class SoundManager {
   }
 
   playRockSnare(time) {
-    if (!this.bgmMasterGain || !this.ctx) return;
+    if (!this.bgmMasterGain || !this.ctx || this.bgmSuppressSnare) return;
     try {
       const osc = this.ctx.createOscillator();
       const oscGain = this.ctx.createGain();
@@ -782,6 +784,7 @@ class SoundManager {
 
   play16BitLead(freq, time, dur) {
     if (!this.bgmMasterGain || !this.ctx || !freq) return;
+    freq = freq * (this.bgmPitchMult || 1);
     try {
       const osc1 = this.ctx.createOscillator();
       const osc2 = this.ctx.createOscillator();
@@ -831,6 +834,7 @@ class SoundManager {
 
   play16BitBass(freq, time, dur) {
     if (!this.bgmMasterGain || !this.ctx || !freq) return;
+    freq = freq * (this.bgmPitchMult || 1);
     try {
       const osc = this.ctx.createOscillator();
       const sub = this.ctx.createOscillator();
@@ -881,7 +885,7 @@ class SoundManager {
       chordFreqs.forEach((f) => {
         const osc = this.ctx.createOscillator();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(f, time);
+        osc.frequency.setValueAtTime(f * (this.bgmPitchMult || 1), time);
         osc.connect(filter);
         osc.start(time);
         osc.stop(time + dur);
@@ -891,6 +895,7 @@ class SoundManager {
 
   play16BitArp(freq, time, dur) {
     if (!this.bgmMasterGain || !this.ctx || !freq) return;
+    freq = freq * (this.bgmPitchMult || 1);
     try {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
@@ -958,7 +963,7 @@ class SoundManager {
   }
 
   play16BitKick(time) {
-    if (!this.bgmMasterGain || !this.ctx) return;
+    if (!this.bgmMasterGain || !this.ctx || this.bgmSuppressKick) return;
     try {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
@@ -975,7 +980,7 @@ class SoundManager {
   }
 
   play16BitSnare(time) {
-    if (!this.bgmMasterGain || !this.ctx) return;
+    if (!this.bgmMasterGain || !this.ctx || this.bgmSuppressSnare) return;
     try {
       const osc = this.ctx.createOscillator();
       const oscGain = this.ctx.createGain();
@@ -1520,287 +1525,78 @@ class SoundManager {
   }
 
   // =========================================================================
-  // LO-FI PIANO & STRUCTURED SONG ENGINE (INTRO -> VERSE -> CHORUS -> BRIDGE)
+  // STRUCTURED SONG ARRANGEMENT (INICIO -> VERSO -> ESTRIBILLO -> PUENTE)
+  // Wraps all 16 original stage tracks so they play as a full 32-bar song
   // =========================================================================
 
-  playLofiPianoNote(freq, time, dur, velocity = 1.0) {
-    if (!this.bgmMasterGain || !this.ctx || !freq) return;
-    try {
-      const osc1 = this.ctx.createOscillator();
-      const osc2 = this.ctx.createOscillator();
-      const filter = this.ctx.createBiquadFilter();
-      const gain = this.ctx.createGain();
-
-      // Warm upright/Rhodes piano blend with subtle lo-fi tape wow detune
-      const wow = 1 + (Math.sin(time * 2.3) * 0.0018);
-      osc1.type = 'triangle';
-      osc2.type = 'sine';
-      osc1.frequency.setValueAtTime(freq * wow, time);
-      osc2.frequency.setValueAtTime(freq * 2.0 * wow, time); // Soft 2nd harmonic warmth
-
-      const osc2Gain = this.ctx.createGain();
-      osc2Gain.gain.setValueAtTime(0.18, time);
-      osc2Gain.gain.exponentialRampToValueAtTime(0.02, time + Math.min(dur, 0.35));
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1650 * Math.max(0.6, velocity), time);
-      filter.frequency.exponentialRampToValueAtTime(420, time + Math.max(0.12, dur * 0.85));
-
-      const peak = 0.16 * velocity;
-      gain.gain.setValueAtTime(0.001, time);
-      gain.gain.linearRampToValueAtTime(peak, time + 0.014); // Soft felt hammer attack
-      gain.gain.exponentialRampToValueAtTime(peak * 0.45, time + Math.min(0.25, dur * 0.45));
-      gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
-
-      osc1.connect(filter);
-      osc2.connect(osc2Gain);
-      osc2Gain.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.bgmMasterGain);
-
-      osc1.start(time);
-      osc2.start(time);
-      osc1.stop(time + dur + 0.03);
-      osc2.stop(time + dur + 0.03);
-    } catch (e) {}
-  }
-
-  playLofiPianoChord(freqs, time, dur, velocity = 0.72, strum = 0.022) {
-    if (!freqs || !freqs.length) return;
-    freqs.forEach((f, idx) => {
-      this.playLofiPianoNote(f, time + idx * strum, Math.max(0.18, dur - idx * strum), velocity * (0.95 - idx * 0.05));
-    });
-  }
-
-  playLofiBass(freq, time, dur, velocity = 0.85) {
-    if (!this.bgmMasterGain || !this.ctx || !freq) return;
-    try {
-      const osc = this.ctx.createOscillator();
-      const filter = this.ctx.createBiquadFilter();
-      const gain = this.ctx.createGain();
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, time);
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(340, time);
-
-      const peak = 0.22 * velocity;
-      gain.gain.setValueAtTime(0.001, time);
-      gain.gain.linearRampToValueAtTime(peak, time + 0.018);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.bgmMasterGain);
-      osc.start(time);
-      osc.stop(time + dur + 0.02);
-    } catch (e) {}
-  }
-
-  playLofiDrums(time, kind) {
-    if (!this.bgmMasterGain || !this.ctx) return;
-    try {
-      if (kind === 'kick') {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(108, time);
-        osc.frequency.exponentialRampToValueAtTime(42, time + 0.14);
-        gain.gain.setValueAtTime(0.28, time);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
-        osc.connect(gain);
-        gain.connect(this.bgmMasterGain);
-        osc.start(time);
-        osc.stop(time + 0.19);
-      } else if (kind === 'snare') {
-        if (this.noiseBuffer) {
-          const src = this.ctx.createBufferSource();
-          src.buffer = this.noiseBuffer;
-          const filter = this.ctx.createBiquadFilter();
-          filter.type = 'bandpass';
-          filter.frequency.setValueAtTime(1150, time);
-          filter.Q.setValueAtTime(1.1, time);
-          const gain = this.ctx.createGain();
-          gain.gain.setValueAtTime(0.09, time);
-          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.11);
-          src.connect(filter);
-          filter.connect(gain);
-          gain.connect(this.bgmMasterGain);
-          src.start(time);
-          src.stop(time + 0.12);
-        }
-        const rim = this.ctx.createOscillator();
-        const rGain = this.ctx.createGain();
-        rim.type = 'triangle';
-        rim.frequency.setValueAtTime(210, time);
-        rim.frequency.exponentialRampToValueAtTime(125, time + 0.05);
-        rGain.gain.setValueAtTime(0.07, time);
-        rGain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
-        rim.connect(rGain);
-        rGain.connect(this.bgmMasterGain);
-        rim.start(time);
-        rim.stop(time + 0.07);
-      } else if (kind === 'hat' && this.noiseBuffer) {
-        const src = this.ctx.createBufferSource();
-        src.buffer = this.noiseBuffer;
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'highpass';
-        filter.frequency.setValueAtTime(6200, time);
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.028, time);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
-        src.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.bgmMasterGain);
-        src.start(time);
-        src.stop(time + 0.045);
-      }
-    } catch (e) {}
-  }
-
-  getLofiSongSpec(stageNum) {
-    // Base progressions in C/F/G/Bb/D/A/Eb transposed cleanly per stage via semitone shift
-    const shift = ((stageNum - 1) * 2) % 12;
-    const transpose = (semi) => 261.63 * Math.pow(2, (semi + shift) / 12);
-    // Warm jazz/lofi 7th & 9th chord voicings (in semitones from root)
-    const chords = {
-      I:   [0, 4, 7, 11, 14],    // Imaj9
-      vi:  [-3, 0, 4, 7, 11],    // vim9
-      ii:  [2, 5, 9, 12, 16],    // iim9
-      V:   [-5, -1, 2, 5, 9],    // V13
-      IV:  [5, 9, 12, 16, 19],   // IVmaj9
-      iv:  [5, 8, 12, 15, 19],   // ivm9 (nostalgic lofi bridge chord)
-      iii: [4, 7, 11, 14, 19]    // iiim7
-    };
-    const isBoss = (stageNum === 3 || stageNum === 9 || stageNum === 15);
-    return {
-      transpose,
-      chords,
-      isBoss,
-      // 4-bar chord cycles per song section:
-      introProg:  ['I', 'vi', 'ii', 'V'],
-      verseProg:  ['ii', 'V', 'I', 'vi'],
-      chorusProg: ['IV', 'V', 'iii', 'vi'],
-      bridgeProg: ['iv', 'I', 'ii', 'V']
-    };
-  }
-
-  scheduleLofiSongStep(stageNum, step, time, stepDur) {
-    const spec = this.getLofiSongSpec(stageNum);
-    const bar = Math.floor(step / 16); // 0..31 (32 bars total)
+  applySongArrangement(stageNum, step, time) {
+    const bar = Math.floor(step / 16); // 0..31 (512 steps)
     const bStep = step % 16;           // 0..15
 
-    // Slight human lo-fi swing on odd 16th notes
-    const t = (bStep % 2 === 1) ? (time + stepDur * 0.14) : time;
+    this.bgmPitchMult = 1.0;
+    this.bgmSuppressKick = false;
+    this.bgmSuppressSnare = false;
 
-    // Determine Song Section:
-    // 0..3   : INICIO (Intro - soft solo piano chords + gentle top notes)
-    // 4..11  : VERSO (Verse - chilled lo-fi beat + upright bass + intimate piano melody)
-    // 12..23 : ESTRIBILLO (Chorus - lush 9th chords + expressive high-octave piano hook)
-    // 24..31 : PUENTE (Bridge - harmonic shift, half-time feel, gentle build back to Intro)
-    let section = 'VERSE';
-    let prog = spec.verseProg;
     if (bar < 4) {
-      section = 'INTRO';
-      prog = spec.introProg;
-    } else if (bar >= 12 && bar < 24) {
-      section = 'CHORUS';
-      prog = spec.chorusProg;
-    } else if (bar >= 24) {
-      section = 'BRIDGE';
-      prog = spec.bridgeProg;
-    }
-
-    const chordKey = prog[bar % 4];
-    const chordSemis = spec.chords[chordKey] || spec.chords.I;
-    const rootSemi = chordSemis[0];
-
-    // 1. Piano Chords (warm arpeggiated comping)
-    if (bStep === 0) {
-      const chordFreqs = chordSemis.slice(0, 4).map((s) => spec.transpose(s));
-      const vel = section === 'CHORUS' ? 0.78 : (section === 'INTRO' ? 0.58 : 0.66);
-      this.playLofiPianoChord(chordFreqs, t, stepDur * 14, vel, section === 'INTRO' ? 0.032 : 0.018);
-    } else if (section === 'CHORUS' && bStep === 10) {
-      // Syncopated lo-fi chord push in chorus
-      const pushFreqs = chordSemis.slice(1, 5).map((s) => spec.transpose(s));
-      this.playLofiPianoChord(pushFreqs, t, stepDur * 5.5, 0.55, 0.014);
-    } else if (section === 'BRIDGE' && bStep === 8) {
-      const bridgeFreqs = chordSemis.slice(1, 4).map((s) => spec.transpose(s));
-      this.playLofiPianoChord(bridgeFreqs, t, stepDur * 7, 0.58, 0.025);
-    }
-
-    // 2. Warm Upright / Sub Bass (enters after Intro)
-    if (section !== 'INTRO') {
-      if (bStep === 0) {
-        this.playLofiBass(spec.transpose(rootSemi - 12), t, stepDur * 7.5, section === 'CHORUS' ? 0.92 : 0.75);
-      } else if (bStep === 6 && section !== 'BRIDGE') {
-        this.playLofiBass(spec.transpose(rootSemi - 12 + 7), t, stepDur * 3.5, 0.65);
-      } else if (bStep === 10 && section === 'CHORUS') {
-        this.playLofiBass(spec.transpose(rootSemi - 12), t, stepDur * 5.0, 0.80);
+      // INICIO (Intro): melodic/harmonic intro before full drums enter
+      if (bar < 2) {
+        this.bgmSuppressKick = true;
+        this.bgmSuppressSnare = true;
+      } else if (bar === 2) {
+        this.bgmSuppressSnare = true;
+      } else if (bar === 3 && (bStep === 12 || bStep === 14)) {
+        if (stageNum === 3) this.playRockSnare(time);
+        else this.play16BitSnare(time);
       }
-    }
-
-    // 3. Mellow Lo-Fi Piano Melody per Section
-    const introMel  = [12, -1, 14, -1, 16, -1, -1, 19, 16, -1, 14, -1, 12, -1, -1, -1];
-    const verseMel  = [12, -1, -1, 14, 16, -1, 12, -1, 19, -1, 16, -1, 14, -1, 11, -1];
-    const chorusMel = [24, -1, 23, 24, 26, -1, 24, -1, 21, -1, 19, -1, 16, -1, 19, -1];
-    const bridgeMel = [15, -1, -1, 19, 17, -1, 15, -1, 14, -1, 12, -1, 11, -1, 14, -1];
-
-    let melArr = verseMel;
-    let melVel = 0.78;
-    if (section === 'INTRO') {
-      melArr = introMel;
-      melVel = 0.62;
-    } else if (section === 'CHORUS') {
-      melArr = chorusMel;
-      melVel = 0.95;
-    } else if (section === 'BRIDGE') {
-      melArr = bridgeMel;
-      melVel = 0.72;
-    }
-
-    // Slight bar-to-bar variation so phrases breathe naturally
-    const melSemi = melArr[(bStep + (bar % 2) * 0) % 16];
-    if (melSemi !== -1) {
-      const noteSemi = spec.isBoss ? (melSemi - 1) : melSemi;
-      const durMult = (section === 'INTRO' || section === 'BRIDGE') ? 4.2 : 3.2;
-      this.playLofiPianoNote(spec.transpose(noteSemi), t, stepDur * durMult, melVel);
-      // Add delicate octave/harmony shimmer in Estribillo
-      if (section === 'CHORUS' && (bStep === 0 || bStep === 8)) {
-        this.playLofiPianoNote(spec.transpose(noteSemi - 12), t + 0.01, stepDur * 4.5, 0.45);
+    } else if (bar < 12) {
+      // VERSO: original stage arrangement
+      if (bar === 4 && bStep === 0) {
+        this.play16BitCrash(time);
       }
-    }
-
-    // 4. Dusty Lo-Fi Drums
-    if (section === 'INTRO') {
-      // Only soft hi-hat on bar 3 to count in the Verse
-      if (bar === 3 && bStep % 4 === 0) {
-        this.playLofiDrums(t, 'hat');
+    } else if (bar < 24) {
+      // ESTRIBILLO (Chorus): full energy with phrase crash accents
+      if (bar % 4 === 0 && bStep === 0) {
+        this.play16BitCrash(time);
       }
-    } else if (section === 'BRIDGE') {
-      // Half-time atmospheric beat in Bridge; fill on bar 31 before returning to Intro
-      if (bStep === 0) this.playLofiDrums(t, 'kick');
-      if (bStep === 8) this.playLofiDrums(t, 'snare');
-      if (bar === 31 && (bStep === 12 || bStep === 14)) this.playLofiDrums(t, 'snare');
-      if (bStep % 4 === 2) this.playLofiDrums(t, 'hat');
     } else {
-      // Verse & Chorus classic Lo-Fi boom-bap groove
-      if (bStep === 0 || bStep === 10 || (section === 'CHORUS' && bStep === 7)) {
-        this.playLofiDrums(t, 'kick');
-      }
-      if (bStep === 4 || bStep === 12) {
-        this.playLofiDrums(t, 'snare');
-      }
-      if (bStep % 2 === 0 || (section === 'CHORUS' && bStep === 15)) {
-        this.playLofiDrums(t, 'hat');
+      // PUENTE (Bridge): harmonic modulation (+5 semitones -> +7 turnaround)
+      if (bar < 28) {
+        this.bgmPitchMult = 1.33484; // +5 semitones (IV)
+        if (bStep !== 0 && bStep !== 8) {
+          this.bgmSuppressKick = true; // Half-time groove break
+        }
+      } else {
+        this.bgmPitchMult = 1.49831; // +7 semitones (V turnaround)
+        if (bar === 31 && (bStep === 8 || bStep === 10 || bStep === 12 || bStep === 14)) {
+          if (stageNum === 3) this.playRockSnare(time);
+          else this.play16BitSnare(time);
+        }
       }
     }
   }
 
-  // Master Step Scheduler dispatching to appropriate track
+  // Master Step Scheduler dispatching to each stage's original track
   scheduleStageStep(stageNum, step, time, stepDur) {
-    return this.scheduleLofiSongStep(stageNum, step, time, stepDur);
+    this.applySongArrangement(stageNum, step, time);
+    switch (stageNum) {
+      case 1:  return this.scheduleStage1Step(step, time, stepDur);
+      case 2:  return this.scheduleStage2Step(step, time, stepDur);
+      case 3:  return this.scheduleRockBossStep(step, time, stepDur); // KILOBURNER BOSS HEAVY METAL!
+      case 4:  return this.scheduleStage4Step(step, time, stepDur);
+      case 5:  return this.scheduleStage5Step(step, time, stepDur);
+      case 6:  return this.scheduleStage6Step(step, time, stepDur);
+      case 7:  return this.scheduleStage7Step(step, time, stepDur);
+      case 8:  return this.scheduleStage8Step(step, time, stepDur);
+      case 9:  return this.scheduleStage9Step(step, time, stepDur);
+      case 10: return this.scheduleStage10Step(step, time, stepDur);
+      case 11: return this.scheduleStage11Step(step, time, stepDur);
+      case 12: return this.scheduleStage12Step(step, time, stepDur);
+      case 13: return this.scheduleStage13Step(step, time, stepDur);
+      case 14: return this.scheduleStage14Step(step, time, stepDur);
+      case 15: return this.scheduleStage15Step(step, time, stepDur);
+      case 16: return this.scheduleStage16Step(step, time, stepDur);
+      default: return this.scheduleStage1Step(step, time, stepDur);
+    }
   }
 
   // =========================================================================
@@ -1823,33 +1619,28 @@ class SoundManager {
     this.currentBgmStage = Number(stageNumber) || 1;
 
     this.bgmMasterGain = this.ctx.createGain();
-    this.bgmMasterGain.gain.setValueAtTime(0.75, this.ctx.currentTime);
+    // Loud, punchy arcade master levels (0.75 for Boss Rock, 0.68 for other stages)
+    this.bgmMasterGain.gain.setValueAtTime(this.currentBgmStage === 3 ? 0.75 : 0.68, this.ctx.currentTime);
+    this.bgmMasterGain.connect(this.ctx.destination);
 
-    // Warm Lo-Fi Tape Low-Pass Filter on master BGM bus
-    this.bgmFilter = this.ctx.createBiquadFilter();
-    this.bgmFilter.type = 'lowpass';
-    this.bgmFilter.frequency.setValueAtTime(3200, this.ctx.currentTime);
-    this.bgmMasterGain.connect(this.bgmFilter);
-    this.bgmFilter.connect(this.ctx.destination);
-
-    // Chill Lo-Fi Piano tempos per stage (78 - 98 BPM)
+    // Original Tempo definition per stage
     const STAGE_TEMPOS = {
-      1: 84,   // Classic Lo-Fi Piano
-      2: 86,   // Spice Pantry Bossa Lo-Fi
-      3: 98,   // Kiloburner Dramatic Minor Lo-Fi
-      4: 82,   // Bistro Jazz Piano
-      5: 88,   // Ocean Chill Piano
-      6: 80,   // Barista Study Beats
-      7: 90,   // Feline Bakery Lo-Fi
-      8: 84,   // Castle Hearth Piano
-      9: 94,   // Dragon Forge Lo-Fi
-      10: 86,  // High Seas Chill
-      11: 78,  // Subzero Winter Piano
-      12: 85,  // Crispy Bakery Waltz Lo-Fi
-      13: 84,  // Panda Wok Pentatonic Lo-Fi
-      14: 88,  // Cosmic Space Piano
-      15: 82,  // Jurassic Amber Lo-Fi
-      16: 90   // Imperial Grand Piano
+      1: 154,  // Kitchen Arcade Chiptune
+      2: 132,  // Latin Salsa Montuno
+      3: 172,  // KILOBURNER BOSS HEAVY METAL / HARD ROCK
+      4: 140,  // French Bistro Swing
+      5: 160,  // Surf Rock
+      6: 114,  // Barista Bebop Lo-Fi
+      7: 166,  // Kawaii Chiptune Pop
+      8: 134,  // Medieval Castle March
+      9: 146,  // Dragon Forge Industrial Metal
+      10: 138, // Pirate Sea Shanty
+      11: 124, // Subzero Ice Synthwave
+      12: 144, // Baker Waltz 3/4
+      13: 130, // Kung-Fu Pentatonic Trap
+      14: 128, // Cyberpunk Synthwave
+      15: 120, // Jurassic Volcano Tribal
+      16: 142  // Imperial Banquet Royal Fanfare
     };
 
     const bpm = STAGE_TEMPOS[this.currentBgmStage] || 150;
