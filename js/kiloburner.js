@@ -851,25 +851,34 @@ class KiloburnerBoss {
     const hoverBob = Math.sin(this.floatAngle) * 5;
     this.y = this.baseY + hoverBob;
 
-    // 3. Horizontal Viewport Anchoring & Active Combat Positioning
+    // 3. Horizontal Viewport Anchoring & Safe Standoff Distance
     const bossHalfW = Math.round(this.logicalW * 0.55);
-    this.maxX = cameraX + 240 - bossHalfW - 8;
-    this.minX = cameraX + 45; // Allows boss to pursue across the combat zone
+    this.maxX = cameraX + 240 - 20;
+    this.minX = cameraX + 20; // Allows boss to stay within combat arena without crowding player
 
-    // If player is within viewport, boss advances to engage in close/medium combat range (~65-80px)
-    if (this.state === 'idle' && player) {
-      const desiredCombatX = (this.facing === -1) ? (player.x + 72) : (player.x - 72);
+    if (player && !this.isDead) {
+      const playerCenterX = player.x + 8;
+      const side = (this.x >= playerCenterX) ? 1 : -1;
+      const desiredDist = 114;
+      const minStandoff = 92;
+
+      const desiredCombatX = playerCenterX + side * desiredDist;
       const targetX = Math.max(this.minX, Math.min(this.maxX, desiredCombatX));
-      this.x += (targetX - this.x) * 0.05 + this.hoverSpeedX;
-    }
 
-    // Safety clamp preventing boss from stepping on player's feet
-    const minStandoff = 42;
-    if (this.state === 'idle' && player && Math.abs(this.x - player.x) < minStandoff) {
-      if (this.facing === -1) {
-        this.x = player.x + minStandoff;
-      } else {
-        this.x = player.x - minStandoff;
+      if (this.state === 'idle') {
+        this.x += (targetX - this.x) * 0.08;
+      } else if (Math.abs(this.x - playerCenterX) < minStandoff) {
+        // Always back away smoothly during attacks/recoil if player gets too close
+        this.x += (targetX - this.x) * 0.14;
+      }
+
+      // Hard safety clamp preventing boss from closing in closer than minStandoff (when arena allows)
+      const distAfter = this.x - playerCenterX;
+      if (Math.abs(distAfter) < minStandoff) {
+        const clampedX = playerCenterX + side * minStandoff;
+        if (clampedX >= this.minX && clampedX <= this.maxX) {
+          this.x = clampedX;
+        }
       }
     }
 
