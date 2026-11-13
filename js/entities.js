@@ -261,7 +261,7 @@ class Player {
     // Fuel drain: ~133 continuous frames of flame (~2.2 seconds) per tank
     this.blowtorchFuel = Math.max(0, this.blowtorchFuel - 0.75);
 
-    let dir = (this.facingDir === 'left' || this.dir === -1) ? -1 : 1;
+    let dir = (this.facingDir === 'left') ? -1 : (this.facingDir === 'right' ? 1 : (this.dir === -1 ? -1 : 1));
     if (currentInput && currentInput.x !== 0) {
       dir = (currentInput.x < 0) ? -1 : 1;
     } else if (this.levelData && this.levelData.autoScrollDir === -1 && this.facingDir === 'right') {
@@ -269,6 +269,7 @@ class Player {
     }
     this.dir = dir;
     this.facingDir = (dir === -1) ? 'left' : 'right';
+    this.lastTossDir = this.facingDir;
 
     const spawnX = (dir === -1) ? (this.x - 4) : (this.x + 20);
     const spawnY = this.y + 7;
@@ -303,12 +304,13 @@ class Player {
     this.pepperTimer = 10;
     this.cryoCooldown = 12; // Rapid-fire cooldown (arcade rhythm)
 
-    let dir = (this.dir === -1) ? -1 : 1;
+    let dir = (this.facingDir === 'left') ? -1 : (this.facingDir === 'right' ? 1 : (this.dir === -1 ? -1 : 1));
     if (currentInput && currentInput.x !== 0) {
       dir = (currentInput.x < 0) ? -1 : 1;
     }
     this.dir = dir;
     this.facingDir = (dir === -1) ? 'left' : 'right';
+    this.lastTossDir = this.facingDir;
 
     const spawnX = (dir === -1) ? (this.x - 2) : (this.x + 18);
     const spawnY = this.y + 7;
