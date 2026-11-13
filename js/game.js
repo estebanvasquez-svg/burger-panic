@@ -472,8 +472,9 @@ class BurgerPanicGame {
       this.player.lastTossDir = 'left';
     }
 
-    // Initialize burgers
-    this.burgers = this.levelData.burgers.map((b) => new window.BurgerPiece(b, this.levelData));
+    // Initialize burgers / stage-themed food layers
+    const activeStage = index + 1;
+    this.burgers = this.levelData.burgers.map((b) => new window.BurgerPiece(b, this.levelData, activeStage));
 
     // Initialize enemies (Safety: ensure all enemies spawn on upper floors far from chef)
     const MIN_SAFE_DIST = 170;

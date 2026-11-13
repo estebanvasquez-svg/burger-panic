@@ -1227,6 +1227,236 @@ drawLadder(ctx, l, theme) {
 
     ctx.restore();
   }
+
+  /**
+   * Returns the culinary food pack for the active stage (1..16).
+   * Maps logical BurgerPiece types ('bun_top', 'lettuce', 'cheese', 'tomato', 'patty', 'bun_bottom')
+   * to stage-specific themed sprites.
+   */
+  getFoodPack(stageNum) {
+    const s = Math.max(1, Math.min(stageNum || 1, 16));
+    const PACKS = {
+      1: {
+        id: 'classic_burger',
+        name: 'Hamburguesa Clásica',
+        crumbColor: '#f4b448',
+        sprites: {
+          bun_top: 'bun_top',
+          lettuce: 'lettuce',
+          cheese: 'cheese',
+          tomato: 'tomato',
+          patty: 'patty',
+          bun_bottom: 'bun_bottom'
+        }
+      },
+      2: {
+        id: 'artisan_pizza',
+        name: 'Pizza Artesanal',
+        crumbColor: '#e67e22',
+        sprites: {
+          bun_top: 'pizza_top',
+          lettuce: 'pizza_basil',
+          cheese: 'pizza_cheese',
+          tomato: 'pizza_pepperoni',
+          patty: 'pizza_sauce',
+          bun_bottom: 'pizza_crust'
+        }
+      },
+      3: {
+        id: 'kiloburner_burger',
+        name: 'Hamburguesa Clásica',
+        crumbColor: '#f4b448',
+        sprites: {
+          bun_top: 'bun_top',
+          lettuce: 'lettuce',
+          cheese: 'cheese',
+          tomato: 'tomato',
+          patty: 'patty',
+          bun_bottom: 'bun_bottom'
+        }
+      },
+      4: {
+        id: 'bistro_club',
+        name: 'Club Sándwich Gourmet',
+        crumbColor: '#f5cba7',
+        sprites: {
+          bun_top: 'bistro_top',
+          lettuce: 'bistro_herb',
+          cheese: 'bistro_cheese',
+          tomato: 'bistro_tomato',
+          patty: 'bistro_meat',
+          bun_bottom: 'bistro_bottom'
+        }
+      },
+      5: {
+        id: 'octopus_sushi',
+        name: 'Sushi Roll del Pulpo',
+        crumbColor: '#f8fafc',
+        sprites: {
+          bun_top: 'sushi_top',
+          lettuce: 'sushi_avocado',
+          cheese: 'sushi_tamago',
+          tomato: 'sushi_salmon',
+          patty: 'sushi_tuna',
+          bun_bottom: 'sushi_nori'
+        }
+      },
+      6: {
+        id: 'barista_waffle',
+        name: 'Torre de Waffles',
+        crumbColor: '#f9e79f',
+        sprites: {
+          bun_top: 'waffle_top',
+          lettuce: 'waffle_berry',
+          cheese: 'waffle_butter',
+          tomato: 'waffle_strawberry',
+          patty: 'waffle_syrup',
+          bun_bottom: 'waffle_bottom'
+        }
+      },
+      7: {
+        id: 'feline_cake',
+        name: 'Pastel de Capas',
+        crumbColor: '#f9a8d4',
+        sprites: {
+          bun_top: 'cake_top',
+          lettuce: 'cake_mint',
+          cheese: 'cake_cream',
+          tomato: 'cake_jam',
+          patty: 'cake_sponge',
+          bun_bottom: 'cake_bottom'
+        }
+      },
+      8: {
+        id: 'castle_roast',
+        name: 'Asado del Castillo',
+        crumbColor: '#d4ac0d',
+        sprites: {
+          bun_top: 'castle_top',
+          lettuce: 'castle_herb',
+          cheese: 'castle_cheese',
+          tomato: 'castle_bacon',
+          patty: 'castle_ribs',
+          bun_bottom: 'castle_bottom'
+        }
+      },
+      9: {
+        id: 'dragon_taco',
+        name: 'Taco de Fuego',
+        crumbColor: '#f5b041',
+        sprites: {
+          bun_top: 'taco_top',
+          lettuce: 'taco_jalapeno',
+          cheese: 'taco_cheese',
+          tomato: 'taco_salsa',
+          patty: 'taco_meat',
+          bun_bottom: 'taco_bottom'
+        }
+      },
+      10: {
+        id: 'mariner_sub',
+        name: 'Sándwich Marinero',
+        crumbColor: '#aed6f1',
+        sprites: {
+          bun_top: 'sea_top',
+          lettuce: 'sea_kelp',
+          cheese: 'sea_tartar',
+          tomato: 'sea_tomato',
+          patty: 'sea_fish',
+          bun_bottom: 'sea_bottom'
+        }
+      },
+      11: {
+        id: 'icecream_sandwich',
+        name: 'Sándwich de Helado',
+        crumbColor: '#fbcfe8',
+        sprites: {
+          bun_top: 'ice_top',
+          lettuce: 'ice_mint',
+          cheese: 'ice_vanilla',
+          tomato: 'ice_strawberry',
+          patty: 'ice_choco',
+          bun_bottom: 'ice_wafer'
+        }
+      },
+      12: {
+        id: 'crispy_millefeuille',
+        name: 'Milhojas Crujiente',
+        crumbColor: '#fdebd0',
+        sprites: {
+          bun_top: 'bakery_top',
+          lettuce: 'bakery_pistachio',
+          cheese: 'bakery_custard',
+          tomato: 'bakery_jam',
+          patty: 'bakery_puff',
+          bun_bottom: 'bakery_bottom'
+        }
+      },
+      13: {
+        id: 'panda_baozi',
+        name: 'Baozi Gourmet',
+        crumbColor: '#f8fafc',
+        sprites: {
+          bun_top: 'wok_top',
+          lettuce: 'wok_bokchoy',
+          cheese: 'wok_egg',
+          tomato: 'wok_chili',
+          patty: 'wok_pork',
+          bun_bottom: 'wok_bottom'
+        }
+      },
+      14: {
+        id: 'cosmic_macaron',
+        name: 'Astro-Burger Cósmica',
+        crumbColor: '#38bdf8',
+        sprites: {
+          bun_top: 'cosmic_top',
+          lettuce: 'cosmic_slime',
+          cheese: 'cosmic_cheese',
+          tomato: 'cosmic_plasma',
+          patty: 'cosmic_patty',
+          bun_bottom: 'cosmic_bottom'
+        }
+      },
+      15: {
+        id: 'jurassic_bronto',
+        name: 'Bronto-Sándwich',
+        crumbColor: '#d97706',
+        sprites: {
+          bun_top: 'dino_top',
+          lettuce: 'dino_fern',
+          cheese: 'dino_cheese',
+          tomato: 'dino_pepper',
+          patty: 'dino_steak',
+          bun_bottom: 'dino_bottom'
+        }
+      },
+      16: {
+        id: 'imperial_banquet',
+        name: 'Banquete Imperial Dorado',
+        crumbColor: '#facc15',
+        sprites: {
+          bun_top: 'royal_top',
+          lettuce: 'royal_truffle',
+          cheese: 'royal_cheese',
+          tomato: 'royal_caviar',
+          patty: 'royal_wagyu',
+          bun_bottom: 'royal_bottom'
+        }
+      }
+    };
+    return PACKS[s] || PACKS[1];
+  }
+
+  resolveIngredientSprite(stageNum, baseType) {
+    const pack = this.getFoodPack(stageNum);
+    return (pack && pack.sprites && pack.sprites[baseType]) ? pack.sprites[baseType] : baseType;
+  }
+
+  getIngredientCrumbColor(stageNum) {
+    const pack = this.getFoodPack(stageNum);
+    return (pack && pack.crumbColor) ? pack.crumbColor : '#f4b448';
+  }
 }
 
 window.stageThemesManager = new StageThemesManager();

@@ -825,6 +825,14 @@ class SpriteManager {
       '  OODDDDDDDDDDDDDDDDDDDDDDDDOO  '
     ];
     this.sprites['bun_bottom'] = this.renderMatrix(mBunBot, cmBunBot, 32, 8);
+    this.registerThemedFoodSprites({
+      bun_top: mBunTop,
+      lettuce: mLettuce,
+      tomato: mTomato,
+      cheese: mCheese,
+      patty: mPatty,
+      bun_bottom: mBunBot
+    });
 
     // 7. Polished Silver / Ceramic Serving Tray
     const cmPlate = {
@@ -844,6 +852,165 @@ class SpriteManager {
     ];
     this.sprites['plate'] = this.renderMatrix(mPlate, cmPlate, 36, 6);
   }
+
+  registerThemedFoodSprites(baseTemplates) {
+    const mWaffle = [
+      ' ODDDDDDDDDDDDDDDDDDDDDDDDDDDDO ',
+      'OHHBBBDHHBBBDHHBBBDHHBBBDHHBBBDO',
+      'OBDCCBDBDCCBDBDCCBDBDCCBDBDCCBDO',
+      'OBDCCBDBDCCBDBDCCBDBDCCBDBDCCBDO',
+      'OHHBBBDHHBBBDHHBBBDHHBBBDHHBBBDO',
+      'OBDCCBDBDCCBDBDCCBDBDCCBDBDCCBDO',
+      'ODDDDDDDDDDDDDDDDDDDDDDDDDDDDDDO',
+      ' OOOOOOOOOOOOOOOOOOOOOOOOOOOOOO '
+    ];
+    const mCakeTop = [
+      '  LLLLHHHLLLLLHHHLLLLLHHHLLLL   ',
+      ' LBBBSBBBLLBBSBBBLLBBSBBBLLBBBL ',
+      'OBBBTBBBBBBBTBBBBBBBTBBBBBBBTBBO',
+      'OBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBO',
+      'ODBBBDDBBBDDBBBBDDBBBDDBBBDDBBDO',
+      ' ODDD  DDD  DDDD  DDD  DDD  DDO ',
+      '  OO    O    OO    O    O    O  ',
+      '                                '
+    ];
+    const mSushiLayer = [
+      ' KRRRRRRRRRRRRRRRRRRRRRRRRRRRRK ',
+      'KRBHHBBBRRBHHBBBRRBHHBBBRRBHHBRK',
+      'KRBBBBBBBRBBBBBBBRBBBBBBBRBBBBRK',
+      'KRBHHBBBRRBHHBBBRRBHHBBBRRBHHBRK',
+      'KRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRK',
+      'KRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRK',
+      'KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+      ' KKKKKKKKKKKKKKKKKKKKKKKKKKKKKK '
+    ];
+    const templates = Object.assign({}, baseTemplates, {
+      waffle: mWaffle,
+      cake_top: mCakeTop,
+      sushi_layer: mSushiLayer
+    });
+
+    const defs = [
+      // Stage 2: Pizza Artesanal
+      ['pizza_top', 'cake_top', { O: '#922b21', D: '#d35400', B: '#f4d03f', H: '#fef9e7', L: '#fffdf0', S: '#c0392b', T: '#7b241c' }],
+      ['pizza_basil', 'lettuce', { D: '#145a32', M: '#1e8449', L: '#27ae60', H: '#58d68d', W: '#abebc6' }],
+      ['pizza_cheese', 'cheese', { D: '#b7950b', O: '#f1c40f', C: '#f7dc6f', Y: '#fcf3cf', H: '#ffffff' }],
+      ['pizza_pepperoni', 'tomato', { K: '#641e16', R: '#922b21', B: '#c0392b', H: '#e6b0aa', J: '#7b241c', Y: '#f5b7b1', G: '#d98880' }],
+      ['pizza_sauce', 'sushi_layer', { K: '#641e16', R: '#a93226', B: '#cb4335', H: '#ec7063' }],
+      ['pizza_crust', 'bun_bottom', { O: '#5d2e0d', D: '#a04000', B: '#d35400', C: '#eb984e', W: '#fad7a0' }],
+
+      // Stage 4: Club Sandwich Gourmet
+      ['bistro_top', 'bun_top', { O: '#5d2e0d', D: '#9c640c', B: '#d4ac0d', H: '#f4d03f', L: '#f9e79f', S: '#fef9e7', T: '#7d6608' }],
+      ['bistro_herb', 'lettuce', { D: '#0b5345', M: '#117864', L: '#1abc9c', H: '#76d7c4', W: '#d1f2eb' }],
+      ['bistro_cheese', 'cheese', { D: '#b7950b', O: '#f7dc6f', C: '#f9e79f', Y: '#fef9e7', H: '#ffffff' }],
+      ['bistro_tomato', 'tomato', { K: '#78281f', R: '#b03a2e', B: '#e74c3c', H: '#f1948a', J: '#943126', Y: '#f9e79f', G: '#82e0aa' }],
+      ['bistro_meat', 'patty', { K: '#3b1c0a', C: '#6e2c00', M: '#a04000', B: '#ca6f1e', H: '#e59866' }],
+      ['bistro_bottom', 'bun_bottom', { O: '#5d2e0d', D: '#9c640c', B: '#d4ac0d', C: '#f4d03f', W: '#fef9e7' }],
+
+      // Stage 5: Sushi Roll del Pulpo
+      ['sushi_top', 'bun_top', { O: '#64748b', D: '#cbd5e1', B: '#f1f5f9', H: '#ffffff', L: '#ffffff', S: '#1e293b', T: '#0f172a' }],
+      ['sushi_avocado', 'lettuce', { D: '#1b4f24', M: '#2e7d32', L: '#66bb6a', H: '#a5d6a7', W: '#e8f5e9' }],
+      ['sushi_tamago', 'cheese', { D: '#b7950b', O: '#f39c12', C: '#f7dc6f', Y: '#fef08a', H: '#ffffff' }],
+      ['sushi_salmon', 'sushi_layer', { K: '#7c2d12', R: '#ea580c', B: '#fb923c', H: '#fed7aa' }],
+      ['sushi_tuna', 'sushi_layer', { K: '#450a0a', R: '#991b1b', B: '#dc2626', H: '#fca5a5' }],
+      ['sushi_nori', 'waffle', { O: '#022c22', D: '#064e3b', B: '#065f46', H: '#047857', C: '#059669' }],
+
+      // Stage 6: Torre de Waffles
+      ['waffle_top', 'cake_top', { O: '#94a3b8', D: '#cbd5e1', B: '#f8fafc', H: '#ffffff', L: '#ffffff', S: '#ef4444', T: '#991b1b' }],
+      ['waffle_berry', 'lettuce', { D: '#1e1b4b', M: '#3730a3', L: '#4f46e5', H: '#818cf8', W: '#c7d2fe' }],
+      ['waffle_butter', 'cheese', { D: '#ca8a04', O: '#eab308', C: '#facc15', Y: '#fef08a', H: '#ffffff' }],
+      ['waffle_strawberry', 'tomato', { K: '#881337', R: '#be123c', B: '#f43f5e', H: '#fda4af', J: '#9f1239', Y: '#fef08a', G: '#4ade80' }],
+      ['waffle_syrup', 'waffle', { O: '#451a03', D: '#92400e', B: '#d97706', H: '#fbbf24', C: '#b45309' }],
+      ['waffle_bottom', 'waffle', { O: '#451a03', D: '#78350f', B: '#b45309', H: '#f59e0b', C: '#92400e' }],
+
+      // Stage 7: Pastel de Capas
+      ['cake_top', 'cake_top', { O: '#831843', D: '#db2777', B: '#f472b6', H: '#fbcfe8', L: '#fdf2f8', S: '#38bdf8', T: '#facc15' }],
+      ['cake_mint', 'lettuce', { D: '#065f46', M: '#10b981', L: '#34d399', H: '#a7f3d0', W: '#ecfdf5' }],
+      ['cake_cream', 'cheese', { D: '#ca8a04', O: '#facc15', C: '#fef08a', Y: '#fef9c3', H: '#ffffff' }],
+      ['cake_jam', 'sushi_layer', { K: '#701a75', R: '#a21caf', B: '#e879f9', H: '#fae8ff' }],
+      ['cake_sponge', 'bun_bottom', { O: '#3f1d0b', D: '#5c2c16', B: '#78350f', C: '#92400e', W: '#d97706' }],
+      ['cake_bottom', 'bun_bottom', { O: '#78350f', D: '#b45309', B: '#f59e0b', C: '#fcd34d', W: '#fef3c7' }],
+
+      // Stage 8: Asado del Castillo
+      ['castle_top', 'bun_top', { O: '#271306', D: '#5d3418', B: '#8c542b', H: '#b87a4b', L: '#d9a473', S: '#e5c199', T: '#3e210e' }],
+      ['castle_herb', 'lettuce', { D: '#14532d', M: '#166534', L: '#22c55e', H: '#86efac', W: '#dcfce7' }],
+      ['castle_cheese', 'cheese', { D: '#9a3412', O: '#ea580c', C: '#fb923c', Y: '#fed7aa', H: '#fff7ed' }],
+      ['castle_bacon', 'sushi_layer', { K: '#450a0a', R: '#991b1b', B: '#ef4444', H: '#fecaca' }],
+      ['castle_ribs', 'patty', { K: '#1c0d06', C: '#451a03', M: '#7c2d12', B: '#b91c1c', H: '#f97316' }],
+      ['castle_bottom', 'bun_bottom', { O: '#271306', D: '#5d3418', B: '#8c542b', C: '#b87a4b', W: '#e5c199' }],
+
+      // Stage 9: Taco de Fuego
+      ['taco_top', 'bun_top', { O: '#713f12', D: '#ca8a04', B: '#eab308', H: '#facc15', L: '#fef08a', S: '#dc2626', T: '#92400e' }],
+      ['taco_jalapeno', 'lettuce', { D: '#14532d', M: '#15803d', L: '#22c55e', H: '#4ade80', W: '#bbf7d0' }],
+      ['taco_cheese', 'cheese', { D: '#b45309', O: '#f59e0b', C: '#fbbf24', Y: '#fde68a', H: '#ffffff' }],
+      ['taco_salsa', 'tomato', { K: '#450a0a', R: '#b91c1c', B: '#ef4444', H: '#fca5a5', J: '#7f1d1d', Y: '#facc15', G: '#4ade80' }],
+      ['taco_meat', 'patty', { K: '#2d0c05', C: '#5c190a', M: '#8a2b13', B: '#c2410c', H: '#fb923c' }],
+      ['taco_bottom', 'waffle', { O: '#713f12', D: '#a16207', B: '#eab308', H: '#fef08a', C: '#ca8a04' }],
+
+      // Stage 10: Sandwich Marinero
+      ['sea_top', 'bun_top', { O: '#1e3a8a', D: '#9a6b38', B: '#d9a468', H: '#f3d0a0', L: '#fae5c8', S: '#ffffff', T: '#64748b' }],
+      ['sea_kelp', 'lettuce', { D: '#064e3b', M: '#047857', L: '#10b981', H: '#6ee7b7', W: '#d1fae5' }],
+      ['sea_tartar', 'cheese', { D: '#94a3b8', O: '#cbd5e1', C: '#e2e8f0', Y: '#f8fafc', H: '#ffffff' }],
+      ['sea_tomato', 'tomato', { K: '#7f1d1d', R: '#dc2626', B: '#f87171', H: '#fecaca', J: '#991b1b', Y: '#fef08a', G: '#86efac' }],
+      ['sea_fish', 'waffle', { O: '#78350f', D: '#b45309', B: '#f59e0b', H: '#fde68a', C: '#d97706' }],
+      ['sea_bottom', 'bun_bottom', { O: '#1e3a8a', D: '#9a6b38', B: '#d9a468', C: '#f3d0a0', W: '#fae5c8' }],
+
+      // Stage 11: Sandwich de Helado
+      ['ice_top', 'cake_top', { O: '#0284c7', D: '#bae6fd', B: '#f0f9ff', H: '#ffffff', L: '#ffffff', S: '#e11d48', T: '#881337' }],
+      ['ice_mint', 'lettuce', { D: '#0f766e', M: '#14b8a6', L: '#5eead4', H: '#99f6e4', W: '#f0fdfa' }],
+      ['ice_vanilla', 'cheese', { D: '#d97706', O: '#fef3c7', C: '#fffbeb', Y: '#ffffff', H: '#ffffff' }],
+      ['ice_strawberry', 'sushi_layer', { K: '#9d174d', R: '#ec4899', B: '#f9a8d4', H: '#fdf2f8' }],
+      ['ice_choco', 'patty', { K: '#1e1008', C: '#3f200e', M: '#5c3016', B: '#7c4422', H: '#a4643c' }],
+      ['ice_wafer', 'waffle', { O: '#78350f', D: '#b45309', B: '#fbbf24', H: '#fef3c7', C: '#d97706' }],
+
+      // Stage 12: Milhojas Crujiente
+      ['bakery_top', 'cake_top', { O: '#78350f', D: '#d97706', B: '#fde68a', H: '#fffbeb', L: '#ffffff', S: '#f59e0b', T: '#92400e' }],
+      ['bakery_pistachio', 'lettuce', { D: '#3f6212', M: '#65a30d', L: '#a3e635', H: '#d9f99d', W: '#f7fee7' }],
+      ['bakery_custard', 'cheese', { D: '#ca8a04', O: '#facc15', C: '#fef08a', Y: '#fef9c3', H: '#ffffff' }],
+      ['bakery_jam', 'tomato', { K: '#831843', R: '#be185d', B: '#f43f5e', H: '#fda4af', J: '#9d174d', Y: '#fef08a', G: '#86efac' }],
+      ['bakery_puff', 'waffle', { O: '#78350f', D: '#b45309', B: '#f59e0b', H: '#fde68a', C: '#d97706' }],
+      ['bakery_bottom', 'bun_bottom', { O: '#78350f', D: '#b45309', B: '#f59e0b', C: '#fcd34d', W: '#fef3c7' }],
+
+      // Stage 13: Baozi Gourmet
+      ['wok_top', 'bun_top', { O: '#64748b', D: '#cbd5e1', B: '#f8fafc', H: '#ffffff', L: '#ffffff', S: '#e2e8f0', T: '#94a3b8' }],
+      ['wok_bokchoy', 'lettuce', { D: '#14532d', M: '#16a34a', L: '#4ade80', H: '#bbf7d0', W: '#f0fdf4' }],
+      ['wok_egg', 'cheese', { D: '#b45309', O: '#f59e0b', C: '#facc15', Y: '#fef08a', H: '#ffffff' }],
+      ['wok_chili', 'sushi_layer', { K: '#450a0a', R: '#b91c1c', B: '#ef4444', H: '#fca5a5' }],
+      ['wok_pork', 'patty', { K: '#3b0764', C: '#7c2d12', M: '#b45309', B: '#ea580c', H: '#fdba74' }],
+      ['wok_bottom', 'bun_bottom', { O: '#64748b', D: '#cbd5e1', B: '#f1f5f9', C: '#f8fafc', W: '#ffffff' }],
+
+      // Stage 14: Astro-Burger Cosmica
+      ['cosmic_top', 'bun_top', { O: '#312e81', D: '#0284c7', B: '#38bdf8', H: '#7dd3fc', L: '#e0f2fe', S: '#facc15', T: '#ca8a04' }],
+      ['cosmic_slime', 'lettuce', { D: '#14532d', M: '#16a34a', L: '#84cc16', H: '#bef264', W: '#ecfccb' }],
+      ['cosmic_cheese', 'cheese', { D: '#6b21a8', O: '#a855f7', C: '#c084fc', Y: '#e9d5ff', H: '#ffffff' }],
+      ['cosmic_plasma', 'tomato', { K: '#701a75', R: '#c026d3', B: '#f43f5e', H: '#fda4af', J: '#86198f', Y: '#38bdf8', G: '#4ade80' }],
+      ['cosmic_patty', 'patty', { K: '#1e1b4b', C: '#3730a3', M: '#6366f1', B: '#818cf8', H: '#c7d2fe' }],
+      ['cosmic_bottom', 'bun_bottom', { O: '#312e81', D: '#0284c7', B: '#38bdf8', C: '#7dd3fc', W: '#e0f2fe' }],
+
+      // Stage 15: Bronto-Sandwich
+      ['dino_top', 'bun_top', { O: '#3b1c0a', D: '#7c2d12', B: '#c2410c', H: '#ea580c', L: '#fdba74', S: '#fef3c7', T: '#451a03' }],
+      ['dino_fern', 'lettuce', { D: '#1a2e05', M: '#3f6212', L: '#65a30d', H: '#a3e635', W: '#ecfccb' }],
+      ['dino_cheese', 'cheese', { D: '#9a3412', O: '#ea580c', C: '#f97316', Y: '#fdba74', H: '#fff7ed' }],
+      ['dino_pepper', 'tomato', { K: '#450a0a', R: '#991b1b', B: '#dc2626', H: '#fca5a5', J: '#7f1d1d', Y: '#facc15', G: '#84cc16' }],
+      ['dino_steak', 'patty', { K: '#1c0a05', C: '#450a0a', M: '#7f1d1d', B: '#b91c1c', H: '#f87171' }],
+      ['dino_bottom', 'bun_bottom', { O: '#3b1c0a', D: '#7c2d12', B: '#c2410c', C: '#ea580c', W: '#fed7aa' }],
+
+      // Stage 16: Banquete Imperial Dorado
+      ['royal_top', 'bun_top', { O: '#713f12', D: '#ca8a04', B: '#facc15', H: '#fef08a', L: '#ffffff', S: '#fffbeb', T: '#a16207' }],
+      ['royal_truffle', 'lettuce', { D: '#064e3b', M: '#059669', L: '#34d399', H: '#a7f3d0', W: '#ecfdf5' }],
+      ['royal_cheese', 'cheese', { D: '#b45309', O: '#f59e0b', C: '#fcd34d', Y: '#fef3c7', H: '#ffffff' }],
+      ['royal_caviar', 'tomato', { K: '#4c0519', R: '#9f1239', B: '#e11d48', H: '#fda4af', J: '#881337', Y: '#facc15', G: '#34d399' }],
+      ['royal_wagyu', 'patty', { K: '#270b07', C: '#5c1810', M: '#8c281c', B: '#d97706', H: '#fde68a' }],
+      ['royal_bottom', 'bun_bottom', { O: '#713f12', D: '#ca8a04', B: '#facc15', C: '#fef08a', W: '#ffffff' }]
+    ];
+
+    for (const [key, tplName, colorMap] of defs) {
+      if (templates[tplName]) {
+        this.sprites[key] = this.renderMatrix(templates[tplName], colorMap, 32, 8);
+      }
+    }
+  }
+
   // ==========================================
   // TILES (Ladders and Platforms)
   // ==========================================

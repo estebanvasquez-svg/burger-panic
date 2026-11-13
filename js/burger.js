@@ -2,12 +2,16 @@
  * Burger Piece Mechanics & Cascades for Burger Panic Mobile
  */
 class BurgerPiece {
-  constructor(data, levelData) {
+  constructor(data, levelData, stageNum = 1) {
     this.col = data.col;
     this.x = data.x;
     this.y = data.y;
     this.initialY = data.y;
     this.type = data.type; // 'bun_top', 'lettuce', 'tomato', 'cheese', 'patty', 'bun_bottom'
+    this.stageNum = stageNum;
+    this.spriteType = window.stageThemesManager
+      ? window.stageThemesManager.resolveIngredientSprite(stageNum, data.type)
+      : data.type;
     this.width = 32;
     this.height = 8;
     this.levelData = levelData;
@@ -230,7 +234,7 @@ class BurgerPiece {
   }
 
   draw(ctx) {
-    const sprite = window.spriteManager.get(this.type);
+    const sprite = window.spriteManager.get(this.spriteType) || window.spriteManager.get(this.type);
     if (!sprite) return;
 
     const sw = sprite.width / 4;
