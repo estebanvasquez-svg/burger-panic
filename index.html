@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Burger Panic - Retro Arcade Mobile</title>
+  <title>Chef Panic - Retro Arcade Mobile</title>
 
   <!-- PWA & Mobile Web App Meta Tags -->
   <link rel="manifest" href="manifest.json">
@@ -24,7 +24,7 @@
   <div id="app-container">
     <!-- Top Arcade Bar -->
     <header class="arcade-header">
-      <div class="logo-badge">BURGER PANIC</div>
+      <div class="logo-badge">CHEF PANIC</div>
       <div class="header-actions">
         <button id="btn-gfx" class="arcade-btn-mini" title="Motor Gráfico Godot WebGL2 (Alternar Modo)" aria-label="Motor Gráfico">✨</button>
         <button id="btn-dev" class="arcade-btn-mini" title="Modo Desarrollador (Todos los niveles abiertos)" aria-label="Modo Desarrollador">🛠️</button>
@@ -112,7 +112,7 @@
 
       <!-- Center: Retro Cabinet Plaque & 1P Arcade Start/Pause Pushbutton -->
       <div class="cpo-center-badge">
-        <div class="cpo-brand-tag">BURGER PANIC</div>
+        <div class="cpo-brand-tag">CHEF PANIC</div>
         <div class="arcade-pause-wrapper">
           <div class="pause-bezel-outer">
             <button id="btn-pause" class="arcade-pause-btn" aria-label="1P PAUSA / START" title="Pausar / Reanudar Juego">
@@ -189,28 +189,28 @@
   </div>
 
   <!-- Game Scripts -->
-  <script src="js/chef_atlas.js?v=137"></script>
-  <script src="js/enemies_atlas.js?v=137"></script>
-  <script src="js/items_atlas.js?v=137"></script>
-  <script src="js/kiloburner_atlas.js?v=137"></script>
-  <script src="js/audio.js?v=137"></script>
-  <script src="js/sprites.js?v=137"></script>
-  <script src="js/kiloburner.js?v=137"></script>
-  <script src="js/map.js?v=137"></script>
-  <script src="js/burger.js?v=137"></script>
-  <script src="js/entities.js?v=137"></script>
-  <script src="js/stage_themes.js?v=137"></script>
-  <script src="js/controls.js?v=137"></script>
-  <script src="js/godot_gfx_engine.js?v=137"></script>
-  <script src="js/screens.js?v=137"></script>
-  <script src="js/game.js?v=137"></script>
+  <script src="js/chef_atlas.js?v=138"></script>
+  <script src="js/enemies_atlas.js?v=138"></script>
+  <script src="js/items_atlas.js?v=138"></script>
+  <script src="js/kiloburner_atlas.js?v=138"></script>
+  <script src="js/audio.js?v=138"></script>
+  <script src="js/sprites.js?v=138"></script>
+  <script src="js/kiloburner.js?v=138"></script>
+  <script src="js/map.js?v=138"></script>
+  <script src="js/burger.js?v=138"></script>
+  <script src="js/entities.js?v=138"></script>
+  <script src="js/stage_themes.js?v=138"></script>
+  <script src="js/controls.js?v=138"></script>
+  <script src="js/godot_gfx_engine.js?v=138"></script>
+  <script src="js/screens.js?v=138"></script>
+  <script src="js/game.js?v=138"></script>
 
   <!-- Service Worker Registration for Offline Play & PWA -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then((reg) => console.log('Burger Panic PWA Service Worker registrado:', reg.scope))
+          .then((reg) => console.log('Chef Panic PWA Service Worker registrado:', reg.scope))
           .catch((err) => console.log('Error registrando Service Worker:', err));
       });
     }

@@ -1,7 +1,7 @@
 {
-  "name": "Burger Panic Mobile",
-  "short_name": "Burger Panic",
-  "description": "Juego arcade retro de plataformas en vertical. ¡Arma las hamburguesas y esquiva a los enemigos!",
+  "name": "Chef Panic Mobile",
+  "short_name": "Chef Panic",
+  "description": "Juego arcade retro de plataformas en vertical. ¡Prepara platos épicos en cocinas de todo el mundo y esquiva a los enemigos!",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait-primary",

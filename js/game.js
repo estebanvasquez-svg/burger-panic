@@ -2253,9 +2253,9 @@ class BurgerPanicGame {
       // 2. Retro Title Header
       this.ctx.fillStyle = '#000000';
       this.ctx.font = '14px "Press Start 2P", monospace';
-      this.ctx.fillText('BURGER PANIC', 121, 23);
+      this.ctx.fillText('CHEF PANIC', 121, 23);
       this.ctx.fillStyle = '#fcb400';
-      this.ctx.fillText('BURGER PANIC', 120, 22);
+      this.ctx.fillText('CHEF PANIC', 120, 22);
 
       if (this.devMode) {
         this.ctx.fillStyle = '#00e436';

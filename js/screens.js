@@ -78,7 +78,7 @@ class MobileScreensManager {
 
   getLeaderboard() {
     const defaults = [
-      { name: 'CHEF PEPE', score: 15000, stage: 16 },
+      { name: 'CHEF BRUNO', score: 15000, stage: 16 },
       { name: 'MASTER PAN', score: 11200, stage: 12 },
       { name: 'DON PIZZA',  score: 8400,  stage: 8 },
       { name: 'SUSHI PRO',  score: 5600,  stage: 5 },
@@ -150,7 +150,7 @@ class MobileScreensManager {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#fcb400';
     ctx.font = 'bold 13px "Press Start 2P", monospace';
-    ctx.fillText('BURGER PANIC', 120, 168);
+    ctx.fillText('CHEF PANIC', 120, 168);
 
     ctx.fillStyle = '#00f0ff';
     ctx.font = '6px "Press Start 2P", monospace';
@@ -251,7 +251,7 @@ class MobileScreensManager {
     ctx.textAlign = 'left';
     ctx.fillStyle = '#fcb400';
     ctx.font = 'bold 8px "Press Start 2P", monospace';
-    ctx.fillText('CHEF PEPE', 72, 68);
+    ctx.fillText('CHEF BRUNO', 72, 68);
 
     ctx.fillStyle = '#00ff88';
     ctx.font = '6px "Press Start 2P", monospace';
@@ -384,7 +384,7 @@ class MobileScreensManager {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#64748b';
     ctx.font = '5px "Press Start 2P", monospace';
-    ctx.fillText('BURGER PANIC MOBILE • AUDIO & GFX', 120, 304);
+    ctx.fillText('CHEF PANIC MOBILE • AUDIO & GFX', 120, 304);
   }
 
   // 6. LEADERBOARD SCREEN

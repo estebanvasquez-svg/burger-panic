@@ -899,7 +899,7 @@ class StageThemesManager {
       ctx.fillStyle = `rgba(254, 202, 202, ${neonFlicker})`;
       ctx.font = '7px "Press Start 2P", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('★ BURGER PANIC ★', signX, signY + 3);
+      ctx.fillText('★ CHEF PANIC ★', signX, signY + 3);
 
       // Neon Sub-text / Open 24h
       ctx.shadowColor = `rgba(56, 189, 248, ${0.40 * neonFlicker})`;
