@@ -106,6 +106,8 @@ class Player {
     this.blowtorchFuel = 0;
     this.maxBlowtorchFuel = 100;
     this.flameSoundTimer = 0;
+    this.airJumpsRemaining = 0;
+    this.afterimages = [];
   }
 
   resetPosition() {
@@ -136,6 +138,8 @@ class Player {
     this.invulnerableTimer = 120; // ~2 seconds of grace flicker
     this.hasBlowtorch = false;
     this.blowtorchFuel = 0;
+    this.airJumpsRemaining = 0;
+    this.afterimages = [];
     this.flameSoundTimer = 0;
   }
 
@@ -150,7 +154,27 @@ class Player {
   }
 
   jump(dir = null, input = null) {
-    if (this.isDead || this.isJumping || this.isTossingPepper) return false;
+    if (this.isDead || this.isTossingPepper) return false;
+    const isBossLevel = (this.levelData && (this.levelData.isBossStage || this.levelData.stageNumber === 3));
+
+    // Metroidvania Air Double Jump in Boss Stage!
+    if (this.isJumping) {
+      if (isBossLevel && this.airJumpsRemaining > 0) {
+        this.airJumpsRemaining--;
+        this.vy = -4.65;
+        if (input && input.x !== 0) {
+          this.vx = input.x > 0 ? 2.55 : -2.55;
+          this.dir = input.x > 0 ? 1 : -1;
+          this.facingDir = this.dir === 1 ? 'right' : 'left';
+        }
+        if (window.burgerPanicGame && window.burgerPanicGame.spawnJumpDust) {
+          window.burgerPanicGame.spawnJumpDust(this.x + 8, this.y + 14);
+        }
+        window.soundManager.playJump();
+        return true;
+      }
+      return false;
+    }
 
     // If currently climbing, omit jump and drop off to the left or right instead!
     if (this.isClimbing) {
@@ -167,8 +191,7 @@ class Player {
     }
 
     // Directional Ground Jump:
-    // In Stage 3 (Boss Kiloburner), jump impulse and leap distance are augmented so Chef Pepe can agilely dodge claws, flames and meatballs!
-    const isBossLevel = (this.levelData && (this.levelData.isBossStage || this.levelData.stageNumber === 3));
+    // In Stage 3 (Boss Kiloburner), jump impulse and leap distance are augmented so Chef Bruno can agilely dodge claws, flames and meatballs!
     const hSpeed = isBossLevel ? 2.5 : 2.2;
     let jumpVx = 0;
     if (input) {
@@ -197,8 +220,10 @@ class Player {
     this.vx = jumpVx;
     if (isBossLevel) {
       this.vy = jumpVx === 0 ? -5.2 : -4.7; // Enhanced agile jump in boss stage (~46-56px apex)
+      this.airJumpsRemaining = 1;
     } else {
       this.vy = jumpVx === 0 ? -4.3 : -3.8; // Standard retro kitchen jump
+      this.airJumpsRemaining = 0;
     }
     if (window.burgerPanicGame && window.burgerPanicGame.spawnJumpDust) {
       window.burgerPanicGame.spawnJumpDust(this.x + 8, this.y + 14);
@@ -343,6 +368,17 @@ class Player {
       this.landSquashTimer--;
     }
 
+    // Fade Metroidvania motion afterimages
+    for (let i = this.afterimages.length - 1; i >= 0; i--) {
+      this.afterimages[i].alpha -= 0.08;
+      if (this.afterimages[i].alpha <= 0) this.afterimages.splice(i, 1);
+    }
+
+    const isBossStage = (this.levelData && (this.levelData.isBossStage || this.levelData.stageNumber === 3));
+    if (!this.isJumping && !this.isClimbing) {
+      this.airJumpsRemaining = isBossStage ? 1 : 0;
+    }
+
     if (this.isTossingPepper) {
       this.pepperTimer--;
       if (this.pepperTimer <= 0) {
@@ -379,6 +415,24 @@ class Player {
 
       this.vy += 0.24; // Gravity
       if (this.vy > 4.2) this.vy = 4.2;
+
+      // Metroidvania mid-air directional control in Boss Stage
+      if (isBossStage) {
+        if (input && input.x !== 0) {
+          const targetVx = input.x > 0 ? 2.5 : -2.5;
+          this.vx += (targetVx - this.vx) * 0.22;
+          this.dir = input.x > 0 ? 1 : -1;
+          this.facingDir = this.dir === 1 ? 'right' : 'left';
+        } else {
+          this.vx *= 0.94;
+        }
+        if (this.animTimer % 3 === 0 && (Math.abs(this.vx) > 1.2 || Math.abs(this.vy) > 1.8)) {
+          const ghostAtlas = this.dir === -1 ? 'run_left_1' : 'run_right_1';
+          this.afterimages.push({ x: this.x, y: this.y, atlasName: ghostAtlas, flip: false, alpha: 0.42 });
+          if (this.afterimages.length > 4) this.afterimages.shift();
+        }
+        this.animTimer++;
+      }
 
       const oldY = this.y;
       this.x += this.vx;
@@ -745,6 +799,19 @@ class Player {
     const w = info ? info.w : 22;
     const drawY = (this.y + 14) - h;
     const drawX = Math.round(this.x + 8 - w / 2);
+
+    // Draw Metroidvania motion afterimages behind Chef Bruno
+    if (this.afterimages && this.afterimages.length > 0) {
+      for (const ghost of this.afterimages) {
+        const gInfo = window.spriteManager.getAtlasInfo(ghost.atlasName);
+        const gh = gInfo ? gInfo.h : 30;
+        const gw = gInfo ? gInfo.w : 22;
+        ctx.save();
+        ctx.globalAlpha = ghost.alpha * 0.65;
+        window.spriteManager.drawAtlas(ctx, ghost.atlasName, Math.round(ghost.x + 8 - gw / 2), Math.round((ghost.y + 14) - gh), ghost.flip);
+        ctx.restore();
+      }
+    }
 
     // Subtle arcade Squash & Stretch anchored to Chef's feet
     let scaleX = 1.0;

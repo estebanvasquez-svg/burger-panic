@@ -726,11 +726,35 @@ class KiloburnerBoss {
     this.cableSparks = [];
     this.armorSparks = [];
     this.corePulse = 0;
+
+    // Metroidvania Phase & Kinetic Combat Systems
+    this.phase = 1;
+    this.trailingHealth = this.maxHealth;
+    this.bossAfterimages = [];
+    this.shockwaves = [];
+    this.dashDir = -1;
   }
 
   update(player, gameFloors, spawnProjectileCallback, cameraX = 0) {
     this.animTimer++;
     if (this.hitFlashTimer > 0) this.hitFlashTimer--;
+
+    // Smooth Metroidvania trailing damage bar
+    if (this.trailingHealth > this.health) {
+      this.trailingHealth = Math.max(this.health, this.trailingHealth - 1.6);
+    }
+
+    // Fade boss afterimages & expand shockwaves
+    for (let i = this.bossAfterimages.length - 1; i >= 0; i--) {
+      this.bossAfterimages[i].alpha -= 0.08;
+      if (this.bossAfterimages[i].alpha <= 0) this.bossAfterimages.splice(i, 1);
+    }
+    for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+      const sw = this.shockwaves[i];
+      sw.r += 3.8;
+      sw.alpha -= 0.045;
+      if (sw.alpha <= 0) this.shockwaves.splice(i, 1);
+    }
 
     // ----------------------------------------------------
     // DEFEAT / EXPLODING / DEAD SEQUENCE
@@ -831,32 +855,30 @@ class KiloburnerBoss {
     }
 
     // 2. Vertical 2D Pursuit & Hydraulic Cables Suspension Physics
-    // Follows Chef Pepe when climbing ladders or dropping floors!
-    if (player && !this.isDead) {
-      // Calculate target vertical position based on player's elevation.
-      // Descends completely (player.y + 24) so the boss's mouth, flames, and claws align squarely with the player!
+    // Follows Chef Bruno when climbing ladders or dropping floors (faster in higher phases)
+    if (player && !this.isDead && this.state !== 'dash_sweep') {
+      const phaseVertMult = this.phase === 3 ? 1.4 : (this.phase === 2 ? 1.22 : 1.0);
       const targetBaseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, player.y + 24));
       const dy = targetBaseY - this.baseY;
 
-      // Heavyweight responsive acceleration
-      const accel = 0.10;
-      this.vy = Math.max(-this.maxVerticalSpeed, Math.min(this.maxVerticalSpeed, this.vy + dy * accel));
+      const accel = 0.10 * phaseVertMult;
+      const maxSpd = this.maxVerticalSpeed * phaseVertMult;
+      this.vy = Math.max(-maxSpd, Math.min(maxSpd, this.vy + dy * accel));
       this.vy *= 0.90; // Damping
       this.baseY += this.vy;
       this.baseY = Math.max(this.minBaseY, Math.min(this.maxBaseY, this.baseY));
     }
 
     // Organic hover bobbing
-    this.floatAngle += 0.055;
+    this.floatAngle += (this.phase === 3 ? 0.085 : 0.055);
     const hoverBob = Math.sin(this.floatAngle) * 5;
     this.y = this.baseY + hoverBob;
 
     // 3. Horizontal Viewport Anchoring & Safe Standoff Distance
-    const bossHalfW = Math.round(this.logicalW * 0.55);
     this.maxX = cameraX + 240 - 20;
-    this.minX = cameraX + 20; // Allows boss to stay within combat arena without crowding player
+    this.minX = cameraX + 20;
 
-    if (player && !this.isDead) {
+    if (player && !this.isDead && this.state !== 'dash_sweep') {
       const playerCenterX = player.x + 8;
       const side = (this.x >= playerCenterX) ? 1 : -1;
       const desiredDist = 114;
@@ -866,19 +888,34 @@ class KiloburnerBoss {
       const targetX = Math.max(this.minX, Math.min(this.maxX, desiredCombatX));
 
       if (this.state === 'idle') {
-        this.x += (targetX - this.x) * 0.08;
+        this.x += (targetX - this.x) * (this.phase === 3 ? 0.12 : 0.08);
       } else if (Math.abs(this.x - playerCenterX) < minStandoff) {
-        // Always back away smoothly during attacks/recoil if player gets too close
         this.x += (targetX - this.x) * 0.14;
       }
 
-      // Hard safety clamp preventing boss from closing in closer than minStandoff (when arena allows)
       const distAfter = this.x - playerCenterX;
       if (Math.abs(distAfter) < minStandoff) {
         const clampedX = playerCenterX + side * minStandoff;
         if (clampedX >= this.minX && clampedX <= this.maxX) {
           this.x = clampedX;
         }
+      }
+    }
+
+    // Metroidvania Phase Transition Check (Phase 2 <= 60% HP, Phase 3 <= 30% HP)
+    if (!this.isDead && this.state !== 'phase_shift') {
+      if (this.phase === 1 && this.health <= this.maxHealth * 0.60) {
+        this.phase = 2;
+        this.state = 'phase_shift';
+        this.stateTimer = 36;
+        this.shockwaves.push({ x: this.x, y: this.y - this.logicalH * 0.45, r: 12, alpha: 0.9, color: '#f97316' });
+        if (window.soundManager && window.soundManager.playBossFlameCharge) window.soundManager.playBossFlameCharge();
+      } else if (this.phase === 2 && this.health <= this.maxHealth * 0.30) {
+        this.phase = 3;
+        this.state = 'phase_shift';
+        this.stateTimer = 40;
+        this.shockwaves.push({ x: this.x, y: this.y - this.logicalH * 0.45, r: 14, alpha: 0.95, color: '#ef4444' });
+        if (window.soundManager && window.soundManager.playExplosion) window.soundManager.playExplosion();
       }
     }
 
@@ -911,6 +948,61 @@ class KiloburnerBoss {
           maxLife: 12,
           color: Math.random() < 0.5 ? '#fef08a' : '#ffffff'
         });
+      }
+    } else if (this.state === 'phase_shift') {
+      this.stateTimer--;
+      this.hitFlashTimer = 2;
+      if (this.stateTimer % 3 === 0) {
+        this.armorSparks.push({
+          x: this.x + (Math.random() - 0.5) * 44,
+          y: this.y - Math.random() * this.logicalH,
+          vx: (Math.random() - 0.5) * 3.5,
+          vy: -1.5 - Math.random() * 2.5,
+          life: 16,
+          maxLife: 16,
+          color: this.phase === 3 ? '#ef4444' : '#f97316'
+        });
+      }
+      if (this.stateTimer <= 0) {
+        this.state = 'idle';
+        this.attackCooldown = 25;
+      }
+    } else if (this.state === 'dash_sweep') {
+      this.stateTimer++;
+      if (this.stateTimer === 1 && player) {
+        this.dashDir = (player.x < this.x) ? -1 : 1;
+        this.facing = this.dashDir;
+        if (window.soundManager && window.soundManager.playBossTelegraphClaw) {
+          window.soundManager.playBossTelegraphClaw();
+        }
+      }
+
+      if (this.stateTimer <= 26) {
+        // Telegraph windup: coil back before jet sweep
+        this.lungeX = -this.dashDir * Math.sin((this.stateTimer / 26) * Math.PI * 0.5) * 10;
+      } else if (this.stateTimer <= 58) {
+        // High-speed Metroidvania horizontal jet sweep across the arena
+        const sweepSpeed = this.phase === 3 ? 5.6 : 4.6;
+        this.x += this.dashDir * sweepSpeed;
+        this.lungeX = this.dashDir * 8;
+        if (this.stateTimer % 3 === 0) {
+          this.bossAfterimages.push({
+            x: this.x,
+            y: this.y,
+            facing: this.facing,
+            alpha: 0.5,
+            spriteName: 'hover_08'
+          });
+          if (this.bossAfterimages.length > 4) this.bossAfterimages.shift();
+        }
+      } else {
+        this.lungeX *= 0.85;
+      }
+
+      if (this.stateTimer >= 72) {
+        this.state = 'idle';
+        this.lungeX = 0;
+        this.attackCooldown = this.phase === 3 ? 45 : 65;
       }
     } else if (this.state === 'hit') {
       this.stateTimer--;
@@ -1002,10 +1094,10 @@ class KiloburnerBoss {
       }
 
       // After 3rd flame launches and clears mouth at frame 290:
-      // Transition to idle and wait 5.0 seconds (300 frames at 60 FPS) before next attack!
-      if (this.stateTimer >= 290) {
+      // Snappy Metroidvania cooldown scaled by phase (instead of 5s wait)
+      if (this.stateTimer >= (this.phase >= 2 ? 170 : 290)) {
         this.state = 'idle';
-        this.attackCooldown = 300; // Exactly 5 seconds cooldown!
+        this.attackCooldown = this.phase === 3 ? 45 : (this.phase === 2 ? 70 : 100);
       }
     } else if (this.state === 'meatball') {
       this.stateTimer++;
@@ -1023,12 +1115,13 @@ class KiloburnerBoss {
         this.lungeX = this.facing * Math.max(0, 6 - (this.stateTimer - 32) * 0.3);
       }
 
-      // Meatball ejection synchronized with Pose 4 (Launch Frame at frame 24)
-      if (this.stateTimer === 24) {
+      // Meatball ejection synchronized with Pose 4 (Launch Frame at frame 24; double salvo in Phase 3!)
+      if (this.stateTimer === 24 || (this.phase === 3 && this.stateTimer === 36)) {
         if (spawnProjectileCallback && player) {
           const spawnX = this.x + (this.facing * (this.logicalW * 0.42));
           const spawnY = this.y - (this.logicalH * 0.45);
-          const targetX = player.x + (player.width ? player.width / 2 : 8) + (Math.random() - 0.5) * 8;
+          const spread = (this.stateTimer === 36) ? (this.facing * -22) : 0;
+          const targetX = player.x + (player.width ? player.width / 2 : 8) + spread + (Math.random() - 0.5) * 8;
           const targetY = player.y + 4;
           spawnProjectileCallback(new MeatballProjectile(spawnX, spawnY, targetX, targetY));
           if (window.soundManager && window.soundManager.playDrop) {
@@ -1038,7 +1131,7 @@ class KiloburnerBoss {
       }
       if (this.stateTimer > 52) {
         this.state = 'idle';
-        this.attackCooldown = 90 + Math.random() * 40;
+        this.attackCooldown = this.phase === 3 ? 42 : (this.phase === 2 ? 60 : 85);
       }
     } else if (this.state === 'claw') {
       this.stateTimer++;
@@ -1103,27 +1196,27 @@ class KiloburnerBoss {
 
       if (this.stateTimer > 65) {
         this.state = 'idle';
-        this.attackCooldown = 90 + Math.random() * 30; // 1.5 - 2s breather
+        this.attackCooldown = this.phase === 3 ? 42 : (this.phase === 2 ? 62 : 85);
       }
     } else {
-      // Idle state: attack decision
+      // Idle state: phase-aware Metroidvania attack selection
       if (this.attackCooldown > 0) {
         this.attackCooldown--;
       } else {
         const distToPlayer = player ? Math.hypot(player.x - this.x, player.y - this.y) : 999;
         const verticalDiff = player ? Math.abs(player.y - this.y) : 999;
+        const roll = Math.random();
 
-        if (distToPlayer < 110 && verticalDiff < 65) {
+        if (this.phase >= 2 && verticalDiff < 55 && roll < 0.34) {
+          this.state = 'dash_sweep';
+        } else if (distToPlayer < 110 && verticalDiff < 65) {
           this.state = Math.random() < 0.55 ? 'flame' : 'claw';
+        } else if (roll < 0.45) {
+          this.state = 'meatball';
+        } else if (roll < 0.78) {
+          this.state = 'flame';
         } else {
-          const roll = Math.random();
-          if (roll < 0.45) {
-            this.state = 'meatball';
-          } else if (roll < 0.75) {
-            this.state = 'flame';
-          } else {
-            this.state = 'claw';
-          }
+          this.state = 'claw';
         }
         this.stateTimer = 0;
       }
@@ -1484,8 +1577,45 @@ class KiloburnerBoss {
 
     ctx.save();
 
+    // Metroidvania Phase 2/3 Thermal Overdrive Aura
+    if (this.phase >= 2 && !this.isDead) {
+      const auraPulse = 0.16 + Math.sin(this.animTimer * 0.18) * 0.08;
+      ctx.save();
+      ctx.globalAlpha = auraPulse;
+      ctx.fillStyle = this.phase === 3 ? '#ef4444' : '#f97316';
+      ctx.beginPath();
+      ctx.ellipse(Math.round(this.x + this.lungeX), Math.round(this.y - renderH * 0.5), renderW * 0.52, renderH * 0.52, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Metroidvania Jet-Sweep Afterimages
+    if (this.bossAfterimages && this.bossAfterimages.length > 0) {
+      for (const ghost of this.bossAfterimages) {
+        const gFlip = (ghost.facing === -1);
+        ctx.save();
+        ctx.globalAlpha = ghost.alpha * 0.55;
+        sm.drawKiloburnerAtlas(ctx, ghost.spriteName, Math.round(ghost.x - renderW / 2), Math.round(ghost.y - renderH), renderW, renderH, gFlip);
+        ctx.restore();
+      }
+    }
+
     // Clean, 100% solid, professional retro arcade sprite drawing (Zero lines, zero transparency ghosting)
     sm.drawKiloburnerAtlas(ctx, spriteName, drawX, drawY, renderW, renderH, flip);
+
+    // Expanding Phase-Shift Shockwave Rings
+    if (this.shockwaves && this.shockwaves.length > 0) {
+      for (const sw of this.shockwaves) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, sw.alpha);
+        ctx.strokeStyle = sw.color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(Math.round(sw.x), Math.round(sw.y), sw.r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
 
     // Solid damage flash (maintains 100% opacity, alternate hit frame)
     if (this.hitFlashTimer > 0 && Math.floor(this.hitFlashTimer / 2) % 2 === 0) {
@@ -1493,13 +1623,46 @@ class KiloburnerBoss {
     }
 
     // 7. Visual Telegraph Signs (Fair gameplay warning prompts!)
+    // Telegraph prompt for Metroidvania Jet Dash Sweep
+    if (this.state === 'dash_sweep' && this.stateTimer <= 26) {
+      const pulse = Math.sin(this.stateTimer * 0.5) * 0.5 + 0.5;
+      const lineY = Math.round(this.y - this.logicalH * 0.45);
+      ctx.save();
+      ctx.strokeStyle = pulse > 0.4 ? '#fef08a' : '#f97316';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(this.x - 180, lineY);
+      ctx.lineTo(this.x + 180, lineY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = 'bold 6px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#000000';
+      ctx.fillText('⚡ ¡EMBESTIDA! ⚡', Math.round(this.x) + 1, lineY - 12 + 1);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillText('⚡ ¡EMBESTIDA! ⚡', Math.round(this.x), lineY - 12);
+      ctx.restore();
+    }
+
     // Telegraph prompt for Hydraulic Claw Attack
     if (this.state === 'claw' && this.stateTimer <= 24) {
       const warnX = this.x + this.lungeX + (this.facing * (this.logicalW * 0.35));
       const warnY = this.y - this.logicalH * 0.48;
       const pulse = Math.sin(this.stateTimer * 0.45) * 0.5 + 0.5;
+      const clawReach = 58;
+      const clawH = 26;
+      const zoneX = (this.facing === -1) ? (this.x - this.logicalW * 0.35 - clawReach) : (this.x + this.logicalW * 0.35);
+      const zoneY = this.y - this.logicalH * 0.38;
 
       ctx.save();
+      // Danger reach box preview
+      ctx.strokeStyle = pulse > 0.4 ? 'rgba(56, 189, 248, 0.8)' : 'rgba(254, 240, 138, 0.6)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.strokeRect(Math.round(zoneX), Math.round(zoneY), clawReach, clawH);
+      ctx.setLineDash([]);
+
       // Flashing electrical danger circle
       ctx.strokeStyle = '#38bdf8';
       ctx.lineWidth = 1.5;
@@ -1621,12 +1784,13 @@ class KiloburnerBoss {
     ctx.font = 'bold 5px "Press Start 2P", monospace, sans-serif';
     ctx.textBaseline = 'middle';
 
-    // Left label: BOSS: KILOBURNER [BLINDADO] (crisp 1px shadow, zero shadowBlur)
+    // Left label: BOSS: KILOBURNER [F1/F2/F3]
+    const phaseTag = this.phase === 3 ? 'F3!' : (this.phase === 2 ? 'F2' : 'F1');
     ctx.textAlign = 'left';
     ctx.fillStyle = '#000000';
-    ctx.fillText('KILOBURNER [ARMOR]', barX + 1, 9);
-    ctx.fillStyle = '#ef4444';
-    ctx.fillText('KILOBURNER [ARMOR]', barX, 8);
+    ctx.fillText(`KILOBURNER [${phaseTag}]`, barX + 1, 9);
+    ctx.fillStyle = this.phase === 3 ? '#fef08a' : (this.phase === 2 ? '#fb923c' : '#ef4444');
+    ctx.fillText(`KILOBURNER [${phaseTag}]`, barX, 8);
 
     // Right label: Remaining HP
     ctx.textAlign = 'right';
@@ -1644,6 +1808,14 @@ class KiloburnerBoss {
     // Health Track (Dark Red background)
     ctx.fillStyle = '#3f0c0c';
     ctx.fillRect(barX, barY, barW, barH);
+
+    // Trailing White/Amber Damage Catch-Up Bar
+    const trailRatio = Math.max(0, Math.min(1, (this.trailingHealth || this.health) / this.maxHealth));
+    const trailW = Math.round(barW * trailRatio);
+    if (trailW > 0) {
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(barX, barY, trailW, barH);
+    }
 
     // Current HP Fill (Cached Gradient)
     const healthRatio = Math.max(0, Math.min(1, this.health / this.maxHealth));
@@ -1663,6 +1835,11 @@ class KiloburnerBoss {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
       ctx.fillRect(barX, barY, currentW, 1);
     }
+
+    // Phase Threshold Notches (60% & 30%)
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(barX + Math.round(barW * 0.60), barY, 1, barH);
+    ctx.fillRect(barX + Math.round(barW * 0.30), barY, 1, barH);
 
     ctx.restore();
   }
