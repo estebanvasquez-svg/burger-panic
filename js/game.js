@@ -2430,88 +2430,155 @@ class BurgerPanicGame {
   }
 
   drawMapScreen() {
-    this.ctx.fillStyle = '#0c0722';
-    this.ctx.fillRect(0, 0, 240, 320);
+    const ctx = this.ctx;
+    const now = Date.now();
+    ctx.fillStyle = '#240d14';
+    ctx.fillRect(0, 0, 240, 320);
 
     const unlocked = this.getUnlockedLevel();
     const scores = JSON.parse(localStorage.getItem('burgerpanic_level_scores') || '{}');
     const scrollY = Math.round(this.mapScrollY);
 
-    // Save context for scrollable world
-    this.ctx.save();
-    this.ctx.translate(0, -scrollY);
+    ctx.save();
+    ctx.translate(0, -scrollY);
 
-    // 1. Twilight / Candy Sky Gradient (1100px tall world)
-    const bgGrad = this.ctx.createLinearGradient(0, 0, 0, 1100);
-    bgGrad.addColorStop(0, '#0c0722');
-    bgGrad.addColorStop(0.25, '#1c1038');
-    bgGrad.addColorStop(0.55, '#161d42');
-    bgGrad.addColorStop(0.8, '#091526');
-    bgGrad.addColorStop(1, '#050b16');
-    this.ctx.fillStyle = bgGrad;
-    this.ctx.fillRect(0, 0, 240, 1100);
+    // 1. Culinary Biomes Gradient (1100px tall world matching Burger Panic's warm arcade palette)
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, 1100);
+    bgGrad.addColorStop(0.00, '#1e0b36'); // Banquete Imperial (Purpura real)
+    bgGrad.addColorStop(0.22, '#3b153d'); // Comedor Cosmico / Wok
+    bgGrad.addColorStop(0.42, '#133a4f'); // Heladeria / Alta Mar
+    bgGrad.addColorStop(0.60, '#5a1e16'); // Horno & Asador (Brasa)
+    bgGrad.addColorStop(0.78, '#4a2314'); // Bistro & Cafeteria (Caramelo tostado)
+    bgGrad.addColorStop(1.00, '#381118'); // Cocina Clasica Diner (Burdeos calido)
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 240, 1100);
 
-    // Fluffy candy pastel clouds along the path
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-    const clouds = [
-      { x: 40, y: 120, rx: 35, ry: 12 },
-      { x: 190, y: 220, rx: 42, ry: 14 },
-      { x: 60, y: 360, rx: 38, ry: 13 },
-      { x: 180, y: 490, rx: 45, ry: 15 },
-      { x: 50, y: 640, rx: 40, ry: 14 },
-      { x: 200, y: 770, rx: 42, ry: 15 },
-      { x: 180, y: 920, rx: 44, ry: 15 },
-      { x: 50, y: 1010, rx: 40, ry: 14 }
+    // Subtle Diner / Kitchen Checkerboard Tile Overlay
+    const tileSize = 20;
+    ctx.fillStyle = 'rgba(255, 232, 195, 0.038)';
+    for (let ty = 0; ty < 1100; ty += tileSize) {
+      const rowOffset = ((ty / tileSize) % 2) * tileSize;
+      for (let tx = rowOffset; tx < 240; tx += tileSize * 2) {
+        ctx.fillRect(tx, ty, tileSize, tileSize);
+      }
+    }
+
+    // Soft Warm Ambient Spotlights along the zones
+    const zoneGlows = [
+      { x: 120, y: 900, r: 120, color: 'rgba(251, 146, 60, 0.14)' },
+      { x: 60,  y: 650, r: 110, color: 'rgba(251, 191, 36, 0.12)' },
+      { x: 185, y: 450, r: 110, color: 'rgba(239, 68, 68, 0.13)' },
+      { x: 80,  y: 280, r: 105, color: 'rgba(56, 189, 248, 0.12)' },
+      { x: 120, y: 95,  r: 120, color: 'rgba(244, 114, 182, 0.13)' }
     ];
-    for (const c of clouds) {
-      this.ctx.beginPath();
-      this.ctx.ellipse(c.x, c.y, c.rx, c.ry, 0, 0, Math.PI * 2);
-      this.ctx.ellipse(c.x - 10, c.y - 4, c.rx * 0.7, c.ry * 0.8, 0, 0, Math.PI * 2);
-      this.ctx.ellipse(c.x + 12, c.y - 2, c.rx * 0.6, c.ry * 0.7, 0, 0, Math.PI * 2);
-      this.ctx.fill();
+    for (const g of zoneGlows) {
+      const rg = ctx.createRadialGradient(g.x, g.y, 4, g.x, g.y, g.r);
+      rg.addColorStop(0, g.color);
+      rg.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    // Twinkling stars
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    for (let sy = 20; sy < 1080; sy += 38) {
-      const sx = ((sy * 43) % 210) + 15;
-      const pulse = (Math.sin(Date.now() / 400 + sy) + 1) * 0.8 + 0.5;
-      this.ctx.fillRect(sx, sy, pulse, pulse);
+    // Side Diner Awning Stripes / Decorative Borders
+    for (let y = 0; y < 1100; y += 24) {
+      ctx.fillStyle = (y / 24) % 2 === 0 ? 'rgba(220, 38, 38, 0.28)' : 'rgba(254, 243, 199, 0.18)';
+      ctx.fillRect(0, y, 5, 24);
+      ctx.fillRect(235, y, 5, 24);
     }
 
-    // 2. Draw Golden Candy Road Ribbons connecting nodes
-    // Starting path ribbon leading into Level 1
+    // Warm Floating Sparks / Steam Motes
+    for (let sy = 25; sy < 1075; sy += 34) {
+      const sx = ((sy * 47) % 204) + 18;
+      const pulse = (Math.sin(now / 420 + sy) + 1) * 0.7 + 0.8;
+      ctx.fillStyle = sy > 450 ? 'rgba(253, 224, 71, 0.35)' : 'rgba(255, 255, 255, 0.35)';
+      ctx.fillRect(sx, sy, pulse, pulse);
+    }
+
+    // Decorative Culinary Plates with Real Game Ingredient Sprites
+    const foodProps = [
+      { x: 192, y: 905, spr: 'bun_top' },
+      { x: 42,  y: 805, spr: 'cheese' },
+      { x: 42,  y: 725, spr: 'tomato' },
+      { x: 198, y: 635, spr: 'lettuce' },
+      { x: 192, y: 545, spr: 'patty' },
+      { x: 42,  y: 445, spr: 'bun_top' },
+      { x: 196, y: 335, spr: 'cheese' },
+      { x: 192, y: 235, spr: 'tomato' },
+      { x: 44,  y: 165, spr: 'lettuce' },
+      { x: 196, y: 75,  spr: 'bun_bottom' }
+    ];
+    for (const fp of foodProps) {
+      ctx.beginPath();
+      ctx.ellipse(fp.x, fp.y + 3, 21, 9, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.ellipse(fp.x, fp.y, 20, 8, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(254, 243, 199, 0.14)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.28)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      const spr = this.spriteManager ? this.spriteManager.get(fp.spr) : null;
+      if (spr) {
+        ctx.drawImage(spr, Math.round(fp.x - 16), Math.round(fp.y - 5), 32, 8);
+      }
+    }
+
+    // 2. Draw Golden Brioche & Cheddar Road Ribbons connecting nodes
     const nStart = this.mapNodes[0];
     if (nStart) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(nStart.x, nStart.y);
-      this.ctx.lineTo(nStart.x, nStart.y + 65);
-      this.ctx.lineWidth = 12;
-      this.ctx.strokeStyle = 'rgba(180, 115, 15, 0.75)';
-      this.ctx.lineCap = 'round';
-      this.ctx.stroke();
+      // Road shadow
+      ctx.beginPath();
+      ctx.moveTo(nStart.x, nStart.y);
+      ctx.lineTo(nStart.x, nStart.y + 48);
+      ctx.lineWidth = 15;
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.42)';
+      ctx.lineCap = 'round';
+      ctx.stroke();
 
-      this.ctx.lineWidth = 8;
-      this.ctx.strokeStyle = '#fbbf24';
-      this.ctx.stroke();
+      // Caramel crust border
+      ctx.beginPath();
+      ctx.moveTo(nStart.x, nStart.y);
+      ctx.lineTo(nStart.x, nStart.y + 46);
+      ctx.lineWidth = 13;
+      ctx.strokeStyle = '#92400e';
+      ctx.stroke();
 
-      this.ctx.lineWidth = 2.5;
-      this.ctx.strokeStyle = '#fffbeb';
-      this.ctx.setLineDash([4, 6]);
-      this.ctx.stroke();
-      this.ctx.setLineDash([]);
+      // Golden cheddar body
+      ctx.lineWidth = 9;
+      ctx.strokeStyle = '#fbbf24';
+      ctx.stroke();
 
-      // Start Landmark Banner at (75, 945)
-      this.ctx.fillStyle = '#1e293b';
-      this.ctx.fillRect(nStart.x - 30, nStart.y + 52, 60, 16);
-      this.ctx.strokeStyle = '#f59e0b';
-      this.ctx.lineWidth = 1.5;
-      this.ctx.strokeRect(nStart.x - 30, nStart.y + 52, 60, 16);
-      this.ctx.fillStyle = '#fbbf24';
-      this.ctx.font = 'bold 6.5px "Press Start 2P", monospace';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillText('★ INICIO ★', nStart.x, nStart.y + 63);
+      // Sesame/cream center dashes
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#fef3c7';
+      ctx.setLineDash([4, 6]);
+      ctx.lineDashOffset = -(now / 60) % 10;
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineDashOffset = 0;
+
+      // Diner-style Start Banner cleanly below the ribbon end
+      const bx = nStart.x - 36;
+      const by = nStart.y + 48;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(bx + 2, by + 2, 72, 18);
+      ctx.fillStyle = '#5c141c';
+      ctx.fillRect(bx, by, 72, 18);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(bx, by, 72, 18);
+      ctx.fillStyle = '#fef3c7';
+      ctx.font = 'bold 6.5px "Press Start 2P", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('★ INICIO ★', nStart.x, by + 12);
     }
+
     for (let i = 0; i < this.mapNodes.length - 1; i++) {
       const n1 = this.mapNodes[i];
       const n2 = this.mapNodes[i + 1];
@@ -2528,64 +2595,87 @@ class BurgerPanicGame {
         });
       }
 
-      // Outer path border
-      this.ctx.beginPath();
-      this.ctx.moveTo(pts[0].x, pts[0].y);
+      // Drop shadow under road
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y + 2);
       for (let p = 1; p < pts.length; p++) {
-        this.ctx.lineTo(pts[p].x, pts[p].y);
+        ctx.lineTo(pts[p].x, pts[p].y + 2);
       }
-      this.ctx.lineWidth = 12;
-      this.ctx.strokeStyle = isSegmentUnlocked ? 'rgba(180, 115, 15, 0.75)' : 'rgba(30, 30, 45, 0.6)';
-      this.ctx.lineCap = 'round';
-      this.ctx.lineJoin = 'round';
-      this.ctx.stroke();
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
 
-      // Inner golden ribbon
-      this.ctx.lineWidth = 8;
-      this.ctx.strokeStyle = isSegmentUnlocked ? '#fbbf24' : '#2d2d3f';
-      this.ctx.stroke();
+      // Outer border (toasted bun vs dark cocoa)
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let p = 1; p < pts.length; p++) {
+        ctx.lineTo(pts[p].x, pts[p].y);
+      }
+      ctx.lineWidth = 13;
+      ctx.strokeStyle = isSegmentUnlocked ? '#92400e' : '#26141a';
+      ctx.stroke();
 
-      // Sweet cream center dashes
-      this.ctx.lineWidth = 2.5;
-      this.ctx.strokeStyle = isSegmentUnlocked ? '#fffbeb' : '#47475c';
-      this.ctx.setLineDash([4, 6]);
-      this.ctx.stroke();
-      this.ctx.setLineDash([]);
+      // Inner ribbon (cheddar gold vs warm slate)
+      ctx.lineWidth = 9;
+      ctx.strokeStyle = isSegmentUnlocked ? '#fbbf24' : '#4a323a';
+      ctx.stroke();
+
+      // Cream center dashes
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = isSegmentUnlocked ? '#fef3c7' : '#785a64';
+      ctx.setLineDash([4, 6]);
+      if (isSegmentUnlocked) ctx.lineDashOffset = -(now / 60) % 10;
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineDashOffset = 0;
     }
 
-    // 3. Draw Level Nodes (3D Candy Jewels)
+    // 3. Draw Level Nodes (Arcade Diner Medallions)
     for (let i = 0; i < this.mapNodes.length; i++) {
       const node = this.mapNodes[i];
       const isUnlocked = node.level <= unlocked;
       const isSelected = this.mapSelectedStage === node.level;
       const stars = this.getStageStars(node.level);
 
-      // Node soft drop shadow
-      this.ctx.beginPath();
-      this.ctx.arc(node.x, node.y + 3, 17, 0, Math.PI * 2);
-      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-      this.ctx.fill();
-
-      // Selected Glowing Aura
+      // Warm glow behind selected node
       if (isSelected) {
-        const pulse = 20 + Math.sin(Date.now() / 150) * 2.5;
-        this.ctx.beginPath();
-        this.ctx.arc(node.x, node.y, pulse, 0, Math.PI * 2);
-        this.ctx.strokeStyle = '#38bdf8';
-        this.ctx.lineWidth = 2.5;
-        this.ctx.stroke();
+        const selGlow = ctx.createRadialGradient(node.x, node.y, 8, node.x, node.y, 28);
+        selGlow.addColorStop(0, 'rgba(253, 224, 71, 0.45)');
+        selGlow.addColorStop(1, 'rgba(253, 224, 71, 0)');
+        ctx.fillStyle = selGlow;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, 28, 0, Math.PI * 2);
+        ctx.fill();
       }
 
-      // Outer Gold / Metal Rim
-      this.ctx.beginPath();
-      this.ctx.arc(node.x, node.y, 16, 0, Math.PI * 2);
-      this.ctx.fillStyle = isUnlocked
-        ? (node.isBoss ? '#ef4444' : (stars === 3 ? '#d97706' : '#0284c7'))
-        : '#27273a';
-      this.ctx.fill();
+      // Node soft drop shadow
+      ctx.beginPath();
+      ctx.arc(node.x, node.y + 3, 17, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fill();
 
-      // Inner Candy Sphere
-      const radGrad = this.ctx.createRadialGradient(node.x - 4, node.y - 5, 2, node.x, node.y, 14);
+      // Selected Ring (tight around medallion so it never clips stars or Chef)
+      if (isSelected) {
+        const pulse = 18.2 + Math.sin(now / 150) * 1.3;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      // Outer Cream / Metal Rim
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 16, 0, Math.PI * 2);
+      ctx.fillStyle = isUnlocked
+        ? (node.isBoss ? '#fca5a5' : (stars === 3 ? '#fef08a' : (stars > 0 ? '#a7f3d0' : '#fed7aa')))
+        : '#3d2a31';
+      ctx.fill();
+
+      // Inner Candy Medallion
+      const radGrad = ctx.createRadialGradient(node.x - 4, node.y - 5, 2, node.x, node.y, 14);
       if (isUnlocked) {
         if (node.isBoss) {
           radGrad.addColorStop(0, '#fca5a5');
@@ -2595,108 +2685,133 @@ class BurgerPanicGame {
           radGrad.addColorStop(0, '#fef08a');
           radGrad.addColorStop(0.5, '#f59e0b');
           radGrad.addColorStop(1, '#b45309');
+        } else if (stars > 0) {
+          radGrad.addColorStop(0, '#6ee7b7');
+          radGrad.addColorStop(0.5, '#10b981');
+          radGrad.addColorStop(1, '#047857');
         } else {
-          radGrad.addColorStop(0, '#7dd3fc');
-          radGrad.addColorStop(0.5, '#0284c7');
-          radGrad.addColorStop(1, '#0369a1');
+          radGrad.addColorStop(0, '#fdba74');
+          radGrad.addColorStop(0.5, '#f97316');
+          radGrad.addColorStop(1, '#c2410c');
         }
       } else {
-        radGrad.addColorStop(0, '#3f3f5a');
-        radGrad.addColorStop(1, '#181824');
+        radGrad.addColorStop(0, '#523b44');
+        radGrad.addColorStop(1, '#26181e');
       }
-      this.ctx.beginPath();
-      this.ctx.arc(node.x, node.y, 13.5, 0, Math.PI * 2);
-      this.ctx.fillStyle = radGrad;
-      this.ctx.fill();
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 13.8, 0, Math.PI * 2);
+      ctx.fillStyle = radGrad;
+      ctx.fill();
 
-      // Specular Highlight (Curved glossy crescent sheen)
-      this.ctx.beginPath();
-      this.ctx.ellipse(node.x, node.y - 6, 8, 3.5, 0, 0, Math.PI * 2);
-      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
-      this.ctx.fill();
+      // Glossy top crescent sheen
+      ctx.beginPath();
+      ctx.ellipse(node.x, node.y - 6, 7.5, 3, 0, 0, Math.PI * 2);
+      ctx.fillStyle = isUnlocked ? 'rgba(255, 255, 255, 0.55)' : 'rgba(255, 255, 255, 0.16)';
+      ctx.fill();
 
-      // Level Label or Lock Icon
-      this.ctx.textAlign = 'center';
+      // Level Number or Lock Icon
+      ctx.textAlign = 'center';
       if (isUnlocked) {
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = 'bold 9px "Press Start 2P", monospace';
-        this.ctx.fillText(node.level.toString(), node.x, node.y + 4);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.font = 'bold 9px "Press Start 2P", monospace';
+        ctx.fillText(node.level.toString(), node.x + 1, node.y + 5);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(node.level.toString(), node.x, node.y + 4);
 
-        // Stars beneath node
-        this.drawStars(this.ctx, stars, node.x - 17, node.y + 20, 10, 12);
+        // Dark pill backing so stars always pop cleanly
+        ctx.fillStyle = 'rgba(20, 8, 12, 0.72)';
+        if (ctx.roundRect) {
+          ctx.beginPath();
+          ctx.roundRect(node.x - 19, node.y + 18, 38, 12, 4);
+          ctx.fill();
+        } else {
+          ctx.fillRect(node.x - 19, node.y + 18, 38, 12);
+        }
+        this.drawStars(ctx, stars, node.x - 17, node.y + 19, 10, 12);
       } else {
-        this.ctx.fillStyle = '#94a3b8';
-        this.ctx.font = '8px "Press Start 2P", monospace';
-        this.ctx.fillText('🔒', node.x, node.y + 3);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '8px "Press Start 2P", monospace';
+        ctx.fillText('🔒', node.x, node.y + 3);
       }
 
-      // Chef Avatar on Selected Level (Same sprite as the game)
+      // Chef Avatar on Selected Level
       if (isSelected) {
-        const bounce = Math.sin(Date.now() / 180) * 2;
-        const idleBlink = Math.floor(Date.now() / 400) % 8 === 0;
+        const bounce = Math.sin(now / 180) * 2;
+        const idleBlink = Math.floor(now / 400) % 8 === 0;
         const atlasName = idleBlink ? 'detenido_2' : 'detenido_1';
 
         const info = window.spriteManager.getAtlasInfo(atlasName);
         const w = info ? info.w : 13;
         const h = info ? info.h : 28;
         const drawX = Math.round(node.x - w / 2);
-        const drawY = Math.round(node.y - 14 - h + bounce);
+        const drawY = Math.round(node.y - 15 - h + bounce);
 
-        // Subtle ground shadow under Chef's feet
-        this.ctx.beginPath();
-        this.ctx.ellipse(node.x, node.y - 13, 7, 2, 0, 0, Math.PI * 2);
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-        this.ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(node.x, node.y - 14, 7, 2, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fill();
 
-        // Draw exact game sprite from Chef Atlas
-        const drawn = window.spriteManager.drawAtlas(this.ctx, atlasName, drawX, drawY, false);
+        const drawn = window.spriteManager.drawAtlas(ctx, atlasName, drawX, drawY, false);
         if (!drawn) {
           const chefSpr = window.spriteManager.get('player_walk1');
           if (chefSpr) {
-            this.ctx.drawImage(chefSpr, node.x - 8, node.y - 32 + bounce, 16, 16);
+            ctx.drawImage(chefSpr, node.x - 8, node.y - 33 + bounce, 16, 16);
           }
         }
 
-        // Floating golden arrow beacon above Chef
-        this.ctx.fillStyle = '#fbbf24';
-        this.ctx.font = '7px "Press Start 2P", monospace';
-        this.ctx.fillText('▼', node.x, drawY - 4);
+        ctx.fillStyle = '#fde047';
+        ctx.font = '7px "Press Start 2P", monospace';
+        ctx.fillText('▼', node.x, drawY - 4);
       }
     }
 
-    this.ctx.restore();
+    ctx.restore();
 
-    // 4. Fixed Top Modern Glass Header
-    this.ctx.fillStyle = 'rgba(12, 10, 26, 0.92)';
-    this.ctx.fillRect(0, 0, 240, 36);
-    this.ctx.strokeStyle = 'rgba(244, 63, 94, 0.6)';
-    this.ctx.lineWidth = 1.5;
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, 36);
-    this.ctx.lineTo(240, 36);
-    this.ctx.stroke();
+    // 4. Fixed Top Diner Header
+    ctx.fillStyle = 'rgba(28, 11, 16, 0.94)';
+    ctx.fillRect(0, 0, 240, 36);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(0, 34, 240, 1);
+    ctx.fillStyle = '#f43f5e';
+    ctx.fillRect(0, 35, 240, 1.5);
 
     // Back pill button
-    this.ctx.fillStyle = '#fb7185';
-    this.ctx.font = '7px "Press Start 2P", monospace';
-    this.ctx.textAlign = 'left';
-    this.ctx.fillText('◀ VOLVER', 10, 22);
+    ctx.fillStyle = '#4c141d';
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(6, 7, 74, 22, 6);
+      ctx.fill();
+    } else {
+      ctx.fillRect(6, 7, 74, 22);
+    }
+    ctx.strokeStyle = '#fb7185';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = '#fecdd3';
+    ctx.font = '6.5px "Press Start 2P", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('◀ VOLVER', 12, 21);
+
+    // Center title
+    ctx.fillStyle = '#fef3c7';
+    ctx.font = '7px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('MAPA', 122, 21);
 
     // Total stars
     const totalStars = this.getTotalStars();
-    this.ctx.textAlign = 'right';
-    this.ctx.fillStyle = '#fbbf24';
-    this.ctx.fillText(`★ ${totalStars.toFixed(1).replace('.0', '')}/45`, 230, 22);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillText(`★ ${totalStars.toFixed(1).replace('.0', '')}/45`, 232, 21);
 
-    // 5. Fixed Bottom Action Glass Drawer
-    this.ctx.fillStyle = 'rgba(12, 10, 26, 0.95)';
-    this.ctx.fillRect(0, 260, 240, 60);
-    this.ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
-    this.ctx.lineWidth = 1.5;
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, 260);
-    this.ctx.lineTo(240, 260);
-    this.ctx.stroke();
+    // 5. Fixed Bottom Action Drawer
+    ctx.fillStyle = 'rgba(28, 11, 16, 0.96)';
+    ctx.fillRect(0, 260, 240, 60);
+    ctx.fillStyle = '#f43f5e';
+    ctx.fillRect(0, 260, 240, 1.5);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(0, 261.5, 240, 1);
 
     const selNode = this.mapNodes.find((n) => n.level === this.mapSelectedStage) || this.mapNodes[0];
     const isSelUnlocked = selNode.level <= unlocked;
@@ -2706,46 +2821,46 @@ class BurgerPanicGame {
     const selScore = scores[selNode.level] || 0;
 
     // Stage Info
-    this.ctx.textAlign = 'left';
-    this.ctx.fillStyle = selNode.isBoss ? '#ef4444' : '#ffffff';
-    this.ctx.font = '7px "Press Start 2P", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = selNode.isBoss ? '#fca5a5' : '#fef3c7';
+    ctx.font = '7px "Press Start 2P", monospace';
     const stagePrefix = selNode.isBoss ? '💥 JEFE' : `NIVEL ${selNode.level}`;
-    this.ctx.fillText(`${stagePrefix}: ${selNode.name}`, 10, 278);
+    ctx.fillText(`${stagePrefix}: ${selNode.name}`, 10, 278);
 
     if (isSelUnlocked) {
       if (isImplemented) {
-        this.ctx.fillStyle = '#38bdf8';
-        this.ctx.font = '6px "Press Start 2P", monospace';
-        this.ctx.fillText(`RÉCORD: ${selScore.toString().padStart(6, '0')} | ${selStars}★`, 10, 295);
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = '6px "Press Start 2P", monospace';
+        ctx.fillText(`RÉCORD: ${selScore.toString().padStart(6, '0')} | ${selStars}★`, 10, 296);
 
-        // Glowing Green Play Pill
-        const pulse = Math.floor(Date.now() / 350) % 2 === 0;
-        this.ctx.fillStyle = pulse ? '#10b981' : '#059669';
-        this.ctx.beginPath();
-        if (this.ctx.roundRect) {
-          this.ctx.roundRect(162, 280, 68, 26, 8);
-          this.ctx.fill();
+        // Glowing Lettuce-Emerald Arcade Play Pill
+        const pulse = Math.floor(now / 350) % 2 === 0;
+        ctx.fillStyle = pulse ? '#10b981' : '#059669';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(162, 280, 68, 26, 8);
+          ctx.fill();
         } else {
-          this.ctx.fillRect(162, 280, 68, 26);
+          ctx.fillRect(162, 280, 68, 26);
         }
-        this.ctx.strokeStyle = '#6ee7b7';
-        this.ctx.lineWidth = 1.5;
-        this.ctx.stroke();
+        ctx.strokeStyle = '#a7f3d0';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
 
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = 'bold 8px "Press Start 2P", monospace';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText('JUGAR', 196, 297);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 8px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('JUGAR', 196, 297);
       } else {
-        this.ctx.fillStyle = '#f59e0b';
-        this.ctx.font = '6px "Press Start 2P", monospace';
-        this.ctx.fillText('¡PRÓXIMAMENTE!', 10, 295);
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = '6px "Press Start 2P", monospace';
+        ctx.fillText('¡PRÓXIMAMENTE!', 10, 295);
       }
     } else {
-      this.ctx.fillStyle = '#94a3b8';
-      this.ctx.font = '6px "Press Start 2P", monospace';
-      this.ctx.fillText('NIVEL BLOQUEADO', 10, 295);
-      this.ctx.fillText(`🔒 Supera Nivel ${selNode.level - 1} para abrir`, 10, 308);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '6px "Press Start 2P", monospace';
+      ctx.fillText('NIVEL BLOQUEADO', 10, 295);
+      ctx.fillText(`🔒 Supera Nivel ${selNode.level - 1} para abrir`, 10, 308);
     }
   }
 
