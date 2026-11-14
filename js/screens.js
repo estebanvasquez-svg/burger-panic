@@ -368,12 +368,11 @@ class MobileScreensManager {
     this.drawTopBar(ctx, 'AJUSTES');
 
     const isMuted = window.soundManager ? window.soundManager.muted : false;
-    const webglOn = game.gfxEngine ? game.gfxEngine.enabled : false;
     const devOn = !!game.devMode;
 
     const rows = [
       { label: 'SONIDO / MÚSICA', value: isMuted ? 'APAGADO 🔇' : 'ACTIVO 🔊', bg: isMuted ? '#7f1d1d' : '#065f46', border: isMuted ? '#ef4444' : '#10b981' },
-      { label: 'GRÁFICOS GODOT HD', value: webglOn ? 'WEBGL2 ✨' : '2D RETRO', bg: '#1e293b', border: '#38bdf8' },
+      { label: 'MODO GRÁFICO', value: 'CLÁSICO 2D', bg: '#1e293b', border: '#38bdf8' },
       { label: 'MODO DESARROLLADOR', value: devOn ? 'ACTIVO 🛠️' : 'NORMAL', bg: devOn ? '#78350f' : '#1e293b', border: '#facc15' },
       { label: 'REINICIAR PROGRESO', value: this.resetConfirmArmed ? '¡CONFIRMAR!' : 'BORRAR', bg: '#7f1d1d', border: '#ef4444' }
     ];
@@ -504,8 +503,8 @@ class MobileScreensManager {
             const soundBtn = document.getElementById('btn-sound');
             if (soundBtn) soundBtn.click();
           } else if (y >= 112 && y <= 154) {
-            const gfxBtn = document.getElementById('btn-gfx');
-            if (gfxBtn) gfxBtn.click();
+            if (game.showDevToast) game.showDevToast('🕹️ MODO CLÁSICO 2D');
+            if (window.soundManager) window.soundManager.playBlip();
           } else if (y >= 166 && y <= 208) {
             const devBtn = document.getElementById('btn-dev');
             if (devBtn) devBtn.click();

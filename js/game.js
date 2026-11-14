@@ -1454,7 +1454,7 @@ class BurgerPanicGame {
     }
 
     // Godot 2.5D Atmospheric Rays & Projected Wall Shadows
-    if (this.gfxEngine) {
+    if (this.gfxEngine && this.gfxEngine.mode !== 2) {
       this.gfxEngine.drawBackdropAtmosphere(this.ctx);
       this.gfxEngine.drawWorldShadows25D(this.ctx);
     }
@@ -1464,7 +1464,7 @@ class BurgerPanicGame {
 
     // Draw Platforms
     this.drawPlatforms();
-    if (this.gfxEngine) {
+    if (this.gfxEngine && this.gfxEngine.mode !== 2) {
       this.gfxEngine.drawPlatformSpecular25D(this.ctx);
     }
 
@@ -1472,7 +1472,7 @@ class BurgerPanicGame {
     this.drawPlates();
 
     // Godot 2.5D Contact Ground Shadows under Chef, Enemies & Items
-    if (this.gfxEngine) {
+    if (this.gfxEngine && this.gfxEngine.mode !== 2) {
       this.gfxEngine.drawEntityShadows25D(this.ctx);
     }
 
@@ -1481,7 +1481,7 @@ class BurgerPanicGame {
       if (b.x + 36 < viewL || b.x > viewR) continue;
       b.draw(this.ctx);
     }
-    if (this.gfxEngine) {
+    if (this.gfxEngine && this.gfxEngine.mode !== 2) {
       this.gfxEngine.drawBurgers25DEffects(this.ctx);
     }
 
@@ -1625,7 +1625,7 @@ class BurgerPanicGame {
     }
 
     // Execute Final Godot WebGL2 Shader Pass (xBR HD + PointLight2D + Bloom + ACES Tonemap)
-    if (this.gfxEngine) {
+    if (this.gfxEngine && this.gfxEngine.mode !== 2) {
       this.gfxEngine.renderWebGLPass();
     }
   }

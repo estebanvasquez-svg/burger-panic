@@ -15,7 +15,7 @@ class Godot2DGraphicsEngine {
     // Modes: 0 = GODOT ULTRA HD (Sub-Pixel Crisp + Emissive Bloom + Lights + 2.5D + Particles),
     //        1 = GODOT RETRO GLOW (Pixel + Bloom + Lights + 2.5D + Particles),
     //        2 = CLASSIC 2D
-    this.mode = 0;
+    this.mode = 2;
     this.modeNames = [
       '✨ GODOT ULTRA HD (60 FPS + Bloom + Luces 2D)',
       '🌟 GODOT RETRO GLOW (Pixel + Bloom + Luces 2D)',
@@ -88,8 +88,10 @@ class Godot2DGraphicsEngine {
       return;
     }
 
-    // Hide baseCanvas paint opacity while keeping pointer events active on it
-    this.baseCanvas.style.opacity = '0';
+    // Keep baseCanvas visible and WebGL overlay hidden when starting in Classic 2D mode
+    const useGL = (this.mode !== 2);
+    glCanvas.style.display = useGL ? 'block' : 'none';
+    this.baseCanvas.style.opacity = useGL ? '0' : '1';
 
     this.gl = gl;
     this.setupShaders();
