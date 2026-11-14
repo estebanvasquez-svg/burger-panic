@@ -86,7 +86,19 @@ class MobileScreensManager {
     ];
     try {
       const saved = JSON.parse(localStorage.getItem('burgerpanic_leaderboard') || 'null');
-      if (Array.isArray(saved) && saved.length > 0) return saved;
+      if (Array.isArray(saved) && saved.length > 0) {
+        let migrated = false;
+        for (const entry of saved) {
+          if (entry && entry.name === 'CHEF PEPE') {
+            entry.name = 'CHEF BRUNO';
+            migrated = true;
+          }
+        }
+        if (migrated) {
+          localStorage.setItem('burgerpanic_leaderboard', JSON.stringify(saved));
+        }
+        return saved;
+      }
     } catch (e) {}
     localStorage.setItem('burgerpanic_leaderboard', JSON.stringify(defaults));
     return defaults;

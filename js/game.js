@@ -2305,7 +2305,7 @@ class BurgerPanicGame {
       // Fallback if image is still loading
       this.ctx.fillStyle = '#e40058';
       this.ctx.font = '16px "Press Start 2P", monospace';
-      this.ctx.fillText('BURGER', 120, 60);
+      this.ctx.fillText('CHEF', 120, 60);
       this.ctx.fillStyle = '#fcb400';
       this.ctx.fillText('PANIC', 120, 84);
 
