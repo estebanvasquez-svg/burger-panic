@@ -74,10 +74,10 @@ class BurgerPanicGame {
     this.controls = new window.ControlsManager();
     this.setupControlHooks();
 
-    // Boot sequence: Show Home (Portada) first, then transition into the Map at their saved level
-    this.state = 'TITLE';
+    // Boot sequence: Splash Screen -> Main Menu -> Level Select (MAP)
+    this.state = 'SPLASH';
     this.isInitialBoot = true;
-    this.stateTimer = 150; // ~2.5s showcase on boot, or tap to advance immediately
+    this.stateTimer = 110; // ~1.8s splash screen, or tap/Enter to advance immediately
     const resumeStage = this.getLastPlayedStage();
     this.mapSelectedStage = resumeStage;
     this.centerMapOnStage(resumeStage, true);
@@ -91,15 +91,22 @@ class BurgerPanicGame {
   setupControlHooks() {
     this.controls.onPepperPress = () => {
       if (this.state === 'MAP') {
-        this.state = (this.player && !this.player.isDead) ? 'PAUSED' : 'TITLE';
+        this.state = (this.player && !this.player.isDead) ? 'PAUSED' : 'MENU';
         if (this.state === 'PAUSED') this.updatePauseButtonUI(true);
+        return;
+      }
+      if (['PROFILE', 'SHOP', 'SETTINGS', 'LEADERBOARD'].includes(this.state)) {
+        this.state = 'MENU';
         return;
       }
       if (this.state === 'STAGE_CLEAR') {
         this.openMap();
         return;
       }
-      if (this.state === 'TITLE') {
+      if (this.state === 'SPLASH') {
+        this.isInitialBoot = false;
+        this.state = 'MENU';
+      } else if (this.state === 'MENU' || this.state === 'TITLE') {
         this.isInitialBoot = false;
         const resumeStage = this.getLastPlayedStage();
         this.openMap(resumeStage);
@@ -472,6 +479,15 @@ class BurgerPanicGame {
       this.player.lastTossDir = 'left';
     }
 
+    // Apply Shop Upgrades for active run
+    if (this.player && window.mobileScreensManager) {
+      const shop = window.mobileScreensManager.getShopState();
+      this.player.lives = Math.max(this.player.lives, 3 + (shop.extraLives || 0));
+      this.player.peppers = Math.max(this.player.peppers, 5 + (shop.extraPeppers || 0) * 2);
+      if (shop.speedBoost > 0) this.player.speed = 1.35 * 1.12;
+      if (shop.startShield > 0) this.player.invulnerableTimer = Math.max(this.player.invulnerableTimer || 0, 180);
+    }
+
     // Initialize burgers / stage-themed food layers
     const activeStage = index + 1;
     this.burgers = this.levelData.burgers.map((b) => new window.BurgerPiece(b, this.levelData, activeStage));
@@ -745,11 +761,17 @@ class BurgerPanicGame {
     }
 
     switch (this.state) {
+      case 'SPLASH':
+        if (this.isInitialBoot && this.stateTimer <= 0) {
+          this.isInitialBoot = false;
+          this.state = 'MENU';
+        }
+        break;
+
       case 'TITLE':
         if (this.isInitialBoot && this.stateTimer <= 0) {
           this.isInitialBoot = false;
-          const resumeStage = this.getLastPlayedStage();
-          this.openMap(resumeStage);
+          this.state = 'MENU';
         }
         break;
 
@@ -1289,6 +1311,12 @@ class BurgerPanicGame {
       const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
       this.stageEarnedStars = this.calculateStageStars();
       this.saveStageProgress(stageNum, this.stageEarnedStars, this.score);
+      if (window.mobileScreensManager) {
+        const earnedCoins = this.stageEarnedStars * 25 + Math.floor(this.score / 250);
+        this.stageEarnedCoins = earnedCoins;
+        window.mobileScreensManager.addCoins(earnedCoins);
+        window.mobileScreensManager.recordScore(this.score, stageNum);
+      }
 
       setTimeout(() => {
         if (window.soundManager && window.soundManager.playStar) {
@@ -1348,7 +1376,8 @@ class BurgerPanicGame {
     const stageNum = (this.levelData && this.levelData.stageNumber) ? this.levelData.stageNumber : (this.stageIndex + 1);
     const theme = window.stageThemesManager ? window.stageThemesManager.getTheme(stageNum) : null;
 
-    if (theme && this.state !== 'TITLE' && this.state !== 'MAP') {
+    const fullScreenStates = ['SPLASH', 'MENU', 'TITLE', 'MAP', 'PROFILE', 'SHOP', 'SETTINGS', 'LEADERBOARD'];
+    if (theme && !fullScreenStates.includes(this.state)) {
       this.ctx.fillStyle = theme.wallColor || '#050508';
       this.ctx.fillRect(0, 0, 240, 320);
     } else {
@@ -1356,10 +1385,37 @@ class BurgerPanicGame {
       this.ctx.fillRect(0, 0, 240, 320);
     }
 
-    if (this.state === 'TITLE') {
-      this.drawTitleScreen();
-      if (this.gfxEngine) this.gfxEngine.renderWebGLPass();
-      return;
+    if (window.mobileScreensManager) {
+      if (this.state === 'SPLASH') {
+        window.mobileScreensManager.drawSplashScreen(this.ctx, this);
+        if (this.gfxEngine) this.gfxEngine.renderWebGLPass();
+        return;
+      }
+      if (this.state === 'MENU' || this.state === 'TITLE') {
+        window.mobileScreensManager.drawMainMenu(this.ctx, this);
+        if (this.gfxEngine) this.gfxEngine.renderWebGLPass();
+        return;
+      }
+      if (this.state === 'PROFILE') {
+        window.mobileScreensManager.drawProfileScreen(this.ctx, this);
+        if (this.gfxEngine) this.gfxEngine.renderWebGLPass();
+        return;
+      }
+      if (this.state === 'SHOP') {
+        window.mobileScreensManager.drawShopScreen(this.ctx, this);
+        if (this.gfxEngine) this.gfxEngine.renderWebGLPass();
+        return;
+      }
+      if (this.state === 'SETTINGS') {
+        window.mobileScreensManager.drawSettingsScreen(this.ctx, this);
+        if (this.gfxEngine) this.gfxEngine.renderWebGLPass();
+        return;
+      }
+      if (this.state === 'LEADERBOARD') {
+        window.mobileScreensManager.drawLeaderboardScreen(this.ctx, this);
+        if (this.gfxEngine) this.gfxEngine.renderWebGLPass();
+        return;
+      }
     }
 
     if (this.state === 'MAP') {
@@ -2352,20 +2408,25 @@ class BurgerPanicGame {
       this.ctx.fillText('• VIDA EXTRA: NO OBTENIDA', 26, 180);
     }
 
-    // Score
+    // Score & Coins
     this.ctx.fillStyle = '#fcb400';
-    this.ctx.fillText(`• PUNTOS: ${this.score}`, 26, 198);
+    this.ctx.fillText(`• PUNTOS: ${this.score} (+${this.stageEarnedCoins || 25} MON.)`, 26, 198);
 
-    // Action Buttons Prompt
-    this.ctx.textAlign = 'center';
-    if (Math.floor(Date.now() / 400) % 2 === 0) {
-      this.ctx.fillStyle = '#00ff88';
-      this.ctx.font = '7px "Press Start 2P", monospace';
-      this.ctx.fillText('[ JUMP / TAP ] SIGUIENTE', 120, 234);
+    // Action Buttons: Next Level & Level Select (MAP)
+    if (window.mobileScreensManager) {
+      window.mobileScreensManager.drawButton(this.ctx, 32, 212, 176, 26, '▶ SIGUIENTE NIVEL', '#059669', '#6ee7b7', '#ffffff', 6.5);
+      window.mobileScreensManager.drawButton(this.ctx, 32, 244, 176, 26, '🗺️ SELECCIÓN DE NIVEL', '#1e293b', '#38bdf8', '#f8fafc', 6);
+    } else {
+      this.ctx.textAlign = 'center';
+      if (Math.floor(Date.now() / 400) % 2 === 0) {
+        this.ctx.fillStyle = '#00ff88';
+        this.ctx.font = '7px "Press Start 2P", monospace';
+        this.ctx.fillText('[ JUMP / TAP ] SIGUIENTE', 120, 234);
+      }
+      this.ctx.fillStyle = '#00f0ff';
+      this.ctx.font = '6px "Press Start 2P", monospace';
+      this.ctx.fillText('[ PEPPER ] VER MAPA', 120, 254);
     }
-    this.ctx.fillStyle = '#00f0ff';
-    this.ctx.font = '6px "Press Start 2P", monospace';
-    this.ctx.fillText('[ PEPPER ] VER MAPA', 120, 254);
   }
 
   drawMapScreen() {
@@ -2820,10 +2881,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const coords = getCanvasCoords(canvas, e);
 
+    if (window.mobileScreensManager && window.mobileScreensManager.handleTap(game, coords)) {
+      return;
+    }
+
     if (game.state === 'TITLE') {
       game.isInitialBoot = false;
-      const resumeStage = game.getLastPlayedStage();
-      game.openMap(resumeStage);
+      game.state = 'MENU';
     } else if (game.state === 'PAUSED') {
       game.togglePause();
     } else if (game.state === 'GAME_OVER') {
@@ -2840,10 +2904,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const unlocked = game.getUnlockedLevel();
       const availableStages = (game.levelMap && game.levelMap.levels) ? game.levelMap.levels.length : 3;
 
-      // 1. Top bar: [ ◀ VOLVER ]
+      // 1. Top bar: [ ◀ VOLVER ] -> Main Menu (or resume if paused)
       if (coords.y <= 36) {
         game.isInitialBoot = false;
-        game.state = (game.player && !game.player.isDead) ? 'PAUSED' : 'TITLE';
+        game.state = (game.player && !game.player.isDead) ? 'PAUSED' : 'MENU';
         if (game.state === 'PAUSED') game.updatePauseButtonUI(true);
         return;
       }
@@ -2894,7 +2958,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (window.burgerPanicGame.player && !window.burgerPanicGame.player.isDead) {
           window.burgerPanicGame.state = 'PLAYING';
         } else {
-          window.burgerPanicGame.state = 'TITLE';
+          window.burgerPanicGame.state = 'MENU';
         }
       } else {
         window.burgerPanicGame.openMap();
