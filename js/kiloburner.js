@@ -686,18 +686,18 @@ class KiloburnerBoss {
     this.logicalW = 120;
     this.logicalH = 88;
 
-    // Balanced arcade boss endurance
-    this.maxHealth = 600; // Balanced 600 HP arcade boss health
-    this.health = 600;
+    // Balanced arcade boss endurance (slower health bar to showcase all 3 attack phases)
+    this.maxHealth = 1500;
+    this.health = 1500;
     this.animTimer = 0;
-    this.facing = -1; // -1 = looking left toward Chef Pepe
+    this.facing = -1; // -1 = looking left toward Chef Bruno
     this.pepperStunTimer = 0; // Blinding pepper duration
 
-    // States: 'idle', 'lean', 'recoil', 'flame', 'meatball', 'claw', 'hit', 'explode', 'dead'
+    // States: 'idle', 'lean', 'recoil', 'flame', 'meatball', 'claw', 'dash_sweep', 'phase_shift', 'hit', 'explode', 'dead'
     this.state = 'idle';
     this.stateTimer = 0;
     this.hitFlashTimer = 0;
-    this.attackCooldown = 90; // frames before first attack
+    this.attackCooldown = 45; // frames before first attack (meatball)
 
     // Floating motion & horizontal hover
     this.floatAngle = 0;
@@ -733,6 +733,7 @@ class KiloburnerBoss {
     this.bossAfterimages = [];
     this.shockwaves = [];
     this.dashDir = -1;
+    this.lastPhase3Attack = 'dash_sweep';
   }
 
   update(player, gameFloors, spawnProjectileCallback, cameraX = 0) {
@@ -902,15 +903,15 @@ class KiloburnerBoss {
       }
     }
 
-    // Metroidvania Phase Transition Check (Phase 2 <= 60% HP, Phase 3 <= 30% HP)
+    // Metroidvania Phase Transition Check (Phase 2 <= 66% HP, Phase 3 <= 33% HP)
     if (!this.isDead && this.state !== 'phase_shift') {
-      if (this.phase === 1 && this.health <= this.maxHealth * 0.60) {
+      if (this.phase === 1 && this.health <= this.maxHealth * 0.66) {
         this.phase = 2;
         this.state = 'phase_shift';
         this.stateTimer = 36;
         this.shockwaves.push({ x: this.x, y: this.y - this.logicalH * 0.45, r: 12, alpha: 0.9, color: '#f97316' });
         if (window.soundManager && window.soundManager.playBossFlameCharge) window.soundManager.playBossFlameCharge();
-      } else if (this.phase === 2 && this.health <= this.maxHealth * 0.30) {
+      } else if (this.phase === 2 && this.health <= this.maxHealth * 0.33) {
         this.phase = 3;
         this.state = 'phase_shift';
         this.stateTimer = 40;
@@ -965,7 +966,7 @@ class KiloburnerBoss {
       }
       if (this.stateTimer <= 0) {
         this.state = 'idle';
-        this.attackCooldown = 25;
+        this.attackCooldown = 12; // Immediately transition into the new phase's attack!
       }
     } else if (this.state === 'dash_sweep') {
       this.stateTimer++;
@@ -1199,24 +1200,18 @@ class KiloburnerBoss {
         this.attackCooldown = this.phase === 3 ? 42 : (this.phase === 2 ? 62 : 85);
       }
     } else {
-      // Idle state: phase-aware Metroidvania attack selection
+      // Idle state: health-bar phase dictates primary attack!
+      // Phase 1 (>66% HP): Meatball | Phase 2 (66%-33% HP): Flame | Phase 3 (<=33% HP): Claw & Jet Dash
       if (this.attackCooldown > 0) {
         this.attackCooldown--;
       } else {
-        const distToPlayer = player ? Math.hypot(player.x - this.x, player.y - this.y) : 999;
-        const verticalDiff = player ? Math.abs(player.y - this.y) : 999;
-        const roll = Math.random();
-
-        if (this.phase >= 2 && verticalDiff < 55 && roll < 0.34) {
-          this.state = 'dash_sweep';
-        } else if (distToPlayer < 110 && verticalDiff < 65) {
-          this.state = Math.random() < 0.55 ? 'flame' : 'claw';
-        } else if (roll < 0.45) {
+        if (this.phase === 1) {
           this.state = 'meatball';
-        } else if (roll < 0.78) {
+        } else if (this.phase === 2) {
           this.state = 'flame';
         } else {
-          this.state = 'claw';
+          this.lastPhase3Attack = (this.lastPhase3Attack === 'claw') ? 'dash_sweep' : 'claw';
+          this.state = this.lastPhase3Attack;
         }
         this.stateTimer = 0;
       }
@@ -1392,9 +1387,9 @@ class KiloburnerBoss {
 
     let effectiveDamage = amount;
     if (source === 'flame_crit') {
-      effectiveDamage = 26; // High reward critical damage penetrating cyber armor!
+      effectiveDamage = 18; // Rewarding critical damage penetrating cyber armor
     } else if (source === 'flame') {
-      effectiveDamage = 12; // Solid visible chip damage
+      effectiveDamage = 8; // Steady chip damage for a longer boss fight
     } else if (source === 'burger') {
       effectiveDamage = 150; // Massive crushing crush damage
     }
@@ -1836,10 +1831,10 @@ class KiloburnerBoss {
       ctx.fillRect(barX, barY, currentW, 1);
     }
 
-    // Phase Threshold Notches (60% & 30%)
+    // Phase Threshold Notches (66% & 33%)
     ctx.fillStyle = '#0f172a';
-    ctx.fillRect(barX + Math.round(barW * 0.60), barY, 1, barH);
-    ctx.fillRect(barX + Math.round(barW * 0.30), barY, 1, barH);
+    ctx.fillRect(barX + Math.round(barW * 0.66), barY, 1, barH);
+    ctx.fillRect(barX + Math.round(barW * 0.33), barY, 1, barH);
 
     ctx.restore();
   }
