@@ -505,8 +505,8 @@ class MeatballProjectile {
     const sm = window.spriteManager;
     let spriteDrawn = false;
     if (sm && sm.kiloburnerAtlasLoaded && sm.drawKiloburnerAtlas) {
-      const projW = 26;
-      const projH = 21;
+      const projW = 32;
+      const projH = 26;
       // Native sprite points right (fiery exhaust trail on left, meatball head on right).
       // If moving left (vx < 0), flip horizontally so head leads left and trail trails right.
       const flip = (this.vx < 0);
@@ -519,9 +519,9 @@ class MeatballProjectile {
       ctx.save();
       ctx.translate(Math.round(this.x), Math.round(this.y));
       ctx.rotate(angle * 0.7); // Dynamic ballistic trajectory alignment
-      // Center the ball mass at origin: ball center in 26x21 sprite is at x=15, y=10
-      const drawX = -15;
-      const drawY = -10;
+      // Center the ball mass at origin: ball center in 32x26 sprite is at x=20, y=13
+      const drawX = -20;
+      const drawY = -13;
       spriteDrawn = sm.drawKiloburnerAtlas(ctx, spriteName, drawX, drawY, projW, projH, flip);
       ctx.restore();
     }
@@ -1116,12 +1116,12 @@ class KiloburnerBoss {
         this.lungeX = this.facing * Math.max(0, 6 - (this.stateTimer - 32) * 0.3);
       }
 
-      // Meatball ejection synchronized with Pose 4 (Launch Frame at frame 24; double salvo in Phase 3!)
-      if (this.stateTimer === 24 || (this.phase === 3 && this.stateTimer === 36)) {
+      // Meatball ejection synchronized with Pose 5 (continuous flaming meatball launch at frame 34; double salvo in Phase 3!)
+      if (this.stateTimer === 34 || (this.phase === 3 && this.stateTimer === 46)) {
         if (spawnProjectileCallback && player) {
           const spawnX = this.x + (this.facing * (this.logicalW * 0.42));
           const spawnY = this.y - (this.logicalH * 0.45);
-          const spread = (this.stateTimer === 36) ? (this.facing * -22) : 0;
+          const spread = (this.stateTimer === 46) ? (this.facing * -22) : 0;
           const targetX = player.x + (player.width ? player.width / 2 : 8) + spread + (Math.random() - 0.5) * 8;
           const targetY = player.y + 4;
           spawnProjectileCallback(new MeatballProjectile(spawnX, spawnY, targetX, targetY));
