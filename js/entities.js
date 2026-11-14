@@ -864,6 +864,8 @@ class Enemy {
     this.bouncedEdge = null;
     this.bounceX = x;
     this.pacingCount = 0;
+    this.escapeMode = false;
+    this.escapeTarget = null;
 
     // Differentiate speeds subtly so enemies don't cluster or walk in exact lockstep
     let speedMod = 1.0;
@@ -935,6 +937,67 @@ class Enemy {
     this.bouncedEdge = null;
     this.bounceX = this.x;
     this.pacingCount = 0;
+    this.escapeMode = false;
+    this.escapeTarget = null;
+  }
+
+  /**
+   * Finds the nearest alternative exit when trapped in a 3-repeat platform loop:
+   * nearest reachable ladder, diagonal ramp, elevator/moving platform, or nearby platform to leap to.
+   */
+  findEscapeTarget(currentFloor, ladders, floors) {
+    const myX = this.x + 8;
+    const myY = this.y;
+    let best = null;
+    let bestScore = Infinity;
+
+    // 1. Nearest ladder intersecting currentFloor that goes up or down
+    for (const l of ladders) {
+      const lx = l.x;
+      if (lx + 8 < currentFloor.x1 - 6 || lx + 8 > currentFloor.x2 + 6) continue;
+      const elevAtLadder = getFloorElevation(currentFloor, lx + 8);
+      if (elevAtLadder < l.y1 - 8 || elevAtLadder > l.y2 + 8) continue;
+      const canUp = l.y1 < elevAtLadder - 6;
+      const canDown = l.y2 > elevAtLadder + 6;
+      if (!canUp && !canDown) continue;
+      const dist = Math.abs(lx - this.x);
+      if (dist < bestScore) {
+        bestScore = dist;
+        best = { kind: 'ladder', x: lx, ladder: l };
+      }
+    }
+    if (best) return best;
+
+    // 2. Nearest diagonal ramp, elevator, or nearby platform to walk/leap onto
+    for (const f of floors) {
+      if (f === currentFloor) continue;
+      const isSpecial = (f.type === 'diagonal' || f.type === 'elevator' || f.type === 'swaying' || f.type === 'swing');
+      // Closest point on candidate floor f to currentFloor's edges or enemy
+      const clampedX = Math.max(f.x1, Math.min(f.x2 - this.width, this.x));
+      const fy = getFloorElevation(f, clampedX + 8);
+      const dyFloor = fy - myY;
+      // Must be reachable (either slightly above for a hop, same level, or below to drop onto)
+      if (dyFloor < -26 || dyFloor > 110) continue;
+
+      const distToF = Math.abs(clampedX - this.x);
+      if (distToF > 85) continue;
+
+      // Determine which edge of currentFloor leads toward f
+      const edgeX = (clampedX >= this.x)
+        ? Math.max(currentFloor.x1, currentFloor.x2 - this.width)
+        : currentFloor.x1;
+      const gap = Math.abs(clampedX - edgeX);
+      if (gap > 56) continue;
+
+      // Slightly prefer diagonals and elevators over generic platforms
+      const score = Math.abs(edgeX - this.x) + gap * 0.5 - (isSpecial ? 12 : 0);
+      if (score < bestScore) {
+        bestScore = score;
+        best = { kind: isSpecial ? f.type : 'platform', x: edgeX, targetFloor: f, jumpDir: (clampedX >= edgeX ? 1 : -1) };
+      }
+    }
+
+    return best;
   }
 
   update(player, ladders, floors) {
@@ -1038,6 +1101,9 @@ class Enemy {
               this.landCooldown = 25; // Landing recovery: prevents instant-killing player
               this.dir = dx >= 0 ? 1 : -1;
               this.changeDirCooldown = 15;
+              this.pacingCount = 0;
+              this.escapeMode = false;
+              this.escapeTarget = null;
               return;
             }
           }
@@ -1090,9 +1156,8 @@ class Enemy {
           }
         }
 
-        // Dead-End Escape: If trapped/pacing this platform without finding player,
-        // take ANY open ladder direction to navigate out of the dead-end!
-        if (!wantClimb && (this.pacingCount || 0) >= 2) {
+        // Loop Escape: After 3 repeats on the same platform, always take ANY open ladder!
+        if (!wantClimb && (this.escapeMode || (this.pacingCount || 0) >= 3)) {
           const canAltUp = currentLadder.y1 < this.y - 2;
           const canAltDown = currentLadder.y2 > this.y + 2;
           if (canAltUp || canAltDown) {
@@ -1112,6 +1177,8 @@ class Enemy {
           this.changeDirCooldown = 25;
           this.bouncedEdge = null;
           this.pacingCount = 0;
+          this.escapeMode = false;
+          this.escapeTarget = null;
         } else {
           // IMPORTANT: Do NOT force this.dir = dx >= 0 ? 1 : -1 !
           // The enemy must continue in its current heading to traverse the platform
@@ -1135,10 +1202,14 @@ class Enemy {
           this.pacingCount = 0;
         }
       }
-      // Case C: Walking on floor with no ladder: steer towards player
+      // Case C: Walking on floor with no ladder: steer towards escape route or player
       else if (!this.isClimbing && currentFloor) {
-        // Only steer towards player if NOT currently moving away from a recently bounced dead-end edge!
-        if (!this.bouncedEdge && Math.abs(dx) > 12 && Math.random() < 0.04) {
+        if (this.escapeMode && this.escapeTarget) {
+          const toTarget = this.escapeTarget.x - this.x;
+          if (Math.abs(toTarget) > 3) {
+            this.dir = toTarget >= 0 ? 1 : -1;
+          }
+        } else if (!this.bouncedEdge && Math.abs(dx) > 12 && Math.random() < 0.04) {
           this.dir = dx >= 0 ? 1 : -1;
           this.changeDirCooldown = 20;
         }
@@ -1212,6 +1283,20 @@ class Enemy {
           this.y = getFloorElevation(connectingFloor, checkX);
           this.bouncedEdge = null;
           this.pacingCount = 0;
+          this.escapeMode = false;
+          this.escapeTarget = null;
+        } else if (this.escapeMode && this.escapeTarget && this.escapeTarget.targetFloor) {
+          // Leap off platform edge toward nearest diagonal, elevator, or adjacent platform
+          const jDir = this.escapeTarget.jumpDir || this.dir;
+          this.isFalling = true;
+          this.vy = -2.4;
+          this.vx = jDir * Math.max(1.25, this.speed * 1.35);
+          this.dir = jDir;
+          this.bouncedEdge = null;
+          this.pacingCount = 0;
+          this.escapeMode = false;
+          this.escapeTarget = null;
+          this.changeDirCooldown = 20;
         } else {
           // True platform edge / dead end: reverse direction smoothly!
           if (this.dir > 0) {
@@ -1227,6 +1312,20 @@ class Enemy {
           }
           this.pacingCount = (this.pacingCount || 0) + 1;
           this.changeDirCooldown = 25;
+
+          // After 3 repeats on the same platform, engage Escape Mode to seek nearest exit
+          if (this.pacingCount >= 3 && !this.escapeMode) {
+            this.escapeTarget = this.findEscapeTarget(currentFloor, ladders, floors);
+            if (this.escapeTarget) {
+              this.escapeMode = true;
+              const toTarget = this.escapeTarget.x - this.x;
+              if (Math.abs(toTarget) > 3) {
+                this.dir = toTarget >= 0 ? 1 : -1;
+              }
+            } else {
+              this.pacingCount = 0;
+            }
+          }
         }
       }
     } else {
